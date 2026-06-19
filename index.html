@@ -82,6 +82,11 @@ button{font-family:inherit;cursor:pointer;border:none}
 .bm-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .bm-zone .lbl{font-size:12.5px;text-align:left;line-height:1.2;color:var(--txt);font-weight:500;word-break:normal;overflow-wrap:normal}
 .bm-zone .days{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:7px}
+.kpi .box{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 7px;text-align:center;min-width:0}
+.kpi .box .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px;color:var(--txt);line-height:1.1;overflow-wrap:anywhere}
+.kpi .box .k{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+.note.ok{border-color:rgba(52,211,153,.4)}
 .legend{display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--muted);margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -182,8 +187,26 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
 <main>
 
+<!-- ============ RESUMO ============ -->
+<section class="view active" id="v-resumo">
+  <div class="card" id="resumoCard">
+    <h2>Hoje <span class="hint" id="resumoDate"></span></h2>
+    <div id="resumoDue"></div>
+    <div class="kpi" id="resumoKpi" style="margin-top:6px"></div>
+  </div>
+  <div class="card">
+    <h2>Adesão ao registro <span class="hint">manter o log vivo</span></h2>
+    <div class="kpi" id="appAdhKpi"></div>
+    <div id="appAdhNudge" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h2>Próximas doses <span class="hint">EAA + GLP-1</span></h2>
+    <div id="resumoNext"></div>
+  </div>
+</section>
+
 <!-- ============ APLICAR ============ -->
-<section class="view active" id="v-apply">
+<section class="view" id="v-apply">
   <div class="card">
     <h2>Nova aplicação <span class="hint" id="phaseChip"></span></h2>
     <button class="btn btn-ghost btn-sm" id="btnRepeat" style="width:100%;margin-bottom:13px">↻ Repetir última aplicação</button>
@@ -372,6 +395,13 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
+    <h2>Tendência de peso <span class="hint">média móvel 7d · taxa</span></h2>
+    <div class="kpi" id="wtTrendKpi"></div>
+    <div class="chart-wrap tall"><canvas id="chWtTrend"></canvas></div>
+    <div id="wtTrendNote"></div>
+  </div>
+
+  <div class="card">
     <h2>Histórico <span class="hint" id="gLogCount"></span></h2>
     <div id="gLog"><div class="empty">Nenhuma aplicação ainda.</div></div>
   </div>
@@ -443,6 +473,13 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
+    <h2>Composição corporal <span class="hint">massa magra × gordura</span></h2>
+    <div class="kpi" id="compKpi"></div>
+    <div class="chart-wrap tall"><canvas id="chComp"></canvas></div>
+    <div id="compNote"></div>
+  </div>
+
+  <div class="card">
     <h2>Painel laboratorial</h2>
     <div class="grid2">
       <div class="field"><label>Estradiol (pg/mL)</label><input id="lE2" type="number" inputmode="decimal" class="num"></div>
@@ -467,12 +504,30 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div class="field"><label>Creatinina</label><input id="lCr" type="number" inputmode="decimal" class="num"></div>
         <div class="field"><label>Cistatina C</label><input id="lCys" type="number" inputmode="decimal" class="num"></div>
         <div class="field"><label>Ferritina (ng/mL)</label><input id="lFer" type="number" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Albumina (g/dL)</label><input id="lAlb" type="number" inputmode="decimal" class="num" placeholder="4.3"></div>
       </div>
     </details>
     <div class="field"><label>Data do exame</label><input id="lDate" type="date"></div>
     <button class="btn btn-ghost" id="lSave">Salvar exame</button>
     <div id="labStatus"></div>
     <div id="labTable" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Marcadores derivados <span class="hint">do último exame</span></h2>
+    <div id="derivedBox"></div>
+    <div class="note">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e eGFR (CKD-EPI 2021). Ferramenta de leitura — decisões com o médico.</div>
+  </div>
+
+  <div class="card">
+    <h2>Ferro & hematócrito <span class="hint">eritrocitose × depleção</span></h2>
+    <div id="ironStatus"></div>
+    <div class="chart-wrap" style="margin-top:6px"><canvas id="chIron"></canvas></div>
+    <div class="row" style="display:flex;gap:8px;align-items:flex-end;margin-top:12px">
+      <div class="field" style="flex:1;margin:0"><label>Registrar doação de sangue</label><input id="donDate" type="date"></div>
+      <button class="btn-ghost btn-sm" id="donSave" style="white-space:nowrap">+ Doação</button>
+    </div>
+    <div id="donList" style="margin-top:8px"></div>
   </div>
 
   <div class="card">
@@ -489,6 +544,12 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="field"><label>Data</label><input id="cDate" type="date"></div>
     <button class="btn btn-ghost" id="cSave">Salvar check-in</button>
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chMood"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>Sintomas × hormônios <span class="hint">subjetivo vs E2/PRL</span></h2>
+    <div class="chart-wrap tall"><canvas id="chSymHorm"></canvas></div>
+    <div class="note">Libido, energia e humor (escala 1–5, eixo esq.) sobre E2 (pg/mL) e prolactina (ng/mL) dos exames (eixo dir.), na mesma linha do tempo. Inspeção visual — não infere causalidade.</div>
   </div>
 </section>
 
@@ -526,6 +587,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Alerta de reuso (dias)</label><input id="setWarn" type="number" inputmode="numeric" class="num" value="5"></div>
       <div class="field"><label>Meta de água (ml/dia)</label><input id="setWater" type="number" inputmode="numeric" class="num" value="4000"></div>
       <div class="field"><label>Intervalo de exames (dias)</label><input id="setExam" type="number" inputmode="numeric" class="num" value="120"></div>
+      <div class="field"><label>Altura (cm)</label><input id="setHeight" type="number" inputmode="decimal" class="num" value="176"></div>
+      <div class="field"><label>Peso-alvo (kg, opcional)</label><input id="setGoal" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="number" inputmode="decimal" class="num" value="4.3"></div>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <input type="checkbox" id="setCycle" style="width:20px;height:20px">
@@ -556,7 +620,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 </main>
 
 <nav id="nav">
-  <button data-v="apply" class="on"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>EAA</button>
+  <button data-v="resumo" class="on"><svg viewBox="0 0 24 24"><path d="M3 12l2-2 4 4 6-6 4 4 2-2"/><path d="M3 20h18"/></svg>Resumo</button>
+  <button data-v="apply"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>EAA</button>
   <button data-v="diario"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>Diário</button>
   <button data-v="glp1"><svg viewBox="0 0 24 24"><path d="M12 2s5 5.5 5 10a5 5 0 01-10 0c0-4.5 5-10 5-10z"/></svg>GLP-1</button>
   <button data-v="charts"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>Gráficos</button>
@@ -704,7 +769,7 @@ const CHECKS=[
   {k:"sleep",lbl:"Sono",lo:"péssimo",hi:"restaurador"},
   {k:"irrit",lbl:"Irritabilidade",lo:"calmo",hi:"explosivo"}
 ];
-const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[30,85],hct:[null,52],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,41],ggt:[null,60],ur:[null,50],cr:[null,1.3],cys:[null,1.1],fer:[30,null]};
+const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[30,85],hct:[null,52],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,41],ggt:[null,60],ur:[null,50],cr:[null,1.3],cys:[null,1.1],fer:[30,null],alb:[3.5,5.2]};
 const DEFAULT_SCHEDULE=[
   {id:"b1",time:"06:00",name:"Pré-treino em jejum",note:"Aeróbico + musculação em jejum",items:[{id:"caf",name:"Cafeína 200mg"},{id:"ioi",name:"Ioimbina 16mg"},{id:"cit",name:"Citrulina 6–8g"},{id:"tau",name:"Taurina 2g"}]},
   {id:"b2",time:"10:00",name:"Café da manhã",items:[{id:"d3",name:"D3 10.000 UI"},{id:"k2",name:"K2 200mcg"},{id:"coq",name:"CoQ10 ubiquinol 200mg"},{id:"omg",name:"Ômega-3 2–3g EPA+DHA"},{id:"vite",name:"Vit E 200 UI"},{id:"b12",name:"B12 sublingual 1.000mcg"},{id:"cro",name:"Cromo 200mcg"}]},
@@ -736,9 +801,9 @@ function load(){
   return fresh();
 }
 function fresh(){
-  return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],
+  return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
-    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120}};
+    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3}};
 }
 function migrate(r){
   r.schemaVersion=2;
@@ -750,7 +815,11 @@ function migrate(r){
   s.refs=Object.assign({},DEFAULT_REFS,s.refs||{});
   if(s.waterTarget==null)s.waterTarget=4000;
   if(s.examDays==null)s.examDays=120;
+  if(s.heightCm==null)s.heightCm=176;
+  if(s.goalWeight===undefined)s.goalWeight=null;
+  if(s.albumin==null)s.albumin=4.3;
   r.daily=r.daily||{};
+  r.donations=r.donations||[];
   r.glp1=r.glp1||[];r.glp1sym=r.glp1sym||[];
   r.glp1Drugs=(r.glp1Drugs&&r.glp1Drugs.length)?r.glp1Drugs:DEFAULT_GLP1.map(d=>({...d}));
   r.suppSchedule=(r.suppSchedule&&r.suppSchedule.length)?r.suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
@@ -802,11 +871,12 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   $$(".view").forEach(v=>v.classList.remove("active"));
   $("#v-"+b.dataset.v).classList.add("active");
   window.scrollTo(0,0);
+  if(b.dataset.v==="resumo")renderResumo();
   if(b.dataset.v==="apply"){buildSiteGrid();renderBodyMap();}
   if(b.dataset.v==="charts"){fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();}
   if(b.dataset.v==="diario")renderDiaryAll();
-  if(b.dataset.v==="glp1")renderGlp();
-  if(b.dataset.v==="bio"){renderBioChart();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();}
+  if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
+  if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
   if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();}
 });
 
@@ -896,7 +966,10 @@ function renderLog(){
   const el=$("#logList");
   if(!list.length){el.innerHTML='<div class="empty">Nenhuma aplicação ainda.</div>';return;}
   el.innerHTML="";
-  list.slice(0,50).forEach(i=>{
+  const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
+  const isCur=i=>{const d=new Date(i.date);return d.getFullYear()===cy&&d.getMonth()===cm;};
+  const cur=list.filter(isCur),older=list.filter(i=>!isCur(i));
+  const mkRow=i=>{
     const c=(drugByName(i.drug)||{}).color||PAL.muted;
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML=`<div class="log-swatch" style="background:${c}"></div>
@@ -904,8 +977,18 @@ function renderLog(){
       <div class="s">${i.site?i.site:"Oral"} · ${fmtDate(i.date)}${i.note?" · "+i.note:""}</div></div>
       <div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
     row.querySelector(".del").onclick=()=>delInjection(i);
-    el.appendChild(row);
-  });
+    return row;
+  };
+  if(!cur.length)el.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Nenhuma aplicação neste mês.</div>';
+  cur.forEach(i=>el.appendChild(mkRow(i)));
+  if(older.length){
+    const btn=document.createElement("button");btn.className="btn btn-ghost btn-sm";btn.style.cssText="width:100%;margin-top:10px";
+    btn.textContent=`▸ Ver anteriores (${older.length})`;
+    const wrap=document.createElement("div");wrap.style.display="none";
+    older.slice(0,150).forEach(i=>wrap.appendChild(mkRow(i)));
+    btn.onclick=()=>{const open=wrap.style.display==="none";wrap.style.display=open?"block":"none";btn.textContent=open?"▾ Ocultar anteriores":`▸ Ver anteriores (${older.length})`;};
+    el.appendChild(btn);el.appendChild(wrap);
+  }
 }
 function delInjection(i){
   db.injections=db.injections.filter(x=>x.id!==i.id);save();
@@ -1448,7 +1531,7 @@ function buildTimeline(forecastDays){
 }
 
 // ---------- CHARTS ----------
-let chFreq,chConc,chCorr,chBio,chMood;
+let chFreq,chConc,chCorr,chBio,chMood,chComp,chWtTrend,chIron,chSymHorm;
 const baseOpts={responsive:true,maintainAspectRatio:false,
   plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:7}}},
   scales:{x:{ticks:{color:PAL.muted,font:{size:9,family:"IBM Plex Mono"},maxTicksLimit:7},grid:{color:"#33363c"}},
@@ -1564,15 +1647,15 @@ $("#bSave").onclick=()=>{
   const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value);
   if(!w&&!bf)return toast("Informe peso ou %GC");
   db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,method:$("#bMethod").value});
-  save();$("#bWeight").value="";$("#bBf").value="";renderBioChart();toast("Biometria salva ✓");
+  save();$("#bWeight").value="";$("#bBf").value="";renderBioChart();renderBodyComp();renderWeightTrend();toast("Biometria salva ✓");
 };
-const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"]];
+const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["alb","lAlb"]];
 $("#lSave").onclick=()=>{
   const rec={id:uid(),date:($("#lDate").value||todayInput())+"T12:00:00"};let any=false;
   LABF.forEach(([k,id])=>{const v=$("#"+id).value;if(v!==""){rec[k]=parseFloat(v);any=true;}});
   if(!any)return toast("Preencha ao menos um marcador");
   db.labs.push(rec);save();LABF.forEach(([,id])=>$("#"+id).value="");
-  renderLabTable();renderLabStatus();renderLabTrend();toast("Exame salvo ✓");
+  renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();toast("Exame salvo ✓");
 };
 function flag(k,v){
   if(v==null||v==="")return"";
@@ -1623,10 +1706,210 @@ $("#cSave").onclick=()=>{
   $$("#checkScales .scale").forEach(s=>{const on=s.querySelector("button.on");if(on){rec[s.dataset.k]=+on.dataset.v;any=true;}});
   if(!any)return toast("Marque ao menos um item");
   db.checkins.push(rec);save();$$("#checkScales .scale button.on").forEach(b=>b.classList.remove("on"));
-  renderMoodChart();toast("Check-in salvo ✓");
+  renderMoodChart();renderSymptomHormone();toast("Check-in salvo ✓");
+};
+$("#donSave").onclick=()=>{
+  const d=$("#donDate").value||todayInput();
+  db.donations.push({id:uid(),date:d+"T12:00:00"});save();$("#donDate").value="";
+  renderIron();toast("Doação registrada ✓");
 };
 
+// ---------- RESUMO / M11 ----------
+function lastBioWeight(){const b=db.biometrics.filter(x=>x.weight!=null).sort((a,b)=>new Date(b.date)-new Date(a.date));return b[0]||null;}
+function weightSeries(){return db.biometrics.filter(x=>x.weight!=null).map(x=>({t:+new Date(x.date),date:x.date,w:x.weight})).sort((a,b)=>a.t-b.t);}
+function cycleDay(){const inj=db.injections.filter(i=>!(drugByName(i.drug)||{}).anc).map(i=>+new Date(i.date)).sort((a,b)=>a-b);if(!inj.length)return null;return Math.floor((Date.now()-inj[0])/864e5)+1;}
+function lastByDrug(arr,fn){const m={};arr.forEach(i=>{if(fn&&fn(i)===false)return;if(!m[i.drug]||new Date(i.date)>new Date(m[i.drug].date))m[i.drug]=i;});return m;}
+function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{const d=drugByName(k)||{};const cad=d.cadence||2;const dd=Math.ceil((+new Date(e[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=Math.ceil((+new Date(g[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
+function renderResumo(){
+  $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
+  const due=dueList();const dueEl=$("#resumoDue");
+  if(due.length)dueEl.innerHTML='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>x.name+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
+  else dueEl.innerHTML='<div class="note ok" style="margin:0 0 10px">✓ Nenhuma aplicação pendente hoje.</div>';
+  const cd=cycleDay();const lw=lastBioWeight();const series=weightSeries();
+  let trendTxt="—",trendCol=PAL.muted;
+  if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
+    const avgR=recent.reduce((a,b)=>a+b.w,0)/recent.length;
+    const avgO=older.length?older.reduce((a,b)=>a+b.w,0)/older.length:avgR;
+    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+diff.toFixed(1)+"kg";
+    trendCol=diff<-.05?PAL.green:diff>.05?PAL.red:PAL.muted;}
+  const lastExam=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  let examTxt="—";
+  if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);examTxt=dd<=0?"vencido":"em "+dd+"d";}
+  $("#resumoKpi").innerHTML='<div class="box"><div class="v">'+(cd!=null?cd:"—")+'</div><div class="k">dia do ciclo</div></div>'+
+    '<div class="box"><div class="v">'+(lw?lw.weight.toFixed(1):"—")+'</div><div class="k">peso (kg)</div></div>'+
+    '<div class="box"><div class="v" style="color:'+trendCol+';font-size:13px">'+trendTxt+'</div><div class="k">tendência 7d</div></div>'+
+    '<div class="box"><div class="v" style="font-size:14px">'+examTxt+'</div><div class="k">próx. exame</div></div>';
+  renderResumoNext();renderAppAdherence();
+}
+function renderResumoNext(){
+  const el=$("#resumoNext");const rows=[];
+  const add=(map,fn,kind,defCad)=>{Object.keys(map).forEach(k=>{const last=map[k];const d=fn(k)||{};const cad=d.cadence||defCad;const next=new Date(+new Date(last.date)+cad*864e5);const dd=Math.ceil((next-Date.now())/864e5);rows.push({k,kind,next,dd,col:d.color||PAL.muted});});};
+  add(lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc)),drugByName,"EAA",2);
+  add(lastByDrug(db.glp1),glpDrugByName,"GLP-1",7);
+  if(!rows.length){el.innerHTML='<div class="empty">Sem aplicações registradas.</div>';return;}
+  rows.sort((a,b)=>a.dd-b.dd);el.innerHTML="";
+  rows.forEach(r=>{const col=r.dd<=0?PAL.red:r.dd<=1?PAL.amber:PAL.green;const row=document.createElement("div");row.className="log-item";
+    row.innerHTML='<div class="log-swatch" style="background:'+r.col+'"></div><div class="log-main"><div class="t">'+r.k+' <span class="muted" style="font-size:10px">'+r.kind+'</span></div><div class="s">'+r.next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+'</div></div><div class="log-dose" style="color:'+col+';font-size:12px">'+(r.dd<0?-r.dd+"d atras.":r.dd===0?"hoje":"em "+r.dd+"d")+'</div>';
+    el.appendChild(row);});
+}
+function dayHasRecord(k){
+  if(db.daily&&db.daily[k]&&(Object.keys(db.daily[k].supps||{}).length||db.daily[k].water))return true;
+  if(db.injections.some(i=>dkey(i.date)===k))return true;
+  if(db.glp1.some(i=>dkey(i.date)===k))return true;
+  if(db.biometrics.some(b=>dkey(b.date)===k))return true;
+  return false;
+}
+function renderAppAdherence(){
+  let streak=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(dayHasRecord(k))streak++;else if(i===0)continue;else break;}
+  let days7=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(dayHasRecord(dkey(d)))days7++;}
+  const lw=lastBioWeight();const noWeight=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
+  $("#appAdhKpi").innerHTML='<div class="box"><div class="v">'+streak+'</div><div class="k">dias seguidos</div></div>'+
+    '<div class="box"><div class="v">'+days7+'/7</div><div class="k">últimos 7 dias</div></div>'+
+    '<div class="box"><div class="v">'+(noWeight==null?"—":noWeight+"d")+'</div><div class="k">sem pesar</div></div>';
+  const n=[];
+  if(noWeight!=null&&noWeight>=4)n.push("Peso não registrado há "+noWeight+" dias — num cut a tendência 7d perde precisão sem dados regulares.");
+  if(days7<=3)n.push("Poucos registros nesta semana. Registros diários mantêm gráficos e adesão fiéis.");
+  $("#appAdhNudge").innerHTML=n.length?n.map(x=>'<div class="note warn" style="margin:6px 0 0">'+x+'</div>').join(""):'<div class="note ok" style="margin:6px 0 0">✓ Registro em dia.</div>';
+}
+
+// ---------- M5: composição corporal ----------
+function renderBodyComp(){
+  const s=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).map(x=>({t:+new Date(x.date),date:x.date,weight:x.weight,bf:x.bf,lean:x.weight*(1-x.bf/100),fat:x.weight*(x.bf/100)})).sort((a,b)=>a.t-b.t);
+  const hM=(db.settings.heightCm||176)/100;const kpi=$("#compKpi"),note=$("#compNote");
+  if(chComp)chComp.destroy();
+  if(!s.length){kpi.innerHTML="";note.innerHTML="";clearCanvas("chComp","registre peso + %GC");return;}
+  const last=s[s.length-1],first=s[0];const ffmi=last.lean/(hM*hM);
+  kpi.innerHTML='<div class="box"><div class="v">'+last.lean.toFixed(1)+'</div><div class="k">massa magra (kg)</div></div>'+
+    '<div class="box"><div class="v">'+last.fat.toFixed(1)+'</div><div class="k">gordura (kg)</div></div>'+
+    '<div class="box"><div class="v">'+ffmi.toFixed(1)+'</div><div class="k">FFMI</div></div>';
+  const labels=s.map(x=>fmtD(x.date));
+  chComp=new Chart($("#chComp"),{data:{labels,datasets:[
+    {type:"line",label:"Massa magra",data:s.map(x=>+x.lean.toFixed(2)),borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true},
+    {type:"line",label:"Gordura",data:s.map(x=>+x.fat.toFixed(2)),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true}
+  ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}}});
+  if(s.length>=2){const dLean=last.lean-first.lean,dFat=last.fat-first.fat,dW=last.weight-first.weight;let msg,cls="";
+    if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+dLean.toFixed(1)+"kg vs "+dFat.toFixed(1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
+    else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+dFat.toFixed(1)+"kg, magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg no período.";}
+    else msg="Variação no período: magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg · gordura "+(dFat>=0?"+":"")+dFat.toFixed(1)+"kg.";
+    note.innerHTML='<div class="note '+cls+'" style="margin-top:10px">'+msg+'</div>';
+  } else note.innerHTML="";
+}
+
+// ---------- M6: tendência de peso ----------
+function renderWeightTrend(){
+  const s=weightSeries();const kpi=$("#wtTrendKpi"),note=$("#wtTrendNote");
+  if(chWtTrend)chWtTrend.destroy();
+  if(s.length<2){kpi.innerHTML="";note.innerHTML="";clearCanvas("chWtTrend","registre peso na aba Saúde");return;}
+  const ma=s.map(p=>{const win=s.filter(q=>q.t<=p.t&&q.t>=p.t-7*864e5);return {t:p.t,date:p.date,raw:p.w,ma:win.reduce((a,b)=>a+b.w,0)/win.length};});
+  const recent=ma.filter(p=>p.t>=Date.now()-28*864e5);const reg=recent.length>=2?recent:ma;
+  let rate=null;
+  if(reg.length>=2){const n=reg.length,x=reg.map(p=>(p.t-reg[0].t)/864e5),y=reg.map(p=>p.ma);const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let num=0,den=0;for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx);}rate=den?num/den*7:0;}
+  const curMA=ma[ma.length-1].ma;const goal=db.settings.goalWeight;
+  let etaTxt="—";
+  if(goal&&rate&&rate<-.02&&curMA>goal){const eta=new Date(Date.now()+(curMA-goal)/-rate*7*864e5);etaTxt=eta.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
+  else if(goal&&curMA<=goal)etaTxt="atingida ✓";
+  const plateau=rate!=null&&Math.abs(rate)<0.1&&(ma[ma.length-1].t-ma[0].t)>=21*864e5;
+  kpi.innerHTML='<div class="box"><div class="v">'+curMA.toFixed(1)+'</div><div class="k">média 7d (kg)</div></div>'+
+    '<div class="box"><div class="v" style="color:'+(rate<-.02?PAL.green:rate>.02?PAL.red:PAL.muted)+';font-size:15px">'+(rate==null?"—":(rate>0?"+":"")+rate.toFixed(2))+'</div><div class="k">kg/semana</div></div>'+
+    '<div class="box"><div class="v" style="font-size:13px">'+(goal?etaTxt:"defina alvo")+'</div><div class="k">ETA alvo</div></div>';
+  const labels=ma.map(p=>fmtD(p.date));
+  const ds=[
+    {type:"line",label:"Peso",data:ma.map(p=>+p.raw.toFixed(2)),borderColor:PAL.muted,backgroundColor:PAL.muted,borderWidth:1,tension:.2,pointRadius:2,spanGaps:true},
+    {type:"line",label:"Média 7d",data:ma.map(p=>+p.ma.toFixed(2)),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2.4,tension:.3,pointRadius:0,spanGaps:true}
+  ];
+  if(goal)ds.push({type:"line",label:"Alvo",data:ma.map(()=>goal),borderColor:PAL.green,borderWidth:1,borderDash:[5,4],pointRadius:0});
+  chWtTrend=new Chart($("#chWtTrend"),{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}}});
+  note.innerHTML=plateau?'<div class="note warn" style="margin-top:10px">Possível platô: variação &lt;0,1 kg/sem nas últimas semanas. Se a meta não foi atingida, é tema de ajuste (dose/déficit) com o médico.</div>':"";
+}
+
+// ---------- M7: marcadores derivados ----------
+function calcFreeT(ttNgDl,shbgNmol,albGdl){
+  if(ttNgDl==null||shbgNmol==null||shbgNmol<=0)return null;
+  const Tt=ttNgDl/28.84*1e-9; // ng/dL -> mol/L (MM 288.4: ng/dL/28.84 = nmol/L)
+  const S=shbgNmol*1e-9, alb=(albGdl||4.3)*10/66500; // g/dL->g/L->mol/L
+  const Kt=1.0e9, Ka=3.6e4;
+  const A=Kt*(1+Ka*alb);
+  const B=Kt*(S-Tt)+(1+Ka*alb);
+  const C=-Tt;
+  const FT=(-B+Math.sqrt(B*B-4*A*C))/(2*A);
+  if(!isFinite(FT)||FT<=0)return null;
+  return FT*288.4*1e9; // mol/L -> ng/L = pg/mL
+}
+function renderDerived(){
+  const el=$("#derivedBox");
+  const last=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(!last){el.innerHTML='<div class="empty">Nenhum exame registrado.</div>';return;}
+  const alb=last.alb!=null?last.alb:(db.settings.albumin||4.3);const rows=[];
+  const ft=calcFreeT(last.tt,last.shbg,alb);
+  if(ft!=null)rows.push(["T livre (calc.)",ft.toFixed(1)+" pg/mL",last.alb!=null?"alb medida "+alb:"alb padrão "+alb]);
+  if(last.tt!=null&&last.e2!=null&&last.e2>0)rows.push(["Razão T:E2",(last.tt/last.e2).toFixed(0),"ng/dL ÷ pg/mL"]);
+  if(last.tgo!=null&&last.tgp!=null&&last.tgp>0)rows.push(["Razão TGO:TGP",(last.tgo/last.tgp).toFixed(2),">1,5 = atenção hepática"]);
+  if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",(last.ldl+(last.vldl||0)).toFixed(0)+" mg/dL","LDL + VLDL"]);
+  if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",(last.tg/last.hdl).toFixed(1),"<2 ideal · resistência insulínica"]);
+  if(last.cr!=null&&last.cr>0){const cr=last.cr,k=0.9,a=-0.302;const egfr=142*Math.pow(Math.min(cr/k,1),a)*Math.pow(Math.max(cr/k,1),-1.2);rows.push(["eGFR (CKD-EPI, s/ idade)",Math.round(egfr)+" mL/min","creatinina sofre viés por massa muscular"]);}
+  if(!rows.length){el.innerHTML='<div class="empty">Faltam marcadores-base no último exame.</div>';return;}
+  el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:10.5px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
+}
+
+// ---------- M9: ferro & hematócrito ----------
+function renderIron(){
+  const el=$("#ironStatus");
+  const lh=db.labs.filter(l=>l.hct!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const lf=db.labs.filter(l=>l.fer!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const lastHct=lh[lh.length-1],lastFer=lf[lf.length-1];const out=[];
+  const ulnHct=(db.settings.refs.hct||[])[1]||52;
+  if(lastHct&&lastHct.hct>=ulnHct)out.push(["warn","Hct "+lastHct.hct+"% no/acima do teto ("+ulnHct+"%) — eritrocitose; tema de flebotomia/doação com o médico."]);
+  if(lastFer){if(lastFer.fer<30)out.push(["warn","Ferritina "+lastFer.fer+" ng/mL — depleção. Repor ferro; doação contraindicada até recuperar."]);
+    else if(lastFer.fer<100)out.push(["warn","Ferritina "+lastFer.fer+" ng/mL — abaixo de 100; recuperar antes de doar."]);
+    else out.push(["ok","Ferritina "+lastFer.fer+" ng/mL — ≥100, reserva adequada para doar."]);}
+  if(lastHct&&lastFer){if(lastHct.hct>=ulnHct&&lastFer.fer>=100)out.push(["ok","Combinado: Hct alto + ferro reposto → janela favorável para doação (confirmar com o médico)."]);
+    else if(lastHct.hct>=ulnHct&&lastFer.fer<100)out.push(["warn","Conflito: Hct alto pede flebotomia, mas ferro baixo. Priorizar reposição de ferro; decisão médica."]);}
+  el.innerHTML=out.length?out.map(x=>'<div class="note '+x[0]+'" style="margin:6px 0 0">'+x[1]+'</div>').join(""):'<div class="muted" style="font-size:12px">Registre Hct e ferritina nos exames.</div>';
+  if(chIron)chIron.destroy();
+  const all=[...new Set(db.labs.filter(l=>l.hct!=null||l.fer!=null).map(l=>l.date))].sort((a,b)=>new Date(a)-new Date(b));
+  if(!all.length){clearCanvas("chIron","sem Hct/ferritina");renderDonList();return;}
+  const labels=all.map(d=>fmtD(d));
+  const hctD=all.map(d=>{const l=db.labs.find(x=>x.date===d&&x.hct!=null);return l?l.hct:null;});
+  const ferD=all.map(d=>{const l=db.labs.find(x=>x.date===d&&x.fer!=null);return l?l.fer:null;});
+  chIron=new Chart($("#chIron"),{data:{labels,datasets:[
+    {type:"line",label:"Hct %",data:hctD,borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:2,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y"},
+    {type:"line",label:"Ferritina",data:ferD,borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"}
+  ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
+    y:{...baseOpts.scales.y,position:"left",title:{display:true,text:"Hct %",color:PAL.muted,font:{size:9}}},
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"Ferr",color:PAL.muted,font:{size:9}}}}}});
+  renderDonList();
+}
+function renderDonList(){
+  const el=$("#donList");if(!el)return;
+  const ds=db.donations.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!ds.length){el.innerHTML='<div class="muted" style="font-size:11px">Nenhuma doação registrada.</div>';return;}
+  el.innerHTML=ds.slice(0,6).map(d=>'<div class="log-item"><div class="log-main"><div class="t" style="font-size:12.5px">Doação de sangue</div><div class="s">'+fmtD(d.date)+'</div></div><button class="del" data-id="'+d.id+'">×</button></div>').join("");
+  el.querySelectorAll(".del").forEach(b=>b.onclick=()=>{const it=db.donations.find(x=>x.id===b.dataset.id);db.donations=db.donations.filter(x=>x.id!==b.dataset.id);save();renderIron();toast("Doação removida",()=>{db.donations.push(it);save();renderIron();});});
+}
+
+// ---------- M10: sintomas × hormônios ----------
+function renderSymptomHormone(){
+  if(chSymHorm)chSymHorm.destroy();
+  const c=db.checkins.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const labs=db.labs.filter(l=>l.e2!=null||l.prol!=null).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!c.length&&!labs.length)return clearCanvas("chSymHorm","sem check-ins/exames");
+  const dates=[...new Set([...c.map(x=>x.date),...labs.map(x=>x.date)])].sort((a,b)=>new Date(a)-new Date(b));
+  const labels=dates.map(d=>fmtD(d));
+  const pick=(arr,d,k)=>{const f=arr.find(x=>x.date===d);return f&&f[k]!=null?f[k]:null;};
+  const ds=[
+    {type:"line",label:"Libido",data:dates.map(d=>pick(c,d,"libido")),borderColor:PAL.pink,backgroundColor:PAL.pink,borderWidth:1.8,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y"},
+    {type:"line",label:"Energia",data:dates.map(d=>pick(c,d,"energy")),borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:1.8,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y"},
+    {type:"line",label:"Humor",data:dates.map(d=>pick(c,d,"mood")),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:1.8,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y"},
+    {type:"line",label:"E2",data:dates.map(d=>pick(labs,d,"e2")),borderColor:PAL.violet,backgroundColor:PAL.violet,borderWidth:2.2,borderDash:[5,3],tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"},
+    {type:"line",label:"PRL",data:dates.map(d=>pick(labs,d,"prol")),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2.2,borderDash:[2,2],tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"}
+  ];
+  chSymHorm=new Chart($("#chSymHorm"),{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,
+    y:{...baseOpts.scales.y,min:0,max:5,position:"left",title:{display:true,text:"1–5",color:PAL.muted,font:{size:9}}},
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"pg·ng/mL",color:PAL.muted,font:{size:9}}}}}});
+}
+
 // ---------- DATA / drugs ----------
+
 function renderDrugEditor(){
   const el=$("#drugEditor");el.innerHTML="";
   db.drugs.forEach((d,idx)=>{
@@ -1685,6 +1968,9 @@ $("#saveSet").onclick=()=>{
   db.settings.cycleMode=$("#setCycle").checked;
   db.settings.waterTarget=+$("#setWater").value||4000;
   db.settings.examDays=+$("#setExam").value||120;
+  db.settings.heightCm=+$("#setHeight").value||176;
+  db.settings.goalWeight=$("#setGoal").value!==""?+$("#setGoal").value:null;
+  db.settings.albumin=+$("#setAlb").value||4.3;
   save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();toast("Configurações salvas ✓");
 };
 function snapSummary(slot){
@@ -1737,9 +2023,10 @@ function initAll(){
   $("#inDate").value=nowLocalInput();$("#gDate").value=nowLocalInput();$("#gSymDate").value=todayInput();
   $("#bDate").value=todayInput();$("#lDate").value=todayInput();$("#cDate").value=todayInput();
   $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;
+  $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();
+  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames`:"monitor de aplicações · local";
@@ -1762,9 +2049,21 @@ setTimeout(()=>{
 (function(){const h=document.querySelector("header");let last=0;
   window.addEventListener("scroll",()=>{const y=window.scrollY;if(y>last&&y>56)h.classList.add("hide");else h.classList.remove("hide");last=y;},{passive:true});})();
 
-// PWA: manifest + service worker
-const manifest={name:"Control",short_name:"Control",display:"standalone",background_color:"#1a1c1f",theme_color:"#1a1c1f",start_url:"./",icons:[]};
-const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"}));document.head.appendChild(ml);
+// PWA: manifest + ícone gerado em runtime (sem arquivo externo)
+(function(){
+  function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+  function makeIcon(size){
+    const cv=document.createElement("canvas");cv.width=cv.height=size;const x=cv.getContext("2d");
+    x.fillStyle="#1a1c1f";roundRect(x,0,0,size,size,size*0.22);x.fill();
+    x.strokeStyle="#F59E0B";x.lineWidth=size*0.075;x.beginPath();x.arc(size/2,size/2,size*0.3,Math.PI*0.25,Math.PI*1.9);x.stroke();
+    x.fillStyle="#F59E0B";x.font="700 "+(size*0.46)+"px 'IBM Plex Sans',sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("C",size/2,size*0.56);
+    return cv.toDataURL("image/png");
+  }
+  let i192,i512;try{i192=makeIcon(192);i512=makeIcon(512);}catch(e){}
+  const manifest={name:"Control — Monitor",short_name:"Control",display:"standalone",background_color:"#1a1c1f",theme_color:"#1a1c1f",start_url:"./",icons:i192?[{src:i192,sizes:"192x192",type:"image/png"},{src:i512,sizes:"512x512",type:"image/png"}]:[]};
+  const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"}));document.head.appendChild(ml);
+  if(i192){const at=document.createElement("link");at.rel="apple-touch-icon";at.href=i192;document.head.appendChild(at);}
+})();
 </script>
 </body>
 </html>

@@ -87,6 +87,14 @@ button{font-family:inherit;cursor:pointer;border:none}
 .kpi .box .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px;color:var(--txt);line-height:1.1;overflow-wrap:anywhere}
 .kpi .box .k{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
 .note.ok{border-color:rgba(52,211,153,.4)}
+.ftile{position:relative;border-radius:10px;background:#15171a;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ftile img{width:100%;height:100%;object-fit:cover;display:block}
+.ftile .ph{opacity:.7}
+.fcap{text-align:center;font-size:11px;color:var(--muted);margin-top:5px}
+.fdchip{position:absolute;bottom:5px;left:5px;background:rgba(15,16,18,.82);color:#e8e6e3;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 6px;border-radius:5px}
+.fdel{position:absolute;top:4px;right:4px;background:rgba(15,16,18,.78);color:#f87171;border:none;width:22px;height:22px;border-radius:6px;font-size:14px;line-height:1;cursor:pointer}
+.angbtn{flex:1;background:var(--panel-2);border:1.5px solid var(--line);color:var(--muted);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+.angbtn.on{background:var(--amber);border-color:var(--amber);color:#1a1200}
 .legend{display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--muted);margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -559,6 +567,32 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 </section>
 
+<!-- ============ FOTOS ============ -->
+<section class="view" id="v-fotos">
+  <div class="card">
+    <h2>Capturar <span class="hint" id="fotoDateLbl"></span></h2>
+    <div class="field"><label>Data da sessão</label><input id="fotoDate" type="date"></div>
+    <div id="fotoSlots" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px"></div>
+    <input id="fotoFile" type="file" accept="image/*" capture="environment" style="display:none">
+    <div class="note">Toque num ângulo para fotografar ou escolher da galeria. A imagem é comprimida (~1080px) e guardada <b>localmente neste aparelho</b> (IndexedDB) — não entra no backup JSON nem sincroniza entre dispositivos.</div>
+  </div>
+
+  <div class="card">
+    <h2>Comparador <span class="hint">antes × depois</span></h2>
+    <div id="cmpAngles" style="display:flex;gap:6px;margin-bottom:10px"></div>
+    <div class="grid2">
+      <div class="field"><label>Antes</label><select id="cmpA"></select></div>
+      <div class="field"><label>Depois</label><select id="cmpB"></select></div>
+    </div>
+    <div id="cmpView"></div>
+  </div>
+
+  <div class="card">
+    <h2>Linha do tempo <span class="hint" id="fotoCount"></span></h2>
+    <div id="fotoTimeline"></div>
+  </div>
+</section>
+
 <!-- ============ DADOS ============ -->
 <section class="view" id="v-data">
   <div class="card">
@@ -647,6 +681,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <button data-v="glp1"><svg viewBox="0 0 24 24"><path d="M12 2s5 5.5 5 10a5 5 0 01-10 0c0-4.5 5-10 5-10z"/></svg>GLP-1</button>
   <button data-v="charts"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>Gráficos</button>
   <button data-v="bio"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-12 2 6h6"/></svg>Saúde</button>
+  <button data-v="fotos"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg>Fotos</button>
   <button data-v="data"><svg viewBox="0 0 24 24"><path d="M4 7V5a2 2 0 012-2h12a2 2 0 012 2v2M4 7h16M4 7v12a2 2 0 002 2h12a2 2 0 002-2V7M9 11h6"/></svg>Dados</button>
 </nav>
 
@@ -900,6 +935,7 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.v==="diario")renderDiaryAll();
   if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
   if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
+  if(b.dataset.v==="fotos")renderFotos();
   if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();}
 });
 
@@ -2033,7 +2069,101 @@ function renderSymptomHormone(){
     y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"pg·ng/mL",color:PAL.muted,font:{size:9}}}}}});
 }
 
+// ============================================================
+// MÓDULO DE FOTOS (fase 1 — local via IndexedDB, sem sync)
+// ============================================================
+const DEFAULT_PHOTO="data:image/png;base64,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";
+const PH_DB="control_photos",PH_STORE="photos",ANGLES=[["frente","Frente"],["costas","Costas"],["lateral","Lateral"]];
+let photoCache=[],captureAngle="frente",captureDate=null,compareAngle="frente";
+function phOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(PH_DB,1);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(PH_STORE))d.createObjectStore(PH_STORE,{keyPath:"id"});};r.onsuccess=e=>res(e.target.result);r.onerror=()=>rej(r.error);});}
+function phPut(rec){return phOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(PH_STORE,"readwrite");tx.objectStore(PH_STORE).put(rec);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);}));}
+function phAll(){return phOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(PH_STORE,"readonly");const rq=tx.objectStore(PH_STORE).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error);}));}
+function phDel(id){return phOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(PH_STORE,"readwrite");tx.objectStore(PH_STORE).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);}));}
+function loadPhotos(){return phAll().then(a=>{photoCache=a||[];}).catch(()=>{photoCache=[];});}
+function photoFor(date,angle){return photoCache.find(p=>p.date===date&&p.angle===angle)||null;}
+function photoDates(angle){return [...new Set(photoCache.filter(p=>!angle||p.angle===angle).map(p=>p.date))].sort((a,b)=>new Date(b)-new Date(a));}
+function compressImage(file,maxDim,q){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(Math.max(w,h)>maxDim){const s=maxDim/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);res({dataUrl:cv.toDataURL("image/jpeg",q),w,h});};img.onerror=()=>rej();img.src=fr.result;};fr.onerror=()=>rej();fr.readAsDataURL(file);});}
+function bioNear(dateStr){const t=+new Date(dateStr+"T12:00:00");let best=null,bd=1e15;db.biometrics.forEach(b=>{const d=Math.abs(+new Date(b.date)-t);if(d<bd){bd=d;best=b;}});return (best&&bd<=14*864e5)?best:null;}
+function renderFotos(){renderFotoCapture();renderFotoCompare();renderFotoTimeline();}
+function renderFotoCapture(){
+  const wrap=$("#fotoSlots");if(!wrap)return;
+  const date=$("#fotoDate").value||todayInput();
+  if($("#fotoDateLbl"))$("#fotoDateLbl").textContent=fmtD(date);
+  wrap.innerHTML="";
+  ANGLES.forEach(([ang,lbl])=>{
+    const p=photoFor(date,ang);const col=document.createElement("div");
+    const tile=document.createElement("div");tile.className="ftile";tile.style.height="120px";
+    if(p)tile.innerHTML='<img src="'+p.dataUrl+'">';
+    else tile.innerHTML='<img class="ph" src="'+DEFAULT_PHOTO+'" style="width:auto;height:80%;object-fit:contain"><span style="position:absolute;bottom:6px;right:6px;color:var(--amber);font-size:20px;line-height:1">+</span>';
+    tile.onclick=()=>{captureAngle=ang;captureDate=date;$("#fotoFile").click();};
+    col.appendChild(tile);const cap=document.createElement("div");cap.className="fcap";cap.textContent=lbl;col.appendChild(cap);
+    wrap.appendChild(col);
+  });
+}
+function renderFotoCompare(){
+  const angBox=$("#cmpAngles");if(!angBox)return;
+  angBox.innerHTML="";
+  ANGLES.forEach(([ang,lbl])=>{const b=document.createElement("button");b.className="angbtn"+(ang===compareAngle?" on":"");b.textContent=lbl;b.onclick=()=>{compareAngle=ang;renderFotoCompare();};angBox.appendChild(b);});
+  const dates=photoDates(compareAngle);const selA=$("#cmpA"),selB=$("#cmpB");
+  const pA=selA.value,pB=selB.value;const opts=dates.map(d=>'<option value="'+d+'">'+fmtD(d)+'</option>').join("");
+  selA.innerHTML=opts;selB.innerHTML=opts;
+  if(dates.length){selA.value=dates.includes(pA)?pA:dates[dates.length-1];selB.value=dates.includes(pB)?pB:dates[0];}
+  selA.onchange=drawCompare;selB.onchange=drawCompare;drawCompare();
+}
+function drawCompare(){
+  const el=$("#cmpView");if(!el)return;
+  const a=$("#cmpA").value,b=$("#cmpB").value;const pa=photoFor(a,compareAngle),pb=photoFor(b,compareAngle);
+  if(!pa||!pb){el.innerHTML='<div class="empty">Registre ao menos duas datas neste ângulo para comparar.</div>';return;}
+  const ba=bioNear(a),bb=bioNear(b);
+  const cell=(p,d,bio,tag,hl)=>'<div><div class="ftile" style="height:210px;cursor:default"><img src="'+p.dataUrl+'"><span class="fdchip"'+(hl?' style="background:rgba(245,158,11,.9);color:#1a1200"':'')+'>'+fmtD(d)+' · '+tag+'</span></div><div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;margin-top:6px"><span>'+(bio&&bio.weight!=null?bio.weight.toFixed(1)+" kg":"—")+'</span><span style="color:var(--muted)">'+(bio&&bio.bf!=null?bio.bf.toFixed(1)+"%":"—")+'</span></div></div>';
+  let html='<div class="grid2">'+cell(pa,a,ba,"antes",false)+cell(pb,b,bb,"depois",true)+'</div>';
+  if(ba&&bb){const pills=[];
+    if(ba.weight!=null&&bb.weight!=null){const dw=bb.weight-ba.weight;pills.push([(dw>0?"+":"")+dw.toFixed(1)+" kg",dw<0]);}
+    if(ba.bf!=null&&bb.bf!=null){const dbf=bb.bf-ba.bf;pills.push([(dbf>0?"+":"")+dbf.toFixed(1)+"% GC",dbf<0]);}
+    if(ba.smm!=null&&bb.smm!=null){const ds=bb.smm-ba.smm;pills.push(["MME "+(ds>0?"+":"")+ds.toFixed(1),ds>0]);}
+    if(pills.length)html+='<div style="display:flex;gap:6px;margin-top:10px">'+pills.map(p=>'<span style="flex:1;text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;padding:6px 2px;border-radius:6px;background:'+(p[1]?"rgba(52,211,153,.13)":"rgba(248,113,113,.13)")+';color:'+(p[1]?"var(--green)":"var(--red)")+'">'+p[0]+'</span>').join("")+'</div>';
+  } else html+='<div class="note" style="margin-top:8px">Sem biometria a ±14d de uma das datas — registre peso/%GC na aba Saúde para ver os deltas.</div>';
+  el.innerHTML=html;
+}
+function renderFotoTimeline(){
+  const el=$("#fotoTimeline");if(!el)return;
+  if($("#fotoCount"))$("#fotoCount").textContent=photoCache.length+" fotos";
+  const dates=photoDates();
+  if(!dates.length){el.innerHTML='<div class="empty">Nenhuma foto ainda.</div>';return;}
+  el.innerHTML="";
+  dates.forEach(d=>{
+    const row=document.createElement("div");row.style.cssText="padding:10px 0;border-bottom:1px solid var(--line)";
+    row.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--muted);margin-bottom:6px">'+fmtD(d)+'</div>';
+    const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:8px";
+    ANGLES.forEach(([ang,lbl])=>{
+      const p=photoFor(d,ang);const cell=document.createElement("div");
+      const tile=document.createElement("div");tile.className="ftile";tile.style.height="88px";tile.style.cursor="default";
+      if(p){tile.innerHTML='<img src="'+p.dataUrl+'"><button class="fdel">×</button>';
+        tile.querySelector(".fdel").onclick=async ev=>{ev.stopPropagation();if(confirm("Excluir foto "+lbl+" de "+fmtD(d)+"?")){await phDel(p.id);await loadPhotos();renderFotos();toast("Foto excluída");}};}
+      else tile.innerHTML='<img class="ph" src="'+DEFAULT_PHOTO+'" style="width:auto;height:64%;object-fit:contain;opacity:.35">';
+      cell.appendChild(tile);const cap=document.createElement("div");cap.className="fcap";cap.style.fontSize="10px";cap.textContent=lbl;cell.appendChild(cap);grid.appendChild(cell);
+    });
+    row.appendChild(grid);el.appendChild(row);
+  });
+}
+function initFotos(){
+  if($("#fotoDate")&&!$("#fotoDate").value)$("#fotoDate").value=todayInput();
+  if($("#fotoDate"))$("#fotoDate").onchange=renderFotoCapture;
+  const fi=$("#fotoFile");
+  if(fi)fi.onchange=async e=>{
+    const f=e.target.files&&e.target.files[0];if(!f){return;}
+    toast("Processando imagem…");
+    try{const r=await compressImage(f,1080,0.72);
+      const date=captureDate||$("#fotoDate").value||todayInput();
+      await phPut({id:date+"_"+captureAngle,date,angle:captureAngle,dataUrl:r.dataUrl,w:r.w,h:r.h,created:Date.now()});
+      await loadPhotos();renderFotos();toast("Foto salva ✓");
+    }catch(err){toast("Falha ao processar imagem");}
+    e.target.value="";
+  };
+  loadPhotos().then(()=>{if($("#fotoSlots"))renderFotos();});
+}
 // ---------- DATA / drugs ----------
+
 
 function renderDrugEditor(){
   const el=$("#drugEditor");el.innerHTML="";
@@ -2157,7 +2287,7 @@ function initAll(){
   $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();
+  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames`:"monitor de aplicações · local";

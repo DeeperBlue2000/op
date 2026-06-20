@@ -191,6 +191,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .heat .cell{width:13px;height:13px;border-radius:3px;background:#2a2d33;cursor:pointer;transition:.1s}
 .heat .cell:hover{outline:1.5px solid var(--amber)}
 .heat .cell.future{visibility:hidden}
+.heat .cell.today{box-shadow:inset 0 0 0 2px var(--amber)}
+.card.collapsible>h2.chead{cursor:pointer;display:flex;align-items:center;gap:8px}
+.chead .chev{margin-left:auto;color:var(--muted);font-size:11px;transition:transform .15s;flex:0 0 auto}
+.card.collapsible.collap>h2.chead .chev{transform:rotate(-90deg)}
+.card.collapsible.collap>:not(h2){display:none}
 .delta-up{color:var(--red)}.delta-dn{color:var(--green)}.delta-flat{color:var(--muted)}
 .chip-btn{background:var(--panel-2);border:1.5px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:20px;font-size:12.5px}
 .chip-btn.on{border-color:var(--amber);background:rgba(245,158,11,.14);color:var(--amber-soft)}
@@ -301,8 +306,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="field"><label>Data do registro</label><input id="diaDate" type="date"></div>
   </div>
 
-  <div class="card">
-    <h2>Sono <span class="hint">noite anterior</span></h2>
+  <div class="card collapsible" id="cardSono">
+    <h2 class="chead">Sono <span class="hint" id="slpHint">noite anterior</span><span class="chev">▾</span></h2>
     <div class="grid2">
       <div class="field"><label>Horas dormidas</label><input id="slpH" type="number" inputmode="decimal" step="0.25" class="num" placeholder="6.5"></div>
       <div class="field"><label>Deitar → acordar (opcional)</label>
@@ -334,15 +339,15 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
   </div>
 
-  <div class="card">
-    <h2>Treino <span class="hint" id="trainPlanLbl"></span></h2>
+  <div class="card collapsible" id="cardTreino">
+    <h2 class="chead">Treino <span class="hint" id="trainPlanLbl"></span><span class="chev">▾</span></h2>
     <div id="trainRing" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 12px"></div>
     <div id="trainToday"></div>
     <div id="trainActions" style="margin-top:12px"></div>
   </div>
 
-  <div class="card">
-    <h2>Dieta <span class="hint" id="dietDayLbl"></span></h2>
+  <div class="card collapsible collap" id="cardDieta">
+    <h2 class="chead">Dieta <span class="hint" id="dietDayLbl"></span><span class="chev">▾</span></h2>
     <div id="dietStatus" style="display:flex;gap:6px"></div>
     <div id="dietToggles" style="margin-top:10px"></div>
     <div style="margin-top:12px">
@@ -352,8 +357,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
   </div>
 
-  <div class="card">
-    <h2>Suplementos do dia <span class="hint" id="suppPct"></span></h2>
+  <div class="card collapsible collap" id="cardSupp">
+    <h2 class="chead">Suplementos do dia <span class="hint" id="suppPct"></span><span class="chev">▾</span></h2>
     <div id="suppList"></div>
     <details style="margin-top:6px"><summary>Editar cronograma</summary>
       <div id="suppEditor" style="margin-top:9px"></div>
@@ -1223,6 +1228,15 @@ function renderDiaryAll(){
   $("#diaChip").innerHTML=`<span class="chip">${fmtD(diaDate+'T12:00:00')}</span>`;
   renderWater();renderSleep();renderSupps();renderSuppEditor();renderAdherence();renderDiaryChart();
   renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();
+  applyDiaryCollapse();
+}
+function setCollap(sel,on){const c=$(sel);if(c)c.classList.toggle("collap",!!on);}
+function applyDiaryCollapse(){
+  const dd=db.daily[diaDate]||{};
+  setCollap("#cardSono",dd.sleepH!=null||dd.sleepQ!=null); // colapsa se preenchido
+  setCollap("#cardTreino",!!trainEntry(diaDate));          // colapsa se registrado
+  setCollap("#cardDieta",true);                            // sempre colapsado
+  setCollap("#cardSupp",true);                             // sempre colapsado
 }
 $("#diaDate").onchange=e=>{diaDate=e.target.value||todayInput();renderDiaryAll();};
 
@@ -1247,6 +1261,7 @@ function buildSleepScale(){
 }
 function renderSleep(){
   const d=curDay(false);
+  if($("#slpHint"))$("#slpHint").textContent=(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"noite anterior");
   $("#slpH").value=d.sleepH!=null?d.sleepH:"";
   $("#slpBed").value=d.sleepBed||"";$("#slpWake").value=d.sleepWake||"";
   $$("#slpQ button").forEach(b=>b.classList.toggle("on",+b.dataset.v===d.sleepQ));
@@ -1261,7 +1276,7 @@ $("#slpSave").onclick=()=>{
   const h=parseFloat($("#slpH").value);const on=$("#slpQ button.on");const q=on?+on.dataset.v:null;
   if(isNaN(h)&&q==null)return toast("Informe horas ou qualidade");
   const d=curDay(true);d.sleepH=isNaN(h)?null:h;d.sleepBed=$("#slpBed").value||null;d.sleepWake=$("#slpWake").value||null;d.sleepQ=q;
-  save();renderSleep();renderDiaryChart();toast("Sono salvo ✓");
+  save();renderSleep();renderDiaryChart();setCollap("#cardSono",true);toast("Sono salvo ✓");
 };
 
 // suplementos
@@ -1346,6 +1361,7 @@ function renderAdherence(){
     const k=dkey(d);const cell=document.createElement("div");cell.className="cell";
     if(d>z){cell.classList.add("future");}
     else{
+      if(k===dkey(z))cell.classList.add("today");
       const has=hasRecord(k);let bg="#2a2d33";
       if(has&&tot){const p=takenCount(k)/tot;bg=p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";}
       cell.style.background=bg;cell.title=fmtD(k+"T12:00:00")+" — "+(has?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");
@@ -2266,8 +2282,8 @@ function dietScore(k){const e=dietEntry(k);if(!e||!e.status)return null;return (
 function windowScore(fn,days){let s=0,c=0;for(let i=0;i<days;i++){const d=new Date();d.setDate(d.getDate()-i);const v=fn(dkey(d));if(v!=null){s+=v;c++;}}return c?{pct:Math.round(s/c*100),c}:{pct:null,c:0};}
 function streakOf(has){let s=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(has(k))s++;else if(i===0)continue;else break;}return s;}
 
-function logTrain(letter,dateK){const k=dateK||diaDate||todayInput();db.training.log[k]={type:"train",letter,ts:Date.now()};save();refreshTD();toast("Treino "+letter+" registrado ✓");}
-function logRest(dateK){const k=dateK||diaDate||todayInput();db.training.log[k]={type:"rest",letter:null,ts:Date.now()};save();refreshTD();toast("Descanso registrado ✓");}
+function logTrain(letter,dateK){const k=dateK||diaDate||todayInput();db.training.log[k]={type:"train",letter,ts:Date.now()};save();refreshTD();if(k===diaDate)setCollap("#cardTreino",true);toast("Treino "+letter+" registrado ✓");}
+function logRest(dateK){const k=dateK||diaDate||todayInput();db.training.log[k]={type:"rest",letter:null,ts:Date.now()};save();refreshTD();if(k===diaDate)setCollap("#cardTreino",true);toast("Descanso registrado ✓");}
 function setDietStatus(v,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.status=v;db.diet.log[k]=e;save();refreshTD();toast("Dieta: "+v);}
 function toggleProtein(dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.protein=!e.protein;db.diet.log[k]=e;save();refreshTD();}
 function toggleMeal(R,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.meals=e.meals||{};e.meals[R]=!e.meals[R];db.diet.log[k]=e;save();refreshTD();}
@@ -2277,7 +2293,7 @@ function renderTrainingCard(){
   if(!$("#trainRing"))return;
   const date=diaDate||todayInput();const p=trainPattern();const len=p.length;
   const idx=mod(diffDays(date,trainAnchor()),len);const planned=p[idx];
-  if($("#trainPlanLbl"))$("#trainPlanLbl").textContent=fmtD(date+"T12:00:00");
+  if($("#trainPlanLbl")){const eHdr=trainEntry(date);$("#trainPlanLbl").textContent=eHdr?("✓ "+(eHdr.type==="rest"?"descanso":(isRegen(eHdr.letter)?"regenerativo":eHdr.letter))):fmtD(date+"T12:00:00");}
   const ring=$("#trainRing");ring.innerHTML="";
   const cycleStart=new Date(date+"T12:00:00");cycleStart.setDate(cycleStart.getDate()-idx);
   for(let i=0;i<len;i++){const d=new Date(cycleStart);d.setDate(cycleStart.getDate()+i);const k=dkey(d);const pl=p[i];
@@ -2321,10 +2337,11 @@ function buildHeat(id,colorFn,titleFn){
   const el=$(id);if(!el)return;el.innerHTML="";
   const today=new Date();today.setHours(12,0,0,0);
   const start=new Date(today);start.setDate(start.getDate()-83);start.setDate(start.getDate()-start.getDay());
+  const tk=dkey(today);
   for(let i=0;i<13*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);
     const cell=document.createElement("div");cell.className="cell";
     if(d>today){cell.className="cell future";el.appendChild(cell);continue;}
-    const k=dkey(d);const col=colorFn(k,d);if(col)cell.style.background=col;
+    const k=dkey(d);if(k===tk)cell.classList.add("today");const col=colorFn(k,d);if(col)cell.style.background=col;
     if(titleFn)cell.title=titleFn(k,d);
     cell.onclick=()=>{diaDate=k;if($("#diaDate"))$("#diaDate").value=k;renderDiaryAll();};
     el.appendChild(cell);}
@@ -2335,7 +2352,7 @@ function pulseCount(k){const e=dietEntry(k);return e&&e.meals?Object.values(e.me
 function pulseLogged(k){const e=dietEntry(k);return !!(e&&e.meals&&Object.keys(e.meals).length);}
 function renderDietCard(){
   if(!$("#dietStatus"))return;
-  const date=diaDate||todayInput();if($("#dietDayLbl"))$("#dietDayLbl").textContent=fmtD(date+"T12:00:00");
+  const date=diaDate||todayInput();if($("#dietDayLbl")){const ee=dietEntry(date)||{};$("#dietDayLbl").textContent=ee.status?("✓ "+({on:"no plano",partial:"parcial",off:"fora",refeed:"refeed"}[ee.status])+" · "+pulseCount(date)+"/6"):fmtD(date+"T12:00:00");}
   const e=dietEntry(date)||{};const sBox=$("#dietStatus");sBox.innerHTML="";
   [["on","No plano","good"],["partial","Parcial","warn"],["off","Fora","bad"],["refeed","Refeed","good"]].forEach(o=>{const b=document.createElement("button");b.className="tribtn"+(e.status===o[0]?" on-"+o[2]:"");b.textContent=o[1];b.onclick=()=>setDietStatus(o[0],date);sBox.appendChild(b);});
   const tg=$("#dietToggles");tg.innerHTML="";
@@ -2543,6 +2560,7 @@ function initAll(){
   if($("#trSavePat"))$("#trSavePat").onclick=saveTrainPattern;
   if($("#trShiftL"))$("#trShiftL").onclick=()=>shiftAnchor(-1);
   if($("#trShiftR"))$("#trShiftR").onclick=()=>shiftAnchor(1);
+  $$(".card.collapsible>h2.chead").forEach(h=>h.onclick=()=>h.parentElement.classList.toggle("collap"));
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames`:"monitor de aplicações · local";

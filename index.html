@@ -319,7 +319,19 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <h2>Dieta <span class="hint" id="dietDayLbl"></span></h2>
     <div id="dietStatus" style="display:flex;gap:6px"></div>
     <div id="dietToggles" style="margin-top:10px"></div>
-    <details style="margin-top:10px"><summary>Refeições R1–R6</summary><div id="dietMeals" style="display:flex;flex-wrap:wrap;margin-top:9px"></div></details>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="margin:0">Pulsos de leucina <span class="muted" style="font-size:10px">(refeição ≥3,85g)</span></label><span class="hint" id="pulseDayCount"></span></div>
+      <div id="dietMeals" style="display:flex;flex-wrap:wrap;margin-top:8px"></div>
+      <div class="muted" style="font-size:10.5px;margin-top:4px">Marcar a refeição conta o pulso. Cumprir a dieta implica os pulsos; o contrário não — dá para bater os pulsos e ainda sair do plano.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
+    <div class="kpi" id="pulseKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
+    <div class="heat" id="pulseHeat"></div>
+    <div class="legend"><span><i style="background:#2a2d33"></i>0</span><span><i style="background:#7f1d1d"></i>1–2</span><span><i style="background:#F59E0B"></i>3–4</span><span><i style="background:#34d399"></i>5–6</span></div>
   </div>
 
   <div class="card">
@@ -1208,7 +1220,7 @@ function renderDiaryAll(){
   $("#diaDate").value=diaDate;
   $("#diaChip").innerHTML=`<span class="chip">${fmtD(diaDate+'T12:00:00')}</span>`;
   renderWater();renderSleep();renderSupps();renderSuppEditor();renderAdherence();renderDiaryChart();
-  renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderAdhResult();
+  renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();
 }
 $("#diaDate").onchange=e=>{diaDate=e.target.value||todayInput();renderDiaryAll();};
 
@@ -2254,7 +2266,7 @@ function logRest(dateK){const k=dateK||diaDate||todayInput();db.training.log[k]=
 function setDietStatus(v,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.status=v;db.diet.log[k]=e;save();refreshTD();toast("Dieta: "+v);}
 function toggleProtein(dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.protein=!e.protein;db.diet.log[k]=e;save();refreshTD();}
 function toggleMeal(R,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.meals=e.meals||{};e.meals[R]=!e.meals[R];db.diet.log[k]=e;save();refreshTD();}
-function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderAdhResult();renderRitual();}
+function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();renderRitual();}
 
 function renderTrainingCard(){
   if(!$("#trainRing"))return;
@@ -2313,16 +2325,29 @@ function buildHeat(id,colorFn,titleFn){
 }
 function renderTrainHeat(){buildHeat("#trainHeat",(k)=>{const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);const ok=(isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train");if(!ok)return "#F59E0B";return e.type==="rest"?"#60a5fa":"#34d399";},(k)=>{const e=trainEntry(k);return fmtD(k+"T12:00:00")+" · prev:"+plannedFor(k)+(e?" · feito:"+(e.type==="rest"?"descanso":e.letter):"");});}
 
+function pulseCount(k){const e=dietEntry(k);return e&&e.meals?Object.values(e.meals).filter(Boolean).length:0;}
+function pulseLogged(k){const e=dietEntry(k);return !!(e&&e.meals&&Object.keys(e.meals).length);}
 function renderDietCard(){
   if(!$("#dietStatus"))return;
   const date=diaDate||todayInput();if($("#dietDayLbl"))$("#dietDayLbl").textContent=fmtD(date+"T12:00:00");
   const e=dietEntry(date)||{};const sBox=$("#dietStatus");sBox.innerHTML="";
   [["on","No plano","good"],["partial","Parcial","warn"],["off","Fora","bad"],["refeed","Refeed","good"]].forEach(o=>{const b=document.createElement("button");b.className="tribtn"+(e.status===o[0]?" on-"+o[2]:"");b.textContent=o[1];b.onclick=()=>setDietStatus(o[0],date);sBox.appendChild(b);});
   const tg=$("#dietToggles");tg.innerHTML="";
-  const pb=document.createElement("button");pb.className="tribtn"+(e.protein?" on-good":"");pb.style.maxWidth="220px";pb.textContent=(e.protein?"✓ ":"")+"Bati a proteína";pb.onclick=()=>toggleProtein(date);tg.appendChild(pb);
-  const m=$("#dietMeals");if(m){m.innerHTML="";["R1","R2","R3","R4","R5","R6"].forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});
-    const done=e.meals?Object.values(e.meals).filter(Boolean).length:0;m.insertAdjacentHTML("beforeend",'<div class="muted" style="font-size:11px;margin-top:6px;width:100%">'+done+'/6 refeições</div>');}
+  const pb=document.createElement("button");pb.className="tribtn"+(e.protein?" on-good":"");pb.style.maxWidth="220px";pb.textContent=(e.protein?"✓ ":"")+"Bati a proteína (total)";pb.onclick=()=>toggleProtein(date);tg.appendChild(pb);
+  const m=$("#dietMeals");if(m){m.innerHTML="";["R1","R2","R3","R4","R5","R6"].forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=(on?"✓ ":"")+R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});}
+  const done=pulseCount(date);if($("#pulseDayCount"))$("#pulseDayCount").textContent=done+"/6 pulsos";
 }
+function renderPulse(){
+  if(!$("#pulseKpi"))return;
+  const today=pulseCount(diaDate||todayInput());
+  const avg=(days)=>{let s=0,c=0;for(let i=0;i<days;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(pulseLogged(k)){s+=pulseCount(k);c++;}}return c?(s/c):null;};
+  const a4=avg(28),a12=avg(84);
+  if($("#pulseStreak"))$("#pulseStreak").textContent="🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=5)+"d ≥5";
+  $("#pulseKpi").innerHTML='<div class="box"><div class="v">'+today+'/6</div><div class="k">pulsos hoje</div></div>'+
+    '<div class="box"><div class="v">'+(a4!=null?a4.toFixed(1):"—")+'</div><div class="k">média/dia · 4 sem</div></div>'+
+    '<div class="box"><div class="v">'+(a12!=null?a12.toFixed(1):"—")+'</div><div class="k">média/dia · 12 sem</div></div>';
+}
+function renderPulseHeat(){buildHeat("#pulseHeat",(k)=>{if(!pulseLogged(k))return null;const n=pulseCount(k);return n>=5?"#34d399":n>=3?"#F59E0B":n>=1?"#7f1d1d":null;},(k)=>fmtD(k+"T12:00:00")+" · "+pulseCount(k)+"/6 pulsos");}
 function renderDietScore(){
   if(!$("#dietScoreKpi"))return;
   const s4=windowScore(dietScore,28),s12=windowScore(dietScore,84);

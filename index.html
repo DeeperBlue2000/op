@@ -301,51 +301,18 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Treino <span class="hint" id="trainPlanLbl"></span></h2>
-    <div id="trainRing" style="display:flex;gap:6px;justify-content:center;margin:2px 0 12px"></div>
-    <div id="trainToday"></div>
-    <div id="trainActions" style="margin-top:12px"></div>
-  </div>
-
-  <div class="card">
-    <h2>Consistência — treino <span class="hint" id="trainStreak"></span></h2>
-    <div class="kpi" id="trainScoreKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
-    <div class="heat" id="trainHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Dieta <span class="hint" id="dietDayLbl"></span></h2>
-    <div id="dietStatus" style="display:flex;gap:6px"></div>
-    <div id="dietToggles" style="margin-top:10px"></div>
-    <div style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="margin:0">Pulsos de leucina <span class="muted" style="font-size:10px">(refeição ≥3,85g)</span></label><span class="hint" id="pulseDayCount"></span></div>
-      <div id="dietMeals" style="display:flex;flex-wrap:wrap;margin-top:8px"></div>
-      <div class="muted" style="font-size:10.5px;margin-top:4px">Marcar a refeição conta o pulso. Cumprir a dieta implica os pulsos; o contrário não — dá para bater os pulsos e ainda sair do plano.</div>
+    <h2>Sono <span class="hint">noite anterior</span></h2>
+    <div class="grid2">
+      <div class="field"><label>Horas dormidas</label><input id="slpH" type="number" inputmode="decimal" step="0.25" class="num" placeholder="6.5"></div>
+      <div class="field"><label>Deitar → acordar (opcional)</label>
+        <div style="display:flex;gap:6px"><input id="slpBed" type="time" style="padding:10px"><input id="slpWake" type="time" style="padding:10px"></div>
+      </div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
-    <div class="kpi" id="pulseKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
-    <div class="heat" id="pulseHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>0</span><span><i style="background:#7f1d1d"></i>1–2</span><span><i style="background:#F59E0B"></i>3–4</span><span><i style="background:#34d399"></i>5–6</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Adesão — dieta <span class="hint" id="dietStreak"></span></h2>
-    <div class="kpi" id="dietScoreKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
-    <div class="heat" id="dietHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
-  </div>
-
-  <div class="card">
-    <h2>Adesão × resultado <span class="hint">semana a semana</span></h2>
-    <div class="chart-wrap tall"><canvas id="chAdhResult"></canvas></div>
-    <div class="note">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</div>
+    <label>Qualidade</label>
+    <div class="scale" id="slpQ"></div>
+    <div class="scale-row"><div class="cap"><span>1 · péssimo</span><span>restaurador · 5</span></div></div>
+    <button class="btn btn-ghost" id="slpSave">Salvar sono</button>
+    <div class="note" id="slpAvg" style="display:none"></div>
   </div>
 
   <div class="card">
@@ -367,18 +334,21 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Sono <span class="hint">noite anterior</span></h2>
-    <div class="grid2">
-      <div class="field"><label>Horas dormidas</label><input id="slpH" type="number" inputmode="decimal" step="0.25" class="num" placeholder="6.5"></div>
-      <div class="field"><label>Deitar → acordar (opcional)</label>
-        <div style="display:flex;gap:6px"><input id="slpBed" type="time" style="padding:10px"><input id="slpWake" type="time" style="padding:10px"></div>
-      </div>
+    <h2>Treino <span class="hint" id="trainPlanLbl"></span></h2>
+    <div id="trainRing" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 12px"></div>
+    <div id="trainToday"></div>
+    <div id="trainActions" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Dieta <span class="hint" id="dietDayLbl"></span></h2>
+    <div id="dietStatus" style="display:flex;gap:6px"></div>
+    <div id="dietToggles" style="margin-top:10px"></div>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="margin:0">Pulsos de leucina <span class="muted" style="font-size:10px">(refeição ≥3,85g)</span></label><span class="hint" id="pulseDayCount"></span></div>
+      <div id="dietMeals" style="display:flex;flex-wrap:wrap;margin-top:8px"></div>
+      <div class="muted" style="font-size:10.5px;margin-top:4px">Marcar a refeição conta o pulso. Cumprir a dieta implica os pulsos; o contrário não — dá para bater os pulsos e ainda sair do plano.</div>
     </div>
-    <label>Qualidade</label>
-    <div class="scale" id="slpQ"></div>
-    <div class="scale-row"><div class="cap"><span>1 · péssimo</span><span>restaurador · 5</span></div></div>
-    <button class="btn btn-ghost" id="slpSave">Salvar sono</button>
-    <div class="note" id="slpAvg" style="display:none"></div>
   </div>
 
   <div class="card">
@@ -392,6 +362,36 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       </div>
       <button class="btn btn-ghost btn-sm" id="addBlock" style="width:100%;margin-top:9px">+ Adicionar bloco</button>
     </details>
+  </div>
+
+  <div class="card">
+    <h2>Consistência — treino <span class="hint" id="trainStreak"></span></h2>
+    <div class="kpi" id="trainScoreKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
+    <div class="heat" id="trainHeat"></div>
+    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Adesão — dieta <span class="hint" id="dietStreak"></span></h2>
+    <div class="kpi" id="dietScoreKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
+    <div class="heat" id="dietHeat"></div>
+    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
+    <div class="kpi" id="pulseKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
+    <div class="heat" id="pulseHeat"></div>
+    <div class="legend"><span><i style="background:#2a2d33"></i>0</span><span><i style="background:#7f1d1d"></i>1–2</span><span><i style="background:#F59E0B"></i>3–4</span><span><i style="background:#34d399"></i>5–6</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Adesão × resultado <span class="hint">semana a semana</span></h2>
+    <div class="chart-wrap tall"><canvas id="chAdhResult"></canvas></div>
+    <div class="note">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</div>
   </div>
 
   <div class="card">
@@ -2254,6 +2254,7 @@ function trainPattern(){return (db.training&&db.training.pattern&&db.training.pa
 function trainAnchor(){if(!db.training.anchor){db.training.anchor=todayInput();save();}return db.training.anchor;}
 function plannedFor(dateStr){const p=trainPattern();return p[mod(diffDays(dateStr,trainAnchor()),p.length)];}
 function nextWorkout(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl))return {date:k,letter:pl};}return null;}
+function nextFicha(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl)&&pl!=="D")return {date:k,letter:pl};}return null;}
 function trainEntry(k){return (db.training.log||{})[k]||null;}
 function dietEntry(k){return (db.diet.log||{})[k]||null;}
 function trainHit(k){const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);return ((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"))?1:0;}
@@ -2274,20 +2275,19 @@ function renderTrainingCard(){
   const idx=mod(diffDays(date,trainAnchor()),len);const planned=p[idx];
   if($("#trainPlanLbl"))$("#trainPlanLbl").textContent=fmtD(date+"T12:00:00");
   const ring=$("#trainRing");ring.innerHTML="";
-  let bs=new Date(date+"T12:00:00");
-  for(let i=0;i<12;i++){if(isRest(plannedFor(dkey(bs))))break;bs.setDate(bs.getDate()-1);}
-  let dd=new Date(bs);
-  for(let i=0;i<9;i++){const k=dkey(dd);const pl=plannedFor(k);if(i>0&&isRest(pl))break;
+  const cycleStart=new Date(date+"T12:00:00");cycleStart.setDate(cycleStart.getDate()-idx);
+  for(let i=0;i<len;i++){const d=new Date(cycleStart);d.setDate(cycleStart.getDate()+i);const k=dkey(d);const pl=p[i];
     const e=trainEntry(k);const done=e&&((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"));
     const isToday=k===date;
     const seg=document.createElement("div");seg.className="tseg "+(isRest(pl)?"rest":"train")+(isToday?" today":"")+(done?" done":"");
-    seg.textContent=isRest(pl)?"R":((e&&e.type==="train"&&e.letter)?e.letter:pl);ring.appendChild(seg);
-    dd.setDate(dd.getDate()+1);}
+    seg.textContent=isRest(pl)?"R":((e&&e.type==="train"&&e.letter)?e.letter:pl);ring.appendChild(seg);}
   const e=trainEntry(date);
-  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":"Treino "+planned)+'</b>';
+  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":(planned==="D"?"D · regenerativo":"Treino "+planned))+'</b>';
   if(e)h+=' · <span style="color:var(--green)">registrado: '+(e.type==="rest"?"descanso ✓":"treino "+(e.letter||"")+" ✓")+'</span>';
   h+='</div>';
-  const nw=nextWorkout(date);if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo treino: <b>'+nw.letter+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
+  const nw=nextWorkout(date);const nf=nextFicha(date);
+  if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo dia de treino: <b>'+(nw.letter==="D"?"D · regenerativo":nw.letter)+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
+  if(nf&&(!nw||nf.date!==nw.date))h+='<div class="muted" style="font-size:11px;margin-top:2px">Próxima ficha: <b>'+nf.letter+'</b> em '+fmtD(nf.date+"T12:00:00")+'</div>';
   if(isRest(planned))h+='<div class="note ok" style="margin-top:8px">Descanso é parte do plano — registrar descanso conta como acerto.</div>';
   $("#trainToday").innerHTML=h;
   const act=$("#trainActions");act.innerHTML="";

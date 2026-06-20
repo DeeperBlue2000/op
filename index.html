@@ -83,6 +83,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .bm-zone .lbl{font-size:12.5px;text-align:left;line-height:1.2;color:var(--txt);font-weight:500;word-break:normal;overflow-wrap:normal}
 .bm-zone .days{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
 .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:7px}
+.kpi.k3{grid-template-columns:repeat(3,1fr)}
 .kpi .box{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 7px;text-align:center;min-width:0}
 .kpi .box .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px;color:var(--txt);line-height:1.1;overflow-wrap:anywhere}
 .kpi .box .k{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
@@ -188,7 +189,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .supp-note{font-size:10.5px;color:var(--muted);font-style:italic;margin:-1px 0 8px;padding-left:2px}
 .supp-blk{margin-bottom:16px}
 .heat{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;overflow-x:auto;padding-bottom:4px;justify-content:start}
-.heat .cell{width:13px;height:13px;border-radius:3px;background:#2a2d33;cursor:pointer;transition:.1s}
+.heat .cell{width:13px;height:13px;border-radius:3px;background:#3e424a;cursor:pointer;transition:.1s}
 .heat .cell:hover{outline:1.5px solid var(--amber)}
 .heat .cell.future{visibility:hidden}
 .heat .cell.today{box-shadow:inset 0 0 0 2px var(--amber)}
@@ -372,7 +373,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card">
     <h2>Consistência — treino <span class="hint" id="trainStreak"></span></h2>
-    <div class="kpi" id="trainScoreKpi"></div>
+    <div class="kpi k3" id="trainScoreKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
     <div class="heat" id="trainHeat"></div>
     <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
@@ -380,7 +381,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card">
     <h2>Adesão — dieta <span class="hint" id="dietStreak"></span></h2>
-    <div class="kpi" id="dietScoreKpi"></div>
+    <div class="kpi k3" id="dietScoreKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
     <div class="heat" id="dietHeat"></div>
     <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
@@ -388,7 +389,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card">
     <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
-    <div class="kpi" id="pulseKpi"></div>
+    <div class="kpi k3" id="pulseKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
     <div class="heat" id="pulseHeat"></div>
     <div class="legend"><span><i style="background:#2a2d33"></i>0</span><span><i style="background:#7f1d1d"></i>1–2</span><span><i style="background:#F59E0B"></i>3–4</span><span><i style="background:#34d399"></i>5–6</span></div>
@@ -402,7 +403,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card">
     <h2>Adesão — suplementos <span class="hint" id="adhStreak"></span></h2>
-    <div class="kpi" id="adhKpi"></div>
+    <div class="kpi k3" id="adhKpi"></div>
     <div class="muted" style="font-size:11px;margin:2px 0 6px">Últimas ~12 semanas (toque num dia para abri-lo)</div>
     <div class="heat" id="heat"></div>
     <div class="legend"><span><i style="background:#2a2d33"></i>sem registro</span><span><i style="background:#7f1d1d"></i>baixa</span><span><i style="background:#F59E0B"></i>média</span><span><i style="background:#34d399"></i>alta</span></div>
@@ -1362,9 +1363,9 @@ function renderAdherence(){
     if(d>z){cell.classList.add("future");}
     else{
       if(k===dkey(z))cell.classList.add("today");
-      const has=hasRecord(k);let bg="#2a2d33";
-      if(has&&tot){const p=takenCount(k)/tot;bg=p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";}
-      cell.style.background=bg;cell.title=fmtD(k+"T12:00:00")+" — "+(has?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");
+      const has=hasRecord(k);
+      if(has&&tot){const p=takenCount(k)/tot;cell.style.background=p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";}
+      cell.title=fmtD(k+"T12:00:00")+" — "+(has?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");
       cell.onclick=()=>{diaDate=k;renderDiaryAll();window.scrollTo(0,0);};
     }
     el.appendChild(cell);

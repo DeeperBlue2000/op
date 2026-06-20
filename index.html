@@ -195,6 +195,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi" id="resumoKpi" style="margin-top:6px"></div>
   </div>
   <div class="card">
+    <h2>Co-protocolo <span class="hint">ancilares vinculados</span></h2>
+    <div id="coProtoBox"></div>
+  </div>
+  <div class="card">
     <h2>Adesão ao registro <span class="hint">manter o log vivo</span></h2>
     <div class="kpi" id="appAdhKpi"></div>
     <div id="appAdhNudge" style="margin-top:8px"></div>
@@ -597,6 +601,21 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <input type="checkbox" id="setCycle" style="width:20px;height:20px">
       <label for="setCycle" style="margin:0">Modo ciclo — suprime alerta vermelho fisiologicamente esperado (E2, Hct, Testo, DHT)</label>
     </div>
+    <details style="margin:8px 0"><summary>Co-protocolo de ancilares</summary>
+      <div style="margin-top:9px">
+        <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <input type="checkbox" id="cpEnabled" style="width:18px;height:18px">
+          <label for="cpEnabled" style="margin:0">Ativar derivação automática</label>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="number" inputmode="decimal" class="num" placeholder="0.20"></div>
+          <div class="field"><label>Anastrozol — horas após testo</label><input id="cpAnaOff" type="number" inputmode="numeric" class="num" placeholder="24"></div>
+          <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="number" inputmode="decimal" class="num" placeholder="0.25"></div>
+        </div>
+        <label style="font-size:11px;color:var(--muted)">Cabergolina — dias da semana</label>
+        <div id="cpCabDays" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px"></div>
+      </div>
+    </details>
     <details><summary>Faixas de referência (editáveis)</summary>
       <div id="refEditor" style="margin-top:9px"></div>
     </details>
@@ -805,7 +824,8 @@ function load(){
 function fresh(){
   return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
-    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3}};
+    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3,
+      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
 }
 function migrate(r){
   r.schemaVersion=2;
@@ -820,6 +840,7 @@ function migrate(r){
   if(s.heightCm==null)s.heightCm=176;
   if(s.goalWeight===undefined)s.goalWeight=null;
   if(s.albumin==null)s.albumin=4.3;
+  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
   r.daily=r.daily||{};
   r.donations=r.donations||[];
   r.glp1=r.glp1||[];r.glp1sym=r.glp1sym||[];
@@ -879,7 +900,7 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.v==="diario")renderDiaryAll();
   if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
   if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
-  if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();}
+  if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();}
 });
 
 // ---------- APPLY ----------
@@ -959,7 +980,7 @@ $("#btnSave").onclick=()=>{
   save();
   $("#inDose").value="";$("#inNote").value="";selectedSite=null;$("#inDate").value=nowLocalInput();
   fillDrugSelect(drug);$("#inCustomDrug").value="";
-  applyDrugContext();renderLog();renderNextDose();renderWeekly();renderBodyMap();
+  applyDrugContext();renderLog();renderNextDose();renderWeekly();renderBodyMap();renderCoProtocol();
   toast(oral?"Dose registrada ✓":"Aplicação registrada ✓");
 };
 function renderLog(){
@@ -1722,6 +1743,74 @@ function weightSeries(){return db.biometrics.filter(x=>x.weight!=null).map(x=>({
 function cycleDay(){const inj=db.injections.filter(i=>!(drugByName(i.drug)||{}).anc).map(i=>+new Date(i.date)).sort((a,b)=>a-b);if(!inj.length)return null;return Math.floor((Date.now()-inj[0])/864e5)+1;}
 function lastByDrug(arr,fn){const m={};arr.forEach(i=>{if(fn&&fn(i)===false)return;if(!m[i.drug]||new Date(i.date)>new Date(m[i.drug].date))m[i.drug]=i;});return m;}
 function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{const d=drugByName(k)||{};const cad=d.cadence||2;const dd=Math.ceil((+new Date(e[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=Math.ceil((+new Date(g[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
+// ---------- C1: co-protocolo (ancilares vinculados) ----------
+function isTesto(name){return /testosterona|durateston|sustanon/i.test(name||"");}
+function lastTestoInjection(){const t=db.injections.filter(i=>isTesto(i.drug)).sort((a,b)=>new Date(b.date)-new Date(a.date));return t[0]||null;}
+const WD_PT=["dom","seg","ter","qua","qui","sex","sáb"];
+function coProtocolDue(){
+  const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
+  const out=[];const now=Date.now();
+  if(cp.anastrozol){const a=cp.anastrozol;const shot=lastTestoInjection();
+    if(shot){const T=+new Date(shot.date);const dueT=T+(a.offsetH||24)*3600e3;
+      const paired=db.injections.some(i=>i.drug===a.drug&&+new Date(i.date)>=T);
+      const status=paired?"done":(now>=dueT?"overdue":"upcoming");
+      out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,
+        reason:(a.offsetH||24)+"h após "+shot.drug.replace("Testosterona ","Test ")+" de "+fmtD(shot.date)});
+    } else out.push({drug:a.drug,dose:a.dose,dueTime:null,status:"none",reason:"sem aplicação de testo registrada"});
+  }
+  if(cp.cabergolina){const c=cp.cabergolina;const days=c.days||[2,5];
+    const today=new Date();const wd=today.getDay();const isToday=days.includes(wd);
+    let off=99;for(let k=0;k<8;k++){if(days.includes((wd+k)%7)){off=k;break;}}
+    const nd=new Date();nd.setDate(nd.getDate()+off);nd.setHours(12,0,0,0);
+    const loggedToday=db.injections.some(i=>i.drug===c.drug&&dkey(i.date)===dkey(today));
+    const status=isToday?(loggedToday?"done":"due"):"upcoming";
+    out.push({drug:c.drug,dose:c.dose,dueTime:+nd,status,reason:"agenda fixa "+days.map(d=>WD_PT[d]).join("/")});
+  }
+  return out;
+}
+function etaText(t){if(t==null)return "—";const h=(t-Date.now())/3600e3;if(h<0)return "agora";if(h<24)return "em ~"+Math.max(1,Math.round(h))+"h";return "em "+Math.round(h/24)+"d";}
+function logCoProtocol(drug,dose){
+  db.injections.push({id:uid(),drug,doseMg:dose,site:null,date:new Date().toISOString(),note:"co-protocolo",phase:db.settings.currentPhase});
+  save();renderResumo();if($("#logList"))renderLog();renderNextDose();toast(drug+" "+dose+"mg registrado ✓");
+}
+function renderCoProtocol(){
+  const el=$("#coProtoBox");if(!el)return;
+  const cp=db.settings.coProtocol;
+  if(!cp||!cp.enabled){el.innerHTML='<div class="muted" style="font-size:12px">Co-protocolo desativado (ative em Dados → Configurações).</div>';return;}
+  const items=coProtocolDue();el.innerHTML="";
+  items.forEach(it=>{
+    let col,label,btn=false;
+    if(it.status==="done"){col=PAL.green;label="✓ feito";}
+    else if(it.status==="overdue"){col=PAL.red;label="atrasado";btn=true;}
+    else if(it.status==="due"){col=PAL.amber;label="hoje";btn=true;}
+    else if(it.status==="none"){col=PAL.muted;label="—";}
+    else {col=PAL.muted;label=etaText(it.dueTime);}
+    const row=document.createElement("div");row.className="log-item";
+    row.innerHTML='<div class="log-swatch" style="background:'+col+'"></div>'+
+      '<div class="log-main"><div class="t">'+it.drug+' <span class="muted" style="font-size:10px">'+it.dose+'mg</span></div>'+
+      '<div class="s">'+it.reason+'</div></div>';
+    const right=document.createElement("div");right.style.cssText="display:flex;align-items:center;gap:6px";
+    if(btn){const b=document.createElement("button");b.className="btn-amber btn-sm";b.textContent="Registrar";b.style.cssText="font-size:10px;padding:5px 9px";b.onclick=()=>logCoProtocol(it.drug,it.dose);right.appendChild(b);}
+    else{const s=document.createElement("div");s.className="log-dose";s.style.cssText="color:"+col+";font-size:11px";s.textContent=label;right.appendChild(s);}
+    row.appendChild(right);el.appendChild(row);
+  });
+  if(!items.length)el.innerHTML='<div class="muted" style="font-size:12px">Nenhum ancilar configurado.</div>';
+}
+const WD_FULL=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+function renderCoProtoEditor(){
+  const cp=db.settings.coProtocol||{};
+  if($("#cpEnabled"))$("#cpEnabled").checked=cp.enabled!==false;
+  if($("#cpAnaDose"))$("#cpAnaDose").value=cp.anastrozol?cp.anastrozol.dose:"";
+  if($("#cpAnaOff"))$("#cpAnaOff").value=cp.anastrozol?cp.anastrozol.offsetH:"";
+  if($("#cpCabDose"))$("#cpCabDose").value=cp.cabergolina?cp.cabergolina.dose:"";
+  const days=(cp.cabergolina&&cp.cabergolina.days)||[];
+  const box=$("#cpCabDays");if(!box)return;box.innerHTML="";
+  WD_FULL.forEach((lbl,i)=>{const on=days.includes(i);const b=document.createElement("button");b.type="button";b.textContent=lbl;b.dataset.d=i;
+    b.className="daychip"+(on?" on":"");
+    b.style.cssText="padding:5px 9px;border-radius:8px;border:1.5px solid var(--line);background:"+(on?"var(--amber)":"var(--panel-2)")+";color:"+(on?"#0a0a0a":"var(--txt)")+";font-size:11px;cursor:pointer";
+    b.onclick=()=>{const nx=b.classList.toggle("on");b.style.background=nx?"var(--amber)":"var(--panel-2)";b.style.color=nx?"#0a0a0a":"var(--txt)";};
+    box.appendChild(b);});
+}
 function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
   const due=dueList();const dueEl=$("#resumoDue");
@@ -1741,7 +1830,7 @@ function renderResumo(){
     '<div class="box"><div class="v">'+(lw?lw.weight.toFixed(1):"—")+'</div><div class="k">peso (kg)</div></div>'+
     '<div class="box"><div class="v" style="color:'+trendCol+';font-size:13px">'+trendTxt+'</div><div class="k">tendência 7d</div></div>'+
     '<div class="box"><div class="v" style="font-size:14px">'+examTxt+'</div><div class="k">próx. exame</div></div>';
-  renderResumoNext();renderAppAdherence();
+  renderResumoNext();renderAppAdherence();renderCoProtocol();
 }
 function renderResumoNext(){
   const el=$("#resumoNext");const rows=[];
@@ -1869,6 +1958,17 @@ function renderDerived(){
 }
 
 // ---------- M9: ferro & hematócrito ----------
+function hctForecast(uln){
+  const pts=db.labs.filter(l=>l.hct!=null).map(l=>({t:+new Date(l.date),v:l.hct})).sort((a,b)=>a.t-b.t);
+  if(pts.length<2)return null;
+  const t0=pts[0].t,x=pts.map(p=>(p.t-t0)/864e5),y=pts.map(p=>p.v),n=x.length;
+  const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx);}
+  const slope=den?num/den:0;const slopeWk=slope*7;
+  const curHct=pts[pts.length-1].v;
+  const crossWeeks=(slope>1e-5&&curHct<uln)?(uln-curHct)/slopeWk:null;
+  return {slope,slopeWk,curHct,crossWeeks};
+}
 function renderIron(){
   const el=$("#ironStatus");
   const lh=db.labs.filter(l=>l.hct!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -1881,6 +1981,14 @@ function renderIron(){
     else out.push(["ok","Ferritina "+lastFer.fer+" ng/mL — ≥100, reserva adequada para doar."]);}
   if(lastHct&&lastFer){if(lastHct.hct>=ulnHct&&lastFer.fer>=100)out.push(["ok","Combinado: Hct alto + ferro reposto → janela favorável para doação (confirmar com o médico)."]);
     else if(lastHct.hct>=ulnHct&&lastFer.fer<100)out.push(["warn","Conflito: Hct alto pede flebotomia, mas ferro baixo. Priorizar reposição de ferro; decisão médica."]);}
+  // C6 — preditor de hematócrito (regressão linear na tendência)
+  const fc=hctForecast(ulnHct);
+  if(fc){
+    if(fc.curHct>=ulnHct)out.push(["warn","Projeção: Hct já no/acima do teto ("+ulnHct+"%)."]);
+    else if(fc.slopeWk<=0.02)out.push(["ok","Projeção: Hct estável/declinando ("+(fc.slopeWk>=0?"+":"")+fc.slopeWk.toFixed(2)+"%/sem) — sem cruzamento previsto no ritmo atual."]);
+    else if(fc.crossWeeks!=null){const dt=new Date(Date.now()+fc.crossWeeks*7*864e5);
+      out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fc.slopeWk.toFixed(2)+"%/sem (≈"+(fc.slopeWk*4.3).toFixed(1)+"%/mês) → cruza "+ulnHct+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
+  }
   el.innerHTML=out.length?out.map(x=>'<div class="note '+x[0]+'" style="margin:6px 0 0">'+x[1]+'</div>').join(""):'<div class="muted" style="font-size:12px">Registre Hct e ferritina nos exames.</div>';
   if(chIron)chIron.destroy();
   const all=[...new Set(db.labs.filter(l=>l.hct!=null||l.fer!=null).map(l=>l.date))].sort((a,b)=>new Date(a)-new Date(b));
@@ -1988,7 +2096,13 @@ $("#saveSet").onclick=()=>{
   db.settings.heightCm=+$("#setHeight").value||176;
   db.settings.goalWeight=$("#setGoal").value!==""?+$("#setGoal").value:null;
   db.settings.albumin=+$("#setAlb").value||4.3;
-  save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();toast("Configurações salvas ✓");
+  const cp=db.settings.coProtocol||{};
+  cp.enabled=$("#cpEnabled").checked;
+  cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,offsetH:+$("#cpAnaOff").value||24};
+  const cabDays=[...$("#cpCabDays").querySelectorAll("button.on")].map(b=>+b.dataset.d);
+  cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,days:cabDays.length?cabDays:[2,5]};
+  db.settings.coProtocol=cp;
+  save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();toast("Configurações salvas ✓");
 };
 function snapSummary(slot){
   try{const s=JSON.parse(localStorage.getItem("control_snap_"+slot));if(!s)return null;
@@ -2043,7 +2157,7 @@ function initAll(){
   $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();
+  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames`:"monitor de aplicações · local";

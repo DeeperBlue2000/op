@@ -466,6 +466,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Peso (kg)</label><input id="bWeight" type="number" inputmode="decimal" class="num" placeholder="79.6"></div>
       <div class="field"><label>%GC</label><input id="bBf" type="number" inputmode="decimal" class="num" placeholder="21.3"></div>
       <div class="field"><label>Método</label><select id="bMethod"><option>Pollock 7</option><option>InBody</option><option>Faulkner</option><option>Guedes</option><option>Outro</option></select></div>
+      <div class="field"><label>MME — massa muscular esq. (kg)</label><input id="bSmm" type="number" inputmode="decimal" class="num" placeholder="38.7"></div>
+      <div class="field"><label>Gordura visceral (nível)</label><input id="bVisc" type="number" inputmode="decimal" class="num" placeholder="nível ou cm²"></div>
     </div>
     <div class="field"><label>Data</label><input id="bDate" type="date"></div>
     <button class="btn btn-ghost" id="bSave">Salvar biometria</button>
@@ -1644,10 +1646,10 @@ function renderMoodChart(){
 
 // ---------- BIO/LAB/CHECK ----------
 $("#bSave").onclick=()=>{
-  const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value);
-  if(!w&&!bf)return toast("Informe peso ou %GC");
-  db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,method:$("#bMethod").value});
-  save();$("#bWeight").value="";$("#bBf").value="";renderBioChart();renderBodyComp();renderWeightTrend();toast("Biometria salva ✓");
+  const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value),smm=parseFloat($("#bSmm").value),visc=parseFloat($("#bVisc").value);
+  if(!w&&!bf&&!smm&&!visc)return toast("Informe ao menos um valor");
+  db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,smm:isNaN(smm)?null:smm,visceral:isNaN(visc)?null:visc,method:$("#bMethod").value});
+  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBodyComp();renderWeightTrend();toast("Biometria salva ✓");
 };
 const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["alb","lAlb"]];
 $("#lSave").onclick=()=>{
@@ -1774,23 +1776,38 @@ function renderAppAdherence(){
 
 // ---------- M5: composição corporal ----------
 function renderBodyComp(){
-  const s=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).map(x=>({t:+new Date(x.date),date:x.date,weight:x.weight,bf:x.bf,lean:x.weight*(1-x.bf/100),fat:x.weight*(x.bf/100)})).sort((a,b)=>a.t-b.t);
+  const s=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).map(x=>({t:+new Date(x.date),date:x.date,weight:x.weight,bf:x.bf,smm:x.smm!=null?x.smm:null,visceral:x.visceral!=null?x.visceral:null,lean:x.weight*(1-x.bf/100),fat:x.weight*(x.bf/100)})).sort((a,b)=>a.t-b.t);
   const hM=(db.settings.heightCm||176)/100;const kpi=$("#compKpi"),note=$("#compNote");
   if(chComp)chComp.destroy();
   if(!s.length){kpi.innerHTML="";note.innerHTML="";clearCanvas("chComp","registre peso + %GC");return;}
   const last=s[s.length-1],first=s[0];const ffmi=last.lean/(hM*hM);
-  kpi.innerHTML='<div class="box"><div class="v">'+last.lean.toFixed(1)+'</div><div class="k">massa magra (kg)</div></div>'+
+  // MME e gordura visceral: último valor disponível + variação vs primeiro disponível
+  const smmPts=s.filter(x=>x.smm!=null),viscPts=s.filter(x=>x.visceral!=null);
+  const lastSmm=smmPts[smmPts.length-1],firstSmm=smmPts[0];
+  const lastVisc=viscPts[viscPts.length-1],firstVisc=viscPts[0];
+  let kpiH='<div class="box"><div class="v">'+last.lean.toFixed(1)+'</div><div class="k">massa magra (kg)</div></div>'+
     '<div class="box"><div class="v">'+last.fat.toFixed(1)+'</div><div class="k">gordura (kg)</div></div>'+
     '<div class="box"><div class="v">'+ffmi.toFixed(1)+'</div><div class="k">FFMI</div></div>';
+  if(lastSmm){const dS=firstSmm&&smmPts.length>1?lastSmm.smm-firstSmm.smm:null;
+    kpiH+='<div class="box"><div class="v">'+lastSmm.smm.toFixed(1)+'</div><div class="k">MME (kg)'+(dS!=null?' · '+(dS>=0?"+":"")+dS.toFixed(1):"")+'</div></div>';}
+  if(lastVisc){const dV=firstVisc&&viscPts.length>1?lastVisc.visceral-firstVisc.visceral:null;
+    kpiH+='<div class="box"><div class="v">'+(+lastVisc.visceral.toFixed(1))+'</div><div class="k">g. visceral'+(dV!=null?' · '+(dV>=0?"+":"")+(+dV.toFixed(1)):"")+'</div></div>';}
+  kpi.innerHTML=kpiH;
   const labels=s.map(x=>fmtD(x.date));
-  chComp=new Chart($("#chComp"),{data:{labels,datasets:[
-    {type:"line",label:"Massa magra",data:s.map(x=>+x.lean.toFixed(2)),borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true},
+  const datasets=[
+    {type:"line",label:"Massa magra (calc.)",data:s.map(x=>+x.lean.toFixed(2)),borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true},
     {type:"line",label:"Gordura",data:s.map(x=>+x.fat.toFixed(2)),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true}
-  ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}}});
+  ];
+  if(smmPts.length)datasets.push({type:"line",label:"MME (medida)",data:s.map(x=>x.smm!=null?+x.smm.toFixed(2):null),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,borderDash:[5,3],tension:.3,pointRadius:2,spanGaps:true});
+  if(viscPts.length)datasets.push({type:"line",label:"G. visceral",data:s.map(x=>x.visceral!=null?+x.visceral.toFixed(1):null),borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:1.6,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y1"});
+  const opts={...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}};
+  if(viscPts.length)opts.scales.y1={position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"visceral",color:PAL.muted,font:{size:9}}};
+  chComp=new Chart($("#chComp"),{data:{labels,datasets},options:opts});
   if(s.length>=2){const dLean=last.lean-first.lean,dFat=last.fat-first.fat,dW=last.weight-first.weight;let msg,cls="";
     if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+dLean.toFixed(1)+"kg vs "+dFat.toFixed(1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
     else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+dFat.toFixed(1)+"kg, magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg no período.";}
     else msg="Variação no período: magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg · gordura "+(dFat>=0?"+":"")+dFat.toFixed(1)+"kg.";
+    if(lastSmm&&firstSmm&&smmPts.length>1){const dS=lastSmm.smm-firstSmm.smm;msg+=" MME medida "+(dS>=0?"+":"")+dS.toFixed(1)+"kg.";}
     note.innerHTML='<div class="note '+cls+'" style="margin-top:10px">'+msg+'</div>';
   } else note.innerHTML="";
 }

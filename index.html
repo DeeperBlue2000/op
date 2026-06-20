@@ -98,6 +98,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .tseg{flex:1;max-width:56px;text-align:center;padding:8px 0;border-radius:8px;border:1.5px solid var(--line);background:var(--panel-2);font-size:13px;font-weight:700;color:var(--muted)}
 .tseg.train{color:#cfd3da}
 .tseg.rest{color:#60a5fa}
+.tseg.regen{color:#a78bfa}
 .tseg.today{outline:2px solid var(--amber);outline-offset:1px}
 .tseg.done{background:rgba(52,211,153,.16);border-color:var(--green);color:var(--green)}
 .tribtn{flex:1;padding:9px 6px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel-2);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;text-align:center}
@@ -713,7 +714,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </details>
     <details style="margin:8px 0"><summary>Ciclo de treino</summary>
       <div style="margin-top:9px">
-        <div class="field"><label>Sequência do ciclo (vírgula; "descanso" ou a letra). D é fixo após o descanso; A/B/C/E rotacionam.</label>
+        <div class="field"><label>Sequência do ciclo (vírgula; use "descanso", "Regenerativo" ou a letra da ficha). O Regenerativo é o dia leve após o descanso; as fichas A/B/C/D rotacionam.</label>
           <textarea id="trPattern" rows="3" style="width:100%;background:var(--panel-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:10px;color:var(--txt);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical"></textarea></div>
         <button class="btn btn-ghost btn-sm" id="trSavePat" style="width:100%">Salvar sequência</button>
         <label style="margin-top:12px;display:block">Alinhar com hoje</label>
@@ -933,7 +934,7 @@ function load(){
 }
 function fresh(){
   return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],
-    training:{pattern:["descanso","D","A","B","descanso","D","C","E"],anchor:null,log:{}},diet:{log:{}},
+    training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3,
       coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
@@ -954,9 +955,10 @@ function migrate(r){
   if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
   r.daily=r.daily||{};
   r.donations=r.donations||[];
-  r.training=r.training||{pattern:["descanso","D","A","B","descanso","D","C","E"],anchor:null,log:{}};
-  if(!r.training.pattern||!r.training.pattern.length)r.training.pattern=["descanso","D","A","B","descanso","D","C","E"];
-  if(JSON.stringify(r.training.pattern)===JSON.stringify(["descanso","D","E","A","B"])||JSON.stringify(r.training.pattern)===JSON.stringify(["descanso","D","E","A","B","descanso","D","C","E","A","descanso","D","B","C","E","descanso","D","A","B","C"]))r.training.pattern=["descanso","D","A","B","descanso","D","C","E"];
+  r.training=r.training||{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}};
+  if(!r.training.pattern||!r.training.pattern.length)r.training.pattern=["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"];
+  {const _old=[JSON.stringify(["descanso","D","E","A","B"]),JSON.stringify(["descanso","D","E","A","B","descanso","D","C","E","A","descanso","D","B","C","E","descanso","D","A","B","C"]),JSON.stringify(["descanso","D","A","B","descanso","D","C","E"])];
+   if(_old.includes(JSON.stringify(r.training.pattern)))r.training.pattern=["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"];}
   r.training.log=r.training.log||{};
   r.diet=r.diet||{log:{}};r.diet.log=r.diet.log||{};
   r.glp1=r.glp1||[];r.glp1sym=r.glp1sym||[];
@@ -2250,11 +2252,13 @@ function initFotos(){
 function diffDays(aStr,bStr){return Math.round((+new Date(aStr+"T12:00:00")-+new Date(bStr+"T12:00:00"))/864e5);}
 function mod(n,m){return ((n%m)+m)%m;}
 function isRest(x){return (x||"").toLowerCase().slice(0,4)==="desc";}
-function trainPattern(){return (db.training&&db.training.pattern&&db.training.pattern.length)?db.training.pattern:["descanso","D","A","B","descanso","D","C","E"];}
+function isRegen(x){return (x||"").toLowerCase().slice(0,4)==="rege";}
+function segLabel(x){return isRest(x)?"Desc":isRegen(x)?"Reg":x;}
+function trainPattern(){return (db.training&&db.training.pattern&&db.training.pattern.length)?db.training.pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"];}
 function trainAnchor(){if(!db.training.anchor){db.training.anchor=todayInput();save();}return db.training.anchor;}
 function plannedFor(dateStr){const p=trainPattern();return p[mod(diffDays(dateStr,trainAnchor()),p.length)];}
 function nextWorkout(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl))return {date:k,letter:pl};}return null;}
-function nextFicha(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl)&&pl!=="D")return {date:k,letter:pl};}return null;}
+function nextFicha(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl)&&!isRegen(pl))return {date:k,letter:pl};}return null;}
 function trainEntry(k){return (db.training.log||{})[k]||null;}
 function dietEntry(k){return (db.diet.log||{})[k]||null;}
 function trainHit(k){const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);return ((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"))?1:0;}
@@ -2278,26 +2282,28 @@ function renderTrainingCard(){
   const cycleStart=new Date(date+"T12:00:00");cycleStart.setDate(cycleStart.getDate()-idx);
   for(let i=0;i<len;i++){const d=new Date(cycleStart);d.setDate(cycleStart.getDate()+i);const k=dkey(d);const pl=p[i];
     const e=trainEntry(k);const done=e&&((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"));
-    const isToday=k===date;
-    const seg=document.createElement("div");seg.className="tseg "+(isRest(pl)?"rest":"train")+(isToday?" today":"")+(done?" done":"");
-    seg.textContent=isRest(pl)?"R":((e&&e.type==="train"&&e.letter)?e.letter:pl);ring.appendChild(seg);}
+    const isToday=k===date;const cls=isRest(pl)?"rest":isRegen(pl)?"regen":"train";
+    const seg=document.createElement("div");seg.className="tseg "+cls+(isToday?" today":"")+(done?" done":"");
+    seg.textContent=isRest(pl)?"Desc":isRegen(pl)?"Reg":((e&&e.type==="train"&&e.letter&&!isRegen(e.letter))?e.letter:pl);ring.appendChild(seg);}
   const e=trainEntry(date);
-  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":(planned==="D"?"D · regenerativo":"Treino "+planned))+'</b>';
-  if(e)h+=' · <span style="color:var(--green)">registrado: '+(e.type==="rest"?"descanso ✓":"treino "+(e.letter||"")+" ✓")+'</span>';
+  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":isRegen(planned)?"Regenerativo (leve)":"Treino "+planned)+'</b>';
+  if(e)h+=' · <span style="color:var(--green)">registrado: '+(e.type==="rest"?"descanso ✓":(isRegen(e.letter)?"regenerativo ✓":"treino "+(e.letter||"")+" ✓"))+'</span>';
   h+='</div>';
   const nw=nextWorkout(date);const nf=nextFicha(date);
-  if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo dia de treino: <b>'+(nw.letter==="D"?"D · regenerativo":nw.letter)+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
+  if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo dia de treino: <b>'+(isRegen(nw.letter)?"Regenerativo":nw.letter)+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
   if(nf&&(!nw||nf.date!==nw.date))h+='<div class="muted" style="font-size:11px;margin-top:2px">Próxima ficha: <b>'+nf.letter+'</b> em '+fmtD(nf.date+"T12:00:00")+'</div>';
   if(isRest(planned))h+='<div class="note ok" style="margin-top:8px">Descanso é parte do plano — registrar descanso conta como acerto.</div>';
   $("#trainToday").innerHTML=h;
   const act=$("#trainActions");act.innerHTML="";
-  const letters=p.filter(x=>!isRest(x)).filter((v,i,a)=>a.indexOf(v)===i);
+  const letters=p.filter(x=>!isRest(x)&&!isRegen(x)).filter((v,i,a)=>a.indexOf(v)===i);
   const prim=document.createElement("button");prim.className="btn";
-  if(isRest(planned)){prim.textContent="Descansei ✓";prim.onclick=()=>logRest(date);}else{prim.textContent="Treinei "+planned+" ✓";prim.onclick=()=>logTrain(planned,date);}
+  if(isRest(planned)){prim.textContent="Descansei ✓";prim.onclick=()=>logRest(date);}
+  else if(isRegen(planned)){prim.textContent="Fiz o regenerativo ✓";prim.onclick=()=>logTrain("Reg",date);}
+  else{prim.textContent="Treinei "+planned+" ✓";prim.onclick=()=>logTrain(planned,date);}
   act.appendChild(prim);
   const r2=document.createElement("div");r2.style.cssText="display:flex;gap:8px;margin-top:8px;align-items:center";
-  const sel=document.createElement("select");sel.style.cssText="padding:10px;flex:1";sel.innerHTML=letters.map(l=>'<option'+(l===planned?" selected":"")+'>'+l+'</option>').join("");
-  const ov=document.createElement("button");ov.className="btn btn-ghost btn-sm";ov.textContent="Registrar treino escolhido";ov.onclick=()=>logTrain(sel.value,date);
+  const sel=document.createElement("select");sel.style.cssText="padding:10px;flex:1";sel.innerHTML=letters.map(l=>'<option'+(l===planned?" selected":"")+'>'+l+'</option>').join("")+'<option value="Reg">Regenerativo</option>';
+  const ov=document.createElement("button");ov.className="btn btn-ghost btn-sm";ov.textContent="Registrar escolhido";ov.onclick=()=>logTrain(sel.value,date);
   r2.appendChild(sel);r2.appendChild(ov);act.appendChild(r2);
   if(!isRest(planned)){const rb=document.createElement("button");rb.className="btn btn-ghost btn-sm";rb.style.cssText="width:100%;margin-top:8px";rb.textContent="Registrar descanso";rb.onclick=()=>logRest(date);act.appendChild(rb);}
   if(e){const cb=document.createElement("button");cb.className="btn btn-ghost btn-sm";cb.style.cssText="width:100%;margin-top:8px;color:var(--red)";cb.textContent="Limpar registro do dia";cb.onclick=()=>{delete db.training.log[date];save();refreshTD();toast("Registro removido");};act.appendChild(cb);}
@@ -2381,7 +2387,7 @@ function renderRitual(){
   const box=$("#ritualBox");box.innerHTML="";
   const r1=document.createElement("div");r1.style.cssText="display:flex;gap:8px";
   if(te){const s=document.createElement("span");s.className="tribtn on-good";s.style.flex="1";s.textContent="Treino: "+(te.type==="rest"?"descanso ✓":(te.letter||"")+" ✓");r1.appendChild(s);}
-  else{const b=document.createElement("button");b.className="btn";b.style.flex="1";b.textContent=isRest(pl)?"Descansar hoje ✓":"Treinei "+pl;b.onclick=()=>{isRest(pl)?logRest(k):logTrain(pl,k);};r1.appendChild(b);}
+  else{const b=document.createElement("button");b.className="btn";b.style.flex="1";b.textContent=isRest(pl)?"Descansar hoje ✓":isRegen(pl)?"Fiz o regenerativo ✓":"Treinei "+pl;b.onclick=()=>{isRest(pl)?logRest(k):logTrain(isRegen(pl)?"Reg":pl,k);};r1.appendChild(b);}
   box.appendChild(r1);
   const r2=document.createElement("div");r2.style.cssText="display:flex;gap:8px;margin-top:8px";
   if(de&&de.status){const s=document.createElement("span");s.className="tribtn "+(de.status==="off"?"on-bad":de.status==="partial"?"on-warn":"on-good");s.style.flex="1";s.textContent="Dieta: "+({on:"no plano",partial:"parcial",off:"fora",refeed:"refeed"}[de.status]);r2.appendChild(s);}
@@ -2397,7 +2403,7 @@ function renderTrainPreview(){
   const el=$("#trPreview");if(!el)return;
   let h='<div class="muted" style="font-size:11px;margin-bottom:5px">Próximos 7 dias — use ◀ ▶ até "hoje" bater com o treino real:</div><div style="display:flex;gap:5px;flex-wrap:wrap">';
   for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);const k=dkey(d);const pl=plannedFor(k);const t=i===0;
-    h+='<div class="tseg '+(isRest(pl)?"rest":"train")+(t?" today":"")+'" style="flex:0 0 auto;min-width:46px;font-size:12px;padding:6px 4px">'+(isRest(pl)?"R":pl)+'<div style="font-size:8px;font-weight:400;color:var(--muted);margin-top:2px">'+(t?"hoje":fmtD(k+"T12:00:00").slice(0,5))+'</div></div>';}
+    h+='<div class="tseg '+(isRest(pl)?"rest":isRegen(pl)?"regen":"train")+(t?" today":"")+'" style="flex:0 0 auto;min-width:46px;font-size:12px;padding:6px 4px">'+segLabel(pl)+'<div style="font-size:8px;font-weight:400;color:var(--muted);margin-top:2px">'+(t?"hoje":fmtD(k+"T12:00:00").slice(0,5))+'</div></div>';}
   h+='</div>';el.innerHTML=h;
 }
 function saveTrainPattern(){

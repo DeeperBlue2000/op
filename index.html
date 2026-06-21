@@ -530,7 +530,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="heat" id="adProtHeat"></div>
     <div class="legend"><span><i style="background:#34d399"></i>no prazo</span><span><i style="background:#7f1d1d"></i>esperada e faltou</span><span><i style="background:#33363c"></i>não esperada</span></div>
     <div id="adProtGaps" style="margin-top:10px"></div>
-    <div class="note">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário ancorado na 1ª aplicação, com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</div>
+    <div class="note">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário reancorado a cada aplicação real (não um grid fixo desde a 1ª dose), com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</div>
   </div>
   <div class="card">
     <h2>Correlação labs × carga</h2>
@@ -1615,10 +1615,27 @@ function renderProtCalendar(){
   if(!dr){kpi.innerHTML="";heat.innerHTML="";gaps.innerHTML="";return;}
   const days=protocolDoseDays(dr.name,dr.kind);const tol=1,cad=dr.cadence;
   const today=new Date();today.setHours(12,0,0,0);const T=+today;
-  const anchor=days[0];const slots=[];for(let t=anchor;t<=T+tol*864e5;t+=cad*864e5)slots.push(t);
+  // Slots esperados: reancorados a cada aplicação real (não um grid rígido desde a 1ª dose).
+  // Cada dose gera um slot esperado em +cad dias; testamos se há uma dose real (a seguinte,
+  // tipicamente) cobrindo esse slot dentro de meia-cadência. Reancorar a cada dose evita que
+  // o "drift" natural de horário/dia acumule e marque dias como perdidos indevidamente.
+  const halfCad=Math.max(cad/2,tol)*864e5;
+  const slots=[];
+  for(let i=0;i<days.length-1;i++)slots.push(days[i]+cad*864e5); // slot entre dose i e i+1
+  // slot final em aberto (da última dose até hoje), mas só enquanto a pausa não
+  // configurar uma lacuna real de protocolo — mesmo critério de "Períodos de uso":
+  // 3× cadência (mín. 10 dias). Além disso é lacuna, não falhas diárias acumuladas.
+  const lastDose=days[days.length-1];
+  const gapThr=Math.max(3*cad,10)*864e5;
+  if(lastDose!=null&&(T-lastDose)<=gapThr){
+    let s=lastDose+cad*864e5;
+    while(s<=T+tol*864e5){if(!slots.includes(s))slots.push(s);s+=cad*864e5;}
+  }
+  slots.sort((a,b)=>a-b);
   const doseSet=new Set(days.map(t=>dkey(new Date(t))));
+  const hitTol=halfCad;
   let hits=0,past=0;
-  slots.forEach(s=>{if(s>T+tol*864e5)return;past++;if(days.some(t=>Math.abs(t-s)<=tol*864e5))hits++;});
+  slots.forEach(s=>{if(s>T+tol*864e5)return;past++;if(days.some(t=>Math.abs(t-s)<=hitTol))hits++;});
   const onTime=past?Math.round(hits/past*100):0;
   const ints=[];for(let i=1;i<days.length;i++)ints.push((days[i]-days[i-1])/864e5);
   const meanInt=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:null;

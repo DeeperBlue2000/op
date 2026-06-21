@@ -377,7 +377,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi k3" id="trainScoreKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
     <div class="heat" id="trainHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
   </div>
 
   <div class="card">
@@ -385,7 +385,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi k3" id="dietScoreKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
     <div class="heat" id="dietHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
   </div>
 
   <div class="card">
@@ -393,7 +393,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi k3" id="pulseKpi"></div>
     <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
     <div class="heat" id="pulseHeat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>0</span><span><i style="background:#7f1d1d"></i>1–2</span><span><i style="background:#F59E0B"></i>3–4</span><span><i style="background:#34d399"></i>5–6</span></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>0–1</span><span><i style="background:#F59E0B"></i>2–3</span><span><i style="background:#34d399"></i>4+</span></div>
   </div>
 
   <div class="card">
@@ -407,7 +407,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi k3" id="adhKpi"></div>
     <div class="muted" style="font-size:11px;margin:2px 0 6px">Últimas ~12 semanas (toque num dia para abri-lo)</div>
     <div class="heat" id="heat"></div>
-    <div class="legend"><span><i style="background:#2a2d33"></i>sem registro</span><span><i style="background:#7f1d1d"></i>baixa</span><span><i style="background:#F59E0B"></i>média</span><span><i style="background:#34d399"></i>alta</span></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem registro</span><span><i style="background:#7f1d1d"></i>baixa</span><span><i style="background:#F59E0B"></i>média</span><span><i style="background:#34d399"></i>alta</span></div>
     <details style="margin-top:12px"><summary>Aderência por item (30 dias)</summary>
       <div id="adhItems" style="margin-top:9px"></div>
     </details>
@@ -528,7 +528,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <select id="adProtDrug"></select>
     <div class="kpi" id="adProtKpi" style="margin-top:11px"></div>
     <div class="heat" id="adProtHeat"></div>
-    <div class="legend"><span><i style="background:#34d399"></i>no prazo</span><span><i style="background:#7f1d1d"></i>esperada e faltou</span><span><i style="background:#2a2d33"></i>não esperada</span></div>
+    <div class="legend"><span><i style="background:#34d399"></i>no prazo</span><span><i style="background:#7f1d1d"></i>esperada e faltou</span><span><i style="background:#33363c"></i>não esperada</span></div>
     <div id="adProtGaps" style="margin-top:10px"></div>
     <div class="note">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário ancorado na 1ª aplicação, com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</div>
   </div>
@@ -753,6 +753,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.01</div>
 </section>
 
 </main>
@@ -921,6 +922,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
+const APP_VERSION="4.01";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1425,7 +1427,7 @@ let chGlpLevel,chGlpResult,gSelectedSite=null;
 function glpDrugByName(n){return db.glp1Drugs.find(d=>d.name===n);}
 function glpDaysSinceSite(site){return daysSinceSiteAll(site);}
 function glpSuggestSite(){let best=null,bd=-1;GLP1_SITES.forEach(s=>{const d=glpDaysSinceSite(s);const v=d==null?1e9:d;if(v>bd){bd=v;best=s;}});return best;}
-function fillGlpSelect(keep){const s=$("#gDrug");const cur=keep||s.value;s.innerHTML="";db.glp1Drugs.forEach(d=>s.add(new Option(d.name,d.name)));s.add(new Option("+ Outro (livre)","__custom__"));if(cur)s.value=cur;}
+function fillGlpSelect(keep){const s=$("#gDrug");const cur=keep||s.value;s.innerHTML="";db.glp1Drugs.forEach(d=>s.add(new Option(d.name,d.name)));s.add(new Option("+ Outro (livre)","__custom__"));if(cur)s.value=cur;else{const ret=db.glp1Drugs.find(d=>/retatrutida/i.test(d.name));if(ret)s.value=ret.name;}}
 function buildGlpSiteGrid(){const g=$("#gSiteGrid");g.innerHTML="";const sug=glpSuggestSite();GLP1_SITES.forEach(s=>{const days=glpDaysSinceSite(s);const b=document.createElement("button");b.type="button";b.className="site-btn"+(s===gSelectedSite?" sel":"");b.title=s===sug?"sugerido — mais tempo sem uso (EAA+GLP-1)":"";b.innerHTML=`<span class="snm">${s===sug?'<i class="star">★</i>':''}${s}</span><small>${days==null?"nunca":days+"d"}</small>`;b.onclick=()=>{gSelectedSite=s;$$("#gSiteGrid .site-btn").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");};g.appendChild(b);});}
 function glpDrugContext(){const v=$("#gDrug").value;$("#gCustomBox").style.display=v==="__custom__"?"block":"none";const d=glpDrugByName(v);if(d&&d.doseTarget&&!$("#gDose").value)$("#gDose").value=d.doseTarget;gSelectedSite=glpSuggestSite();$("#gSugHint").textContent=gSelectedSite?"· sugerido: "+gSelectedSite:"";buildGlpSiteGrid();}
 $("#gDrug").onchange=()=>{$("#gDose").value="";glpDrugContext();};
@@ -1631,7 +1633,7 @@ function renderProtCalendar(){
   for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
     const k=dkey(d);const cell=document.createElement("div");cell.className="cell";
     if(d>z){cell.classList.add("future");}
-    else{const tk=+new Date(k+"T12:00:00");let bg="#2a2d33",title=fmtD(k+"T12:00:00")+" — ";
+    else{const tk=+new Date(k+"T12:00:00");let bg="#33363c",title=fmtD(k+"T12:00:00")+" — ";
       if(doseSet.has(k)){bg="#34d399";title+="aplicada";}
       else if(slotKeys.has(k)){if(days.some(t=>Math.abs(t-tk)<=tol*864e5)){bg="#34d399";title+="no prazo (±1d)";}else{bg="#7f1d1d";title+="esperada e faltou";}}
       else title+="não esperada";
@@ -2363,6 +2365,11 @@ function renderDietCard(){
   [["on","No plano","good"],["partial","Parcial","warn"],["off","Fora","bad"],["refeed","Refeed","good"]].forEach(o=>{const b=document.createElement("button");b.className="tribtn"+(e.status===o[0]?" on-"+o[2]:"");b.textContent=o[1];b.onclick=()=>setDietStatus(o[0],date);sBox.appendChild(b);});
   const tg=$("#dietToggles");tg.innerHTML="";
   const pb=document.createElement("button");pb.className="tribtn"+(e.protein?" on-good":"");pb.style.maxWidth="220px";pb.textContent=(e.protein?"✓ ":"")+"Bati a proteína (total)";pb.onclick=()=>toggleProtein(date);tg.appendChild(pb);
+  const pstreak=streakOf(k=>{const ee=dietEntry(k);return ee&&ee.protein;});
+  let ps=0,pc=0;for(let i=0;i<30;i++){const ee=dietEntry(dkey(new Date(Date.now()-i*864e5)));if(ee&&ee.status){pc++;if(ee.protein)ps++;}}
+  const ind=document.createElement("div");ind.className="muted";ind.style.cssText="font-size:11px;margin-top:7px";
+  ind.innerHTML='Proteína (total): 🔥 <b style="color:var(--green)">'+pstreak+'d</b> seguidos · <b>'+(pc?Math.round(ps/pc*100):0)+'%</b> dos dias registrados (30d)';
+  tg.appendChild(ind);
   const m=$("#dietMeals");if(m){m.innerHTML="";["R1","R2","R3","R4","R5","R6"].forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=(on?"✓ ":"")+R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});}
   const done=pulseCount(date);if($("#pulseDayCount"))$("#pulseDayCount").textContent=done+"/6 pulsos";
 }
@@ -2371,12 +2378,12 @@ function renderPulse(){
   const today=pulseCount(diaDate||todayInput());
   const avg=(days)=>{let s=0,c=0;for(let i=0;i<days;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(pulseLogged(k)){s+=pulseCount(k);c++;}}return c?(s/c):null;};
   const a4=avg(28),a12=avg(84);
-  if($("#pulseStreak"))$("#pulseStreak").textContent="🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=5)+"d ≥5";
+  if($("#pulseStreak"))$("#pulseStreak").textContent="🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=4)+"d ≥4";
   $("#pulseKpi").innerHTML='<div class="box"><div class="v">'+today+'/6</div><div class="k">pulsos hoje</div></div>'+
     '<div class="box"><div class="v">'+(a4!=null?a4.toFixed(1):"—")+'</div><div class="k">média/dia · 4 sem</div></div>'+
     '<div class="box"><div class="v">'+(a12!=null?a12.toFixed(1):"—")+'</div><div class="k">média/dia · 12 sem</div></div>';
 }
-function renderPulseHeat(){buildHeat("#pulseHeat",(k)=>{if(!pulseLogged(k))return null;const n=pulseCount(k);return n>=5?"#34d399":n>=3?"#F59E0B":n>=1?"#7f1d1d":null;},(k)=>fmtD(k+"T12:00:00")+" · "+pulseCount(k)+"/6 pulsos");}
+function renderPulseHeat(){buildHeat("#pulseHeat",(k)=>{if(!pulseLogged(k))return null;const n=pulseCount(k);return n>=4?"#34d399":n>=2?"#F59E0B":"#7f1d1d";},(k)=>fmtD(k+"T12:00:00")+" · "+pulseCount(k)+"/6 pulsos");}
 function renderDietScore(){
   if(!$("#dietScoreKpi"))return;
   const s4=windowScore(dietScore,28),s12=windowScore(dietScore,84);
@@ -2569,7 +2576,7 @@ function initAll(){
   $$(".card.collapsible>h2.chead").forEach(h=>h.onclick=()=>h.parentElement.classList.toggle("collap"));
   updatePhaseChip();
   const c=db.injections.length;
-  $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames`:"monitor de aplicações · local";
+  $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames · v${APP_VERSION}`:`monitor de aplicações · v${APP_VERSION}`;
 }
 initAll();
 

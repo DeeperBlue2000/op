@@ -1176,8 +1176,7 @@ function renderNextDose(){
   const due=[];
   keys.forEach(k=>{
     const last=byDrug[k];const d=drugByName(k)||{};const c=d.color||PAL.muted;const cad=d.cadence||2;
-    const next=new Date(new Date(last.date).getTime()+cad*864e5);
-    const dd=Math.ceil((next-Date.now())/864e5);
+    const dd=dueDays(last.date,cad);const next=new Date();next.setHours(0,0,0,0);next.setDate(next.getDate()+dd);
     if(dd<=0)due.push({k,dd});
     const txt=dd<0?`atrasada ${-dd}d`:dd===0?"hoje":`em ${dd}d`;
     const col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
@@ -1880,7 +1879,12 @@ function lastBioWeight(){const b=db.biometrics.filter(x=>x.weight!=null).sort((a
 function weightSeries(){return db.biometrics.filter(x=>x.weight!=null).map(x=>({t:+new Date(x.date),date:x.date,w:x.weight})).sort((a,b)=>a.t-b.t);}
 function cycleDay(){const inj=db.injections.filter(i=>!(drugByName(i.drug)||{}).anc).map(i=>+new Date(i.date)).sort((a,b)=>a-b);if(!inj.length)return null;return Math.floor((Date.now()-inj[0])/864e5)+1;}
 function lastByDrug(arr,fn){const m={};arr.forEach(i=>{if(fn&&fn(i)===false)return;if(!m[i.drug]||new Date(i.date)>new Date(m[i.drug].date))m[i.drug]=i;});return m;}
-function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{const d=drugByName(k)||{};const cad=d.cadence||2;const dd=Math.ceil((+new Date(e[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=Math.ceil((+new Date(g[k].date)+cad*864e5-Date.now())/864e5);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
+function dueDays(lastISO,cad){
+  const due=new Date(+new Date(lastISO)+(cad||0)*864e5);due.setHours(0,0,0,0);
+  const today=new Date();today.setHours(0,0,0,0);
+  return Math.round((due-today)/864e5);
+}
+function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{const d=drugByName(k)||{};const cad=d.cadence||2;const dd=dueDays(e[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=dueDays(g[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
 // ---------- C1: co-protocolo (ancilares vinculados) ----------
 function isTesto(name){return /testosterona|durateston|sustanon/i.test(name||"");}
 function lastTestoInjection(){const t=db.injections.filter(i=>isTesto(i.drug)).sort((a,b)=>new Date(b.date)-new Date(a.date));return t[0]||null;}
@@ -1972,7 +1976,7 @@ function renderResumo(){
 }
 function renderResumoNext(){
   const el=$("#resumoNext");const rows=[];
-  const add=(map,fn,kind,defCad)=>{Object.keys(map).forEach(k=>{const last=map[k];const d=fn(k)||{};const cad=d.cadence||defCad;const next=new Date(+new Date(last.date)+cad*864e5);const dd=Math.ceil((next-Date.now())/864e5);rows.push({k,kind,next,dd,col:d.color||PAL.muted});});};
+  const add=(map,fn,kind,defCad)=>{Object.keys(map).forEach(k=>{const last=map[k];const d=fn(k)||{};const cad=d.cadence||defCad;const dd=dueDays(last.date,cad);const next=new Date();next.setHours(0,0,0,0);next.setDate(next.getDate()+dd);rows.push({k,kind,next,dd,col:d.color||PAL.muted});});};
   add(lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc)),drugByName,"EAA",2);
   add(lastByDrug(db.glp1),glpDrugByName,"GLP-1",7);
   if(!rows.length){el.innerHTML='<div class="empty">Sem aplicações registradas.</div>';return;}

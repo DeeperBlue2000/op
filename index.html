@@ -54,7 +54,7 @@ main{padding:16px;max-width:760px;margin:0 auto}
 .view{display:none;animation:fade .25s ease}
 .view.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;position:relative}
 .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin:0 0 13px;font-weight:600;font-family:'IBM Plex Mono',monospace}
 .card h2 .hint{float:right;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;font-weight:400}
 label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:500}
@@ -148,6 +148,21 @@ nav button.on{color:var(--amber)}
 .note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px;padding:10px;background:var(--panel-2);border-radius:var(--r-sm);border-left:2px solid var(--amber)}
 .note.warn{border-left-color:var(--red);color:#f3c0c0}
 .note.ok{border-left-color:var(--green);color:#bfe9d6}
+/* Ícone de ajuda "?" + popup */
+.help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;vertical-align:middle;line-height:1;flex:0 0 auto;-webkit-tap-highlight-color:transparent;user-select:none}
+.help:hover,.help:active{border-color:var(--amber);color:var(--amber)}
+h2 .help{margin-left:6px}
+/* "?" no canto inferior direito do card */
+.help-corner{position:absolute;bottom:12px;right:12px;margin:0;z-index:2}
+.card.has-help-corner{padding-bottom:34px}
+.help-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;opacity:0;pointer-events:none;transition:opacity .18s}
+.help-backdrop.on{opacity:1;pointer-events:auto}
+.help-pop{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:min(440px,calc(100vw - 36px));max-height:70vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:var(--r);padding:16px 18px;z-index:61;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;box-shadow:0 12px 40px rgba(0,0,0,.5);font-size:12.5px;line-height:1.6;color:var(--txt)}
+.help-pop.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.help-pop b{color:var(--amber-soft);font-weight:600}
+.help-pop .help-x{position:absolute;top:10px;right:12px;width:26px;height:26px;border-radius:50%;border:none;background:var(--panel-2);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.help-pop .help-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;padding-right:28px}
+.note.ok{border-left-color:var(--green);color:#bfe9d6}
 .drug-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
 .drug-row:last-child{border:none}
 .drug-row .sw{width:13px;height:13px;border-radius:4px;flex-shrink:0}
@@ -198,6 +213,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .chead .chev{margin-left:auto;color:var(--muted);font-size:11px;transition:transform .15s;flex:0 0 auto}
 .card.collapsible.collap>h2.chead .chev{transform:rotate(-90deg)}
 .card.collapsible.collap>:not(h2){display:none}
+/* Card de Metas: ao colapsar, mantém o resumo de alvos visível, oculta só o formulário */
+#cardGoals.collap>#goalProgress{display:block}
+#cardGoals.collap .goal-form{display:none}
 .delta-up{color:var(--red)}.delta-dn{color:var(--green)}.delta-flat{color:var(--muted)}
 .chip-btn{background:var(--panel-2);border:1.5px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:20px;font-size:12.5px}
 .chip-btn.on{border-color:var(--amber);background:rgba(245,158,11,.14);color:var(--amber-soft)}
@@ -273,14 +291,14 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Rotação de sítios <span class="hint">dias desde a última · EAA+GLP-1</span></h2>
+    <h2>Rotação de sítios <span class="hint">dias desde a última · EAA+GLP-1</span> <span class="help" data-note-id="help1" data-help-title="Rotação de sítios">?</span></h2>
     <div class="bodymap" id="bodyMap"></div>
     <div class="legend">
       <span><i style="background:var(--green)"></i>livre</span>
       <span><i style="background:var(--amber)"></i>recente</span>
       <span><i style="background:var(--red)"></i>reuso (&lt; <b id="warnDisp">5</b>d)</span>
     </div>
-    <div class="note">Alerta visual ao reutilizar um sítio dentro da janela — profilaxia de fibrose / lipo-hipertrofia. Monitoração <b>compartilhada entre EAA e GLP-1</b> (o mesmo ponto físico conta nos dois). Janela editável em <b>Dados</b>.</div>
+    <template class="help-src" id="help1">Alerta visual ao reutilizar um sítio dentro da janela — profilaxia de fibrose / lipo-hipertrofia. Monitoração <b>compartilhada entre EAA e GLP-1</b> (o mesmo ponto físico conta nos dois). Janela editável em <b>Dados</b>.</template>
   </div>
 
   <div class="card">
@@ -397,9 +415,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Adesão × resultado <span class="hint">semana a semana</span></h2>
+    <h2>Adesão × resultado <span class="hint">semana a semana</span> <span class="help" data-note-id="help2" data-help-title="Adesão × resultado">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chAdhResult"></canvas></div>
-    <div class="note">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</div>
+    <template class="help-src" id="help2">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</template>
   </div>
 
   <div class="card">
@@ -443,9 +461,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Rotação SC <span class="hint">dias desde a última</span></h2>
+    <h2>Rotação SC <span class="hint">dias desde a última</span> <span class="help" data-note-id="help3" data-help-title="Rotação SC">?</span></h2>
     <div class="bodymap" id="gBodyMap"></div>
-    <div class="note">Rotacione os sítios para reduzir nódulos e variabilidade de absorção. Abdômen: ≥5 cm do umbigo.</div>
+    <template class="help-src" id="help3">Rotacione os sítios para reduzir nódulos e variabilidade de absorção. Abdômen: ≥5 cm do umbigo.</template>
   </div>
 
   <div class="card">
@@ -470,9 +488,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="chart-wrap tall"><canvas id="chGlpLevel"></canvas></div>
   </div>
   <div class="card">
-    <h2>Resultado & tolerância</h2>
+    <h2>Resultado & tolerância <span class="help" data-note-id="help4" data-help-title="Resultado & tolerância">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chGlpResult"></canvas></div>
-    <div class="note">Peso (da aba Saúde) sobre apetite e náusea, na mesma linha do tempo — relaciona resposta e tolerância à titulação.</div>
+    <template class="help-src" id="help4">Peso (da aba Saúde) sobre apetite e náusea, na mesma linha do tempo — relaciona resposta e tolerância à titulação.</template>
   </div>
 
   <div class="card">
@@ -505,22 +523,22 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="chart-wrap"><canvas id="chFreq"></canvas></div>
   </div>
   <div class="card">
-    <h2>Concentração estimada <span class="hint">índice mg-eq</span></h2>
+    <h2>Concentração estimada <span class="hint">índice mg-eq</span> <span class="help" data-note-id="help5" data-help-title="Concentração estimada">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chConc"></canvas></div>
-    <div class="note">Superposição de decaimento exponencial (½-vida editável). Índice relativo, não ng/dL. Totais separados por via (injetável × oral) — não somados entre si. Tracejado = projeção 14d sem novas doses.</div>
+    <template class="help-src" id="help5">Superposição de decaimento exponencial (½-vida editável). Índice relativo, não ng/dL. Totais separados por via (injetável × oral) — não somados entre si. Tracejado = projeção 14d sem novas doses.</template>
   </div>
   <div class="card">
-    <h2>Estado de equilíbrio <span class="hint">teórico, do protocolo</span></h2>
+    <h2>Estado de equilíbrio <span class="hint">teórico, do protocolo</span> <span class="help" data-note-id="help6" data-help-title="Estado de equilíbrio">?</span></h2>
     <div class="scrollx" id="ssTable"></div>
-    <div class="note">Calculado a partir do protocolo de cada droga (dose-alvo, cadência, ½-vida): Cmáx/Cmín no steady-state, flutuação pico-vale e tempo até ~90% do platô. Edite cadência em <b>Dados</b> para comparar EOD × E3D. Ferramenta de visualização — decisões com o médico.</div>
+    <template class="help-src" id="help6">Calculado a partir do protocolo de cada droga (dose-alvo, cadência, ½-vida): Cmáx/Cmín no steady-state, flutuação pico-vale e tempo até ~90% do platô. Edite cadência em <b>Dados</b> para comparar EOD × E3D. Ferramenta de visualização — decisões com o médico.</template>
   </div>
   <div class="card">
-    <h2>Períodos de uso <span class="hint">automático, do log</span></h2>
+    <h2>Períodos de uso <span class="hint">automático, do log</span> <span class="help" data-note-id="help7" data-help-title="Períodos de uso">?</span></h2>
     <div class="scrollx" id="usagePeriods"></div>
-    <div class="note">Início, fim e reinício inferidos só pelas datas de aplicação — sem alterar o protocolo. Um período encerra quando há lacuna maior que <b>3× a cadência</b> (mín. 10 dias); a próxima aplicação abre um novo período. "Em curso" = última dose dentro desse limiar. mg/sem = dose acumulada ÷ período (cobertura de uma cadência por dose). Lacunas isoladas não encerram o período.</div>
+    <template class="help-src" id="help7">Início, fim e reinício inferidos só pelas datas de aplicação — sem alterar o protocolo. Um período encerra quando há lacuna maior que <b>3× a cadência</b> (mín. 10 dias); a próxima aplicação abre um novo período. "Em curso" = última dose dentro desse limiar. mg/sem = dose acumulada ÷ período (cobertura de uma cadência por dose). Lacunas isoladas não encerram o período.</template>
   </div>
   <div class="card">
-    <h2>Adesão ao protocolo <span class="hint">EAA + GLP-1</span></h2>
+    <h2>Adesão ao protocolo <span class="hint">EAA + GLP-1</span> <span class="help" data-note-id="help8" data-help-title="Adesão ao protocolo">?</span></h2>
     <div class="seg" id="adProtSeg"><button data-win="30" class="on">30d</button><button data-win="90">90d</button><button data-win="0">Tudo</button></div>
     <div id="adProtIndex"></div>
     <hr>
@@ -530,12 +548,12 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="heat" id="adProtHeat"></div>
     <div class="legend"><span><i style="background:#34d399"></i>no prazo</span><span><i style="background:#7f1d1d"></i>esperada e faltou</span><span><i style="background:#33363c"></i>não esperada</span></div>
     <div id="adProtGaps" style="margin-top:10px"></div>
-    <div class="note">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário reancorado a cada aplicação real (não um grid fixo desde a 1ª dose), com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</div>
+    <template class="help-src" id="help8">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário reancorado a cada aplicação real (não um grid fixo desde a 1ª dose), com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</template>
   </div>
   <div class="card">
-    <h2>Correlação labs × carga</h2>
+    <h2>Correlação labs × carga <span class="help" data-note-id="help9" data-help-title="Correlação labs × carga">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chCorr"></canvas></div>
-    <div class="note">E2 (pg/mL) e Prolactina (ng/mL) sobre a carga androgênica total. Triângulos = timing de doses de inibidor de aromatase (AI). Inspeção visual — não infere causalidade.</div>
+    <template class="help-src" id="help9">E2 (pg/mL) e Prolactina (ng/mL) sobre a carga androgênica total. Triângulos = timing de doses de inibidor de aromatase (AI). Inspeção visual — não infere causalidade.</template>
   </div>
 </section>
 
@@ -553,19 +571,22 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="field"><label>Data</label><input id="bDate" type="date"></div>
     <button class="btn btn-ghost" id="bSave">Salvar biometria</button>
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chBio"></canvas></div>
+    <div id="bioList" style="margin-top:12px"></div>
   </div>
 
-  <div class="card">
-    <h2>Metas / objetivos <span class="hint">acompanhamento</span></h2>
-    <div class="grid2">
-      <div class="field"><label>Objetivo de peso (kg)</label><input id="goalW" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-      <div class="field"><label>Objetivo de %GC</label><input id="goalBf" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-      <div class="field"><label>Objetivo massa magra (kg)</label><input id="goalLean" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-      <div class="field"><label>Objetivo de gordura (kg)</label><input id="goalFat" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+  <div class="card collapsible" id="cardGoals">
+    <h2 class="chead">Metas / objetivos <span class="hint">acompanhamento</span><span class="chev">▾</span></h2>
+    <div id="goalProgress" style="margin-top:6px"></div>
+    <div class="goal-form">
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>Objetivo de peso (kg)</label><input id="goalW" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo de %GC</label><input id="goalBf" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo massa magra (kg)</label><input id="goalLean" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo de gordura (kg)</label><input id="goalFat" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+      </div>
+      <div class="field"><label>Prazo (opcional)</label><input id="goalDeadline" type="date"></div>
+      <button class="btn btn-ghost" id="goalSave">Salvar metas</button>
     </div>
-    <div class="field"><label>Prazo (opcional)</label><input id="goalDeadline" type="date"></div>
-    <button class="btn btn-ghost" id="goalSave">Salvar metas</button>
-    <div id="goalProgress" style="margin-top:14px"></div>
   </div>
 
   <div class="card">
@@ -610,9 +631,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Marcadores derivados <span class="hint">do último exame</span></h2>
+    <h2>Marcadores derivados <span class="hint">do último exame</span> <span class="help" data-note-id="help10" data-help-title="Marcadores derivados">?</span></h2>
     <div id="derivedBox"></div>
-    <div class="note">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e eGFR (CKD-EPI 2021). Ferramenta de leitura — decisões com o médico.</div>
+    <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e eGFR (CKD-EPI 2021). Ferramenta de leitura — decisões com o médico.</template>
   </div>
 
   <div class="card">
@@ -627,11 +648,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Tendência dos exames <span class="hint" id="examDue"></span></h2>
+    <h2>Tendência dos exames <span class="hint" id="examDue"></span> <span class="help" data-note-id="help11" data-help-title="Tendência dos exames">?</span></h2>
     <div class="field"><label>Marcador</label><select id="trendMarker"></select></div>
     <div id="trendDelta" style="text-align:center;margin-bottom:10px"></div>
     <div class="chart-wrap"><canvas id="chTrend"></canvas></div>
-    <div class="note">Trajetória ao longo dos exames com a faixa de referência sombreada. Pontos vermelhos = fora da faixa (respeita o modo ciclo). Intervalo de exame configurável em Dados.</div>
+    <template class="help-src" id="help11">Trajetória ao longo dos exames com a faixa de referência sombreada. Pontos vermelhos = fora da faixa (respeita o modo ciclo). Intervalo de exame configurável em Dados.</template>
   </div>
 
   <div class="card">
@@ -643,20 +664,20 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Sintomas × hormônios <span class="hint">subjetivo vs E2/PRL</span></h2>
+    <h2>Sintomas × hormônios <span class="hint">subjetivo vs E2/PRL</span> <span class="help" data-note-id="help12" data-help-title="Sintomas × hormônios">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chSymHorm"></canvas></div>
-    <div class="note">Libido, energia e humor (escala 1–5, eixo esq.) sobre E2 (pg/mL) e prolactina (ng/mL) dos exames (eixo dir.), na mesma linha do tempo. Inspeção visual — não infere causalidade.</div>
+    <template class="help-src" id="help12">Libido, energia e humor (escala 1–5, eixo esq.) sobre E2 (pg/mL) e prolactina (ng/mL) dos exames (eixo dir.), na mesma linha do tempo. Inspeção visual — não infere causalidade.</template>
   </div>
 </section>
 
 <!-- ============ FOTOS ============ -->
 <section class="view" id="v-fotos">
   <div class="card">
-    <h2>Capturar <span class="hint" id="fotoDateLbl"></span></h2>
+    <h2>Capturar <span class="hint" id="fotoDateLbl"></span> <span class="help" data-note-id="help13" data-help-title="Captura de fotos">?</span></h2>
     <div class="field"><label>Data da sessão</label><input id="fotoDate" type="date"></div>
     <div id="fotoSlots" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px"></div>
     <input id="fotoFile" type="file" accept="image/*" capture="environment" style="display:none">
-    <div class="note">Toque num ângulo para fotografar ou escolher da galeria. A imagem é comprimida (~1080px) e guardada <b>localmente neste aparelho</b> (IndexedDB) — não entra no backup JSON nem sincroniza entre dispositivos.</div>
+    <template class="help-src" id="help13">Toque num ângulo para fotografar ou escolher da galeria. A imagem é comprimida (~1080px) e guardada <b>localmente neste aparelho</b> (IndexedDB) — não entra no backup JSON nem sincroniza entre dispositivos.</template>
   </div>
 
   <div class="card">
@@ -699,7 +720,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       </div>
       <button class="btn btn-ghost btn-sm" id="addDrug" style="width:100%;margin-top:9px">+ Adicionar</button>
     </details>
-    <div class="note">Durateston é blend de 4 ésteres — ½-vida única é aproximação. Orais não pedem sítio. Cadência por droga alimenta "próxima dose" e steady-state.</div>
+    <span class="help" data-note-id="help14" data-help-title="Drogas & protocolo">?</span>
+    <template class="help-src" id="help14">Durateston é blend de 4 ésteres — ½-vida única é aproximação. Orais não pedem sítio. Cadência por droga alimenta "próxima dose" e steady-state.</template>
   </div>
 
   <div class="card">
@@ -732,7 +754,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div id="cpCabDays" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px"></div>
       </div>
     </details>
-    <details style="margin:8px 0"><summary>Ciclo de treino</summary>
+    <details style="margin:8px 0"><summary>Ciclo de treino <span class="help" data-note-id="help15" data-help-title="Ciclo de treino" data-help-inline="1">?</span></summary>
       <div style="margin-top:9px">
         <div class="field"><label>Sequência do ciclo (vírgula; use "descanso", "Regenerativo" ou a letra da ficha). O Regenerativo é o dia leve após o descanso; as fichas A/B/C/D rotacionam.</label>
           <textarea id="trPattern" rows="3" style="width:100%;background:var(--panel-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:10px;color:var(--txt);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical"></textarea></div>
@@ -743,7 +765,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
           <button class="btn btn-ghost btn-sm" id="trShiftR" style="flex:1">Avançar ficha ▶</button>
         </div>
         <div id="trPreview" style="margin-top:12px"></div>
-        <div class="note">Quando as fichas mudarem, edite a sequência e use ◀ ▶ até o "hoje" do preview bater com o treino real. Ao registrar no Diário você ainda pode escolher outra ficha — o histórico guarda o que foi feito.</div>
+        <template class="help-src" id="help15">Quando as fichas mudarem, edite a sequência e use ◀ ▶ até o "hoje" do preview bater com o treino real. Ao registrar no Diário você ainda pode escolher outra ficha — o histórico guarda o que foi feito.</template>
       </div>
     </details>
     <details><summary>Faixas de referência (editáveis)</summary>
@@ -783,6 +805,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 </nav>
 
 <div class="toast" id="toast"><span id="toastMsg">Salvo</span></div>
+<div class="help-backdrop" id="helpBackdrop"></div>
+<div class="help-pop" id="helpPop"><button class="help-x" id="helpX" aria-label="Fechar">×</button><div class="help-title" id="helpTitle">Explicação</div><div id="helpBody"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -1022,6 +1046,34 @@ function toast(m,actionFn,actionLabel){
   t.classList.add("show");clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>t.classList.remove("show"),actionFn?6000:1700);
 }
+// Popup de ajuda "?" — substitui as notas explicativas estáticas
+function openHelp(html,title){
+  $("#helpBody").innerHTML=html;
+  $("#helpTitle").textContent=title||"Explicação";
+  $("#helpBackdrop").classList.add("on");$("#helpPop").classList.add("on");
+}
+function closeHelp(){$("#helpBackdrop").classList.remove("on");$("#helpPop").classList.remove("on");}
+// Liga clique nos ícones .help (delegação) e fechamento
+document.addEventListener("click",e=>{
+  const h=e.target.closest(".help");
+  if(h){e.stopPropagation();
+    let body=h.dataset.help||"";
+    const nid=h.dataset.noteId;
+    if(nid){const tpl=document.getElementById(nid);if(tpl)body=tpl.innerHTML;}
+    openHelp(body,h.dataset.helpTitle||"Explicação");return;}
+});
+function initHelp(){
+  const bx=$("#helpBackdrop"),xx=$("#helpX");
+  if(bx)bx.onclick=closeHelp;
+  if(xx)xx.onclick=closeHelp;
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeHelp();});
+  // Reposiciona cada "?" para o canto inferior direito do seu card
+  $$(".help[data-note-id]").forEach(h=>{
+    if(h.dataset.helpInline)return;            // permanece inline (ex.: dentro de <summary>)
+    const card=h.closest(".card");
+    if(card){h.classList.add("help-corner");card.classList.add("has-help-corner");card.appendChild(h);}
+  });
+}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 function fmtD(iso){return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
 function nowLocalInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
@@ -1041,7 +1093,7 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.v==="charts"){fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();}
   if(b.dataset.v==="diario")renderDiaryAll();
   if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
-  if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
+  if(b.dataset.v==="bio"){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
   if(b.dataset.v==="fotos")renderFotos();
   if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
 });
@@ -1826,6 +1878,42 @@ function renderBioChart(){
     y:{...baseOpts.scales.y,position:"left",title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}},
     y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"%",color:PAL.muted,font:{size:9}}}}}});
 }
+function renderBioList(){
+  const el=$("#bioList");if(!el)return;
+  const b=db.biometrics.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!b.length){el.innerHTML='<div class="empty">Nenhum registro de biometria.</div>';return;}
+  el.innerHTML='<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Registros ('+b.length+')</div>';
+  const mkRow=x=>{
+    const parts=[];
+    if(x.weight!=null)parts.push(x.weight+" kg");
+    if(x.bf!=null)parts.push(x.bf+"% GC");
+    if(x.smm!=null)parts.push("MME "+x.smm);
+    if(x.visceral!=null)parts.push("visc "+x.visceral);
+    const row=document.createElement("div");row.className="log-item";
+    row.innerHTML='<div class="log-main"><div class="t">'+fmtD(x.date)+
+      (x.method?' <span class="muted" style="font-size:10px">'+x.method+'</span>':'')+'</div>'+
+      '<div class="s">'+(parts.join(" · ")||"—")+'</div></div>'+
+      '<button class="del" aria-label="Apagar">×</button>';
+    row.querySelector(".del").onclick=()=>delBio(x);
+    return row;
+  };
+  const cur=b.slice(0,12),older=b.slice(12);
+  cur.forEach(x=>el.appendChild(mkRow(x)));
+  if(older.length){
+    const btn=document.createElement("button");btn.className="btn btn-ghost btn-sm";btn.style.cssText="width:100%;margin-top:10px";
+    btn.textContent=`▸ Ver anteriores (${older.length})`;
+    const wrap=document.createElement("div");wrap.style.display="none";
+    older.slice(0,200).forEach(x=>wrap.appendChild(mkRow(x)));
+    btn.onclick=()=>{const open=wrap.style.display==="none";wrap.style.display=open?"block":"none";btn.textContent=open?"▾ Ocultar anteriores":`▸ Ver anteriores (${older.length})`;};
+    el.appendChild(btn);el.appendChild(wrap);
+  }
+}
+function delBio(x){
+  const removed=x;
+  db.biometrics=db.biometrics.filter(y=>y.id!==x.id);save();
+  renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();
+  toast("Registro apagado",()=>{db.biometrics.push(removed);save();renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();});
+}
 function renderMoodChart(){
   const c=db.checkins.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(chMood)chMood.destroy();
@@ -1841,7 +1929,7 @@ $("#bSave").onclick=()=>{
   const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value),smm=parseFloat($("#bSmm").value),visc=parseFloat($("#bVisc").value);
   if(!w&&!bf&&!smm&&!visc)return toast("Informe ao menos um valor");
   db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,smm:isNaN(smm)?null:smm,visceral:isNaN(visc)?null:visc,method:$("#bMethod").value});
-  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBodyComp();renderGoals();renderWeightTrend();toast("Biometria salva ✓");
+  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();toast("Biometria salva ✓");
 };
 $("#goalSave").onclick=()=>{
   const num=id=>{const v=$(id).value;return v!==""?parseFloat(v):null;};
@@ -1855,7 +1943,9 @@ $("#goalSave").onclick=()=>{
   // Mantém o campo legado de peso-alvo (usado na tendência de peso) em sincronia
   db.settings.goalWeight=db.settings.goals.weight;
   if($("#setGoal"))$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";
-  save();renderGoals();renderWeightTrend();toast("Metas salvas ✓");
+  save();renderGoals();renderWeightTrend();
+  {const cg=$("#cardGoals");if(cg)cg.classList.add("collap");}
+  toast("Metas salvas ✓");
 };
 const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["alb","lAlb"]];
 $("#lSave").onclick=()=>{
@@ -2702,6 +2792,10 @@ function initAll(){
   if($("#trShiftL"))$("#trShiftL").onclick=()=>shiftAnchor(-1);
   if($("#trShiftR"))$("#trShiftR").onclick=()=>shiftAnchor(1);
   $$(".card.collapsible>h2.chead").forEach(h=>h.onclick=()=>h.parentElement.classList.toggle("collap"));
+  initHelp();
+  // Metas: colapsado por padrão se já houver algum alvo definido (mostra só os alvos)
+  {const g=db.settings.goals||{};const hasGoal=[g.weight,g.bf,g.lean,g.fat].some(v=>v!=null);
+   const cg=$("#cardGoals");if(cg&&hasGoal)cg.classList.add("collap");}
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames · v${APP_VERSION}`:`monitor de aplicações · v${APP_VERSION}`;

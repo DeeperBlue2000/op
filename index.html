@@ -556,6 +556,19 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
+    <h2>Metas / objetivos <span class="hint">acompanhamento</span></h2>
+    <div class="grid2">
+      <div class="field"><label>Objetivo de peso (kg)</label><input id="goalW" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Objetivo de %GC</label><input id="goalBf" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Objetivo massa magra (kg)</label><input id="goalLean" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Objetivo de gordura (kg)</label><input id="goalFat" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+    </div>
+    <div class="field"><label>Prazo (opcional)</label><input id="goalDeadline" type="date"></div>
+    <button class="btn btn-ghost" id="goalSave">Salvar metas</button>
+    <div id="goalProgress" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
     <h2>Composição corporal <span class="hint">massa magra × gordura</span></h2>
     <div class="kpi" id="compKpi"></div>
     <div class="chart-wrap tall"><canvas id="chComp"></canvas></div>
@@ -760,8 +773,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
 <nav id="nav">
   <button data-v="resumo" class="on"><svg viewBox="0 0 24 24"><path d="M3 12l2-2 4 4 6-6 4 4 2-2"/><path d="M3 20h18"/></svg>Resumo</button>
-  <button data-v="apply"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>EAA</button>
   <button data-v="diario"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>Diário</button>
+  <button data-v="apply"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>EAA</button>
   <button data-v="glp1"><svg viewBox="0 0 24 24"><path d="M12 2s5 5.5 5 10a5 5 0 01-10 0c0-4.5 5-10 5-10z"/></svg>GLP-1</button>
   <button data-v="charts"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>Gráficos</button>
   <button data-v="bio"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-12 2 6h6"/></svg>Saúde</button>
@@ -946,6 +959,7 @@ function fresh(){
     training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3,
+      goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
       coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
 }
 function migrate(r){
@@ -960,6 +974,7 @@ function migrate(r){
   if(s.examDays==null)s.examDays=120;
   if(s.heightCm==null)s.heightCm=176;
   if(s.goalWeight===undefined)s.goalWeight=null;
+  if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
   if(s.albumin==null)s.albumin=4.3;
   if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
   r.daily=r.daily||{};
@@ -1026,7 +1041,7 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.v==="charts"){fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();}
   if(b.dataset.v==="diario")renderDiaryAll();
   if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
-  if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
+  if(b.dataset.v==="bio"){renderBioChart();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
   if(b.dataset.v==="fotos")renderFotos();
   if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
 });
@@ -1826,7 +1841,21 @@ $("#bSave").onclick=()=>{
   const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value),smm=parseFloat($("#bSmm").value),visc=parseFloat($("#bVisc").value);
   if(!w&&!bf&&!smm&&!visc)return toast("Informe ao menos um valor");
   db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,smm:isNaN(smm)?null:smm,visceral:isNaN(visc)?null:visc,method:$("#bMethod").value});
-  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBodyComp();renderWeightTrend();toast("Biometria salva ✓");
+  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBodyComp();renderGoals();renderWeightTrend();toast("Biometria salva ✓");
+};
+$("#goalSave").onclick=()=>{
+  const num=id=>{const v=$(id).value;return v!==""?parseFloat(v):null;};
+  db.settings.goals={
+    weight: num("#goalW"),
+    bf:     num("#goalBf"),
+    lean:   num("#goalLean"),
+    fat:    num("#goalFat"),
+    deadline: $("#goalDeadline").value||null
+  };
+  // Mantém o campo legado de peso-alvo (usado na tendência de peso) em sincronia
+  db.settings.goalWeight=db.settings.goals.weight;
+  if($("#setGoal"))$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";
+  save();renderGoals();renderWeightTrend();toast("Metas salvas ✓");
 };
 const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["alb","lAlb"]];
 $("#lSave").onclick=()=>{
@@ -1914,7 +1943,14 @@ function coProtocolDue(){
   if(cp.anastrozol){const a=cp.anastrozol;const shot=lastTestoInjection();
     if(shot){const T=+new Date(shot.date);const dueT=T+(a.offsetH||24)*3600e3;
       const paired=db.injections.some(i=>i.drug===a.drug&&+new Date(i.date)>=T);
-      const status=paired?"done":(now>=dueT?"overdue":"upcoming");
+      // Botão disponível assim que o dia previsto chega (mesmo dia do vencimento),
+      // não só depois de vencido — fluxo unificado com a Cabergolina.
+      const dueToday=dkey(new Date(dueT))===dkey(new Date(now));
+      let status;
+      if(paired)status="done";
+      else if(now>=dueT)status="overdue";
+      else if(dueToday)status="due";
+      else status="upcoming";
       out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,
         reason:(a.offsetH||24)+"h após "+shot.drug.replace("Testosterona ","Test ")+" de "+fmtD(shot.date)});
     } else out.push({drug:a.drug,dose:a.dose,dueTime:null,status:"none",reason:"sem aplicação de testo registrada"});
@@ -2060,6 +2096,71 @@ function renderBodyComp(){
     if(lastSmm&&firstSmm&&smmPts.length>1){const dS=lastSmm.smm-firstSmm.smm;msg+=" MME medida "+(dS>=0?"+":"")+dS.toFixed(1)+"kg.";}
     note.innerHTML='<div class="note '+cls+'" style="margin-top:10px">'+msg+'</div>';
   } else note.innerHTML="";
+}
+
+// ---------- Metas / objetivos de biometria ----------
+function renderGoals(){
+  const el=$("#goalProgress");if(!el)return;
+  const g=(db.settings.goals)||{};
+  // Estado atual derivado do último registro de biometria
+  const wPts=db.biometrics.filter(x=>x.weight!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const cPts=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const lastW=wPts[wPts.length-1]||null, firstW=wPts[0]||null;
+  const lastC=cPts[cPts.length-1]||null, firstC=cPts[0]||null;
+  const cur={
+    weight: lastW?lastW.weight:null,
+    bf:      lastC?lastC.bf:null,
+    lean:    lastC?lastC.weight*(1-lastC.bf/100):null,
+    fat:     lastC?lastC.weight*(lastC.bf/100):null
+  };
+  const start={
+    weight: firstW?firstW.weight:null,
+    bf:      firstC?firstC.bf:null,
+    lean:    firstC?firstC.weight*(1-firstC.bf/100):null,
+    fat:     firstC?firstC.weight*(firstC.bf/100):null
+  };
+  const defs=[
+    ["weight","Peso","kg",1],
+    ["bf","%GC","%",1],
+    ["lean","Massa magra","kg",2],
+    ["fat","Gordura","kg",1]
+  ];
+  const rows=[];
+  defs.forEach(([k,lbl,unit,dec])=>{
+    const target=g[k];if(target==null)return;
+    const c=cur[k], s=start[k];
+    if(c==null){rows.push('<div class="wk"><div style="display:flex;justify-content:space-between"><span style="font-size:13px">'+lbl+'</span><span class="mg">alvo '+(+target).toFixed(dec)+unit+'</span></div><div class="pct">sem registro de biometria</div></div>');return;}
+    // Progresso = quanto do caminho entre início e alvo já foi percorrido
+    const totalGap=(s!=null)?(target-s):null;          // distância total planejada
+    const remaining=target-c;                          // o que falta
+    let pct;
+    if(totalGap==null||Math.abs(totalGap)<1e-6){pct=Math.abs(remaining)<1e-6?100:0;}
+    else{pct=Math.round((1-remaining/totalGap)*100);}
+    pct=Math.max(0,Math.min(100,pct));
+    const reached=Math.abs(remaining)<(k==="bf"?0.2:0.3)|| (totalGap!=null&&((totalGap<0&&c<=target)||(totalGap>0&&c>=target)));
+    const barCol=reached?PAL.green:PAL.amber;
+    const remTxt=reached?'<span style="color:'+PAL.green+'">✓ atingida</span>':
+      ('falta '+(remaining>0?"+":"")+remaining.toFixed(dec)+unit);
+    rows.push(
+      '<div class="wk">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
+          '<span style="font-size:13px">'+lbl+' <span class="muted" style="font-size:10.5px">atual '+(+c).toFixed(dec)+unit+'</span></span>'+
+          '<span class="mg">alvo '+(+target).toFixed(dec)+unit+'</span>'+
+        '</div>'+
+        '<div class="bar"><i style="width:'+pct+'%;background:'+barCol+'"></i></div>'+
+        '<div class="pct">'+pct+'% · '+remTxt+(start[k]!=null?' · partiu de '+(+s).toFixed(dec)+unit:'')+'</div>'+
+      '</div>');
+  });
+  // Prazo
+  let deadlineTxt="";
+  if(g.deadline){
+    const dd=Math.ceil((+new Date(g.deadline+"T12:00:00")-Date.now())/864e5);
+    const col=dd<0?PAL.red:dd<=14?PAL.amber:PAL.muted;
+    const dstr=new Date(g.deadline+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});
+    deadlineTxt='<div class="note" style="margin-top:10px;border-left-color:'+col+'">Prazo: <b>'+dstr+'</b> · '+(dd<0?Math.abs(dd)+" dias atrás (vencido)":dd===0?"hoje":"em "+dd+" dias")+'</div>';
+  }
+  if(!rows.length&&!deadlineTxt){el.innerHTML='<div class="muted" style="font-size:12px">Defina ao menos um objetivo acima para acompanhar o progresso.</div>';return;}
+  el.innerHTML=rows.join("")+deadlineTxt;
 }
 
 // ---------- M6: tendência de peso ----------
@@ -2524,6 +2625,10 @@ $("#saveSet").onclick=()=>{
   db.settings.examDays=+$("#setExam").value||120;
   db.settings.heightCm=+$("#setHeight").value||176;
   db.settings.goalWeight=$("#setGoal").value!==""?+$("#setGoal").value:null;
+  // Espelha o peso-alvo no objeto de metas e no card de Metas/objetivos
+  db.settings.goals=db.settings.goals||{weight:null,bf:null,lean:null,fat:null,deadline:null};
+  db.settings.goals.weight=db.settings.goalWeight;
+  if($("#goalW"))$("#goalW").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";
   db.settings.albumin=+$("#setAlb").value||4.3;
   const cp=db.settings.coProtocol||{};
   cp.enabled=$("#cpEnabled").checked;
@@ -2531,7 +2636,7 @@ $("#saveSet").onclick=()=>{
   const cabDays=[...$("#cpCabDays").querySelectorAll("button.on")].map(b=>+b.dataset.d);
   cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,days:cabDays.length?cabDays:[2,5]};
   db.settings.coProtocol=cp;
-  save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();toast("Configurações salvas ✓");
+  save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();renderGoals();renderWeightTrend();toast("Configurações salvas ✓");
 };
 function snapSummary(slot){
   try{const s=JSON.parse(localStorage.getItem("control_snap_"+slot));if(!s)return null;
@@ -2584,9 +2689,15 @@ function initAll(){
   $("#bDate").value=todayInput();$("#lDate").value=todayInput();$("#cDate").value=todayInput();
   $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;
   $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
+  {const g=db.settings.goals||{};
+   if($("#goalW"))$("#goalW").value=g.weight!=null?g.weight:"";
+   if($("#goalBf"))$("#goalBf").value=g.bf!=null?g.bf:"";
+   if($("#goalLean"))$("#goalLean").value=g.lean!=null?g.lean:"";
+   if($("#goalFat"))$("#goalFat").value=g.fat!=null?g.fat:"";
+   if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";}
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();
+  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();renderGoals();
   if($("#trSavePat"))$("#trSavePat").onclick=saveTrainPattern;
   if($("#trShiftL"))$("#trShiftL").onclick=()=>shiftAnchor(-1);
   if($("#trShiftR"))$("#trShiftR").onclick=()=>shiftAnchor(1);

@@ -789,7 +789,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.02</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.03</div>
 </section>
 
 </main>
@@ -816,6 +816,22 @@ const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 const KEY="control_v2", OLD_KEY="ciclolog_v1";
 const SITES=["Deltóide D","Deltóide E","Vasto Lateral D","Vasto Lateral E","Ventroglúteo D","Ventroglúteo E","Abdômen D","Abdômen E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
 const PAL={amber:"#F59E0B",amber2:"#fbbf24",blue:"#60a5fa",violet:"#a78bfa",green:"#34d399",pink:"#f472b6",red:"#f87171",muted:"#9aa0a8"};
+
+// ---------- Helpers utilitários compartilhados ----------
+// Data: meio-dia local evita drift de fuso ao comparar/iterar dias.
+function today12(){const d=new Date();d.setHours(12,0,0,0);return d;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+// DOM: set-text seguro (no-op se o elemento não existe na view atual).
+function setText(id,v){const el=$("#"+id);if(el)el.textContent=v;}
+// KPI: gera o markup padrão de box (valor + label).
+const kpiBox=(v,k,vs)=>`<div class="box"><div class="v"${vs?` style="${vs}"`:""}>${v}</div><div class="k">${k}</div></div>`;
+const kpi3=(...boxes)=>boxes.map(b=>kpiBox(b[0],b[1],b[2])).join("");
+// Chart.js: opções de eixo recorrentes (baseOpts é avaliado no momento da chamada).
+const axisTitle=t=>({display:true,text:t,color:PAL.muted,font:{size:9}});
+const leftY=(text,extra={})=>({...baseOpts.scales.y,position:"left",...(text?{title:axisTitle(text)}:{}),...extra});
+// Chart.js: registro central — destrói o gráfico anterior e recria no mesmo canvas.
+const charts={};
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();return charts[id]=new Chart($("#"+id),cfg);}
 
 // ============================================================
 // SUPABASE SYNC ENGINE
@@ -960,7 +976,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.02";
+const APP_VERSION="4.03";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1180,6 +1196,13 @@ $("#btnSave").onclick=()=>{
   applyDrugContext();renderLog();renderNextDose();renderWeekly();renderBodyMap();renderCoProtocol();
   toast(oral?"Dose registrada ✓":"Aplicação registrada ✓");
 };
+// Linha de histórico compartilhada por EAA e GLP-1 (markup idêntico; variam cor, rótulo de sítio e handler).
+function logRow(i,color,siteTxt,onDel){
+  const row=document.createElement("div");row.className="log-item";
+  row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${i.drug}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+i.note:""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
+  row.querySelector(".del").onclick=onDel;
+  return row;
+}
 function renderLog(){
   const list=db.injections.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   $("#logCount").textContent=list.length+" registros";
@@ -1189,16 +1212,7 @@ function renderLog(){
   const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
   const isCur=i=>{const d=new Date(i.date);return d.getFullYear()===cy&&d.getMonth()===cm;};
   const cur=list.filter(isCur),older=list.filter(i=>!isCur(i));
-  const mkRow=i=>{
-    const c=(drugByName(i.drug)||{}).color||PAL.muted;
-    const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div>
-      <div class="log-main"><div class="t">${i.drug}</div>
-      <div class="s">${i.site?i.site:"Oral"} · ${fmtDate(i.date)}${i.note?" · "+i.note:""}</div></div>
-      <div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
-    row.querySelector(".del").onclick=()=>delInjection(i);
-    return row;
-  };
+  const mkRow=i=>logRow(i,(drugByName(i.drug)||{}).color||PAL.muted,i.site||"Oral",()=>delInjection(i));
   if(!cur.length)el.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Nenhuma aplicação neste mês.</div>';
   cur.forEach(i=>el.appendChild(mkRow(i)));
   if(older.length){
@@ -1289,7 +1303,7 @@ $("#btnIcs").onclick=()=>{
 };
 
 // ---------- DIÁRIO ----------
-let diaDate=todayInput(), chDiary;
+let diaDate=todayInput();
 function curDay(create){
   if(!db.daily)db.daily={};
   if(!db.daily[diaDate]&&create)db.daily[diaDate]={water:0,waterEvents:[],supps:{}};
@@ -1329,11 +1343,11 @@ $("#waterUndo").onclick=()=>{const d=curDay(false);if(!d.waterEvents||!d.waterEv
 // sono
 function buildSleepScale(){
   const el=$("#slpQ");el.innerHTML=[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}">${n}</button>`).join("");
-  el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
+  bindScale(el);
 }
 function renderSleep(){
   const d=curDay(false);
-  if($("#slpHint"))$("#slpHint").textContent=(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"noite anterior");
+  setText("slpHint",(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"noite anterior"));
   $("#slpH").value=d.sleepH!=null?d.sleepH:"";
   $("#slpBed").value=d.sleepBed||"";$("#slpWake").value=d.sleepWake||"";
   $$("#slpQ button").forEach(b=>b.classList.toggle("on",+b.dataset.v===d.sleepQ));
@@ -1391,15 +1405,14 @@ $("#addBlock").onclick=()=>{
 };
 function renderDiaryChart(){
   const keys=Object.keys(db.daily||{}).filter(k=>db.daily[k]&&((db.daily[k].water||0)>0||db.daily[k].sleepH!=null)).sort().slice(-14);
-  if(chDiary)chDiary.destroy();
   if(!keys.length)return clearCanvas("chDiary","sem registros");
   const labels=keys.map(k=>fmtD(k+"T12:00:00"));
-  chDiary=new Chart($("#chDiary"),{data:{labels,datasets:[
+  mkChart("chDiary",{data:{labels,datasets:[
     {type:"bar",label:"Água (L)",data:keys.map(k=>+( (db.daily[k].water||0)/1000).toFixed(2)),backgroundColor:"rgba(96,165,250,.55)",yAxisID:"y1",borderRadius:5},
     {type:"line",label:"Sono (h)",data:keys.map(k=>db.daily[k].sleepH??null),borderColor:PAL.violet,backgroundColor:PAL.violet,borderWidth:2,tension:.3,pointRadius:3,yAxisID:"y",spanGaps:true}
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,position:"left",beginAtZero:true,title:{display:true,text:"h",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"L",color:PAL.muted,font:{size:9}}}}}});
+    y:leftY("h",{beginAtZero:true}),
+    y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("L")}}}});
 }
 
 // ---------- ADESÃO (suplementos) ----------
@@ -1409,10 +1422,10 @@ function scheduledIds(){const s=new Set();(db.suppSchedule||[]).forEach(b=>b.ite
 function takenCount(k){const d=db.daily&&db.daily[k];if(!d||!d.supps)return 0;const ids=scheduledIds();return Object.keys(d.supps).filter(x=>d.supps[x]&&ids.has(x)).length;}
 function hasRecord(k){const d=db.daily&&db.daily[k];return !!(d&&d.supps&&Object.keys(d.supps).length);}
 function adhPct(k){const t=scheduleTotal();return t?Math.min(1,takenCount(k)/t):0;}
-function avgAdh(n){const z=new Date();z.setHours(12,0,0,0);let s=0;for(let i=0;i<n;i++){const dd=new Date(z);dd.setDate(z.getDate()-i);s+=adhPct(dkey(dd));}return s/n;}
+function avgAdh(n){const z=today12();let s=0;for(let i=0;i<n;i++){const dd=addDays(z,-i);s+=adhPct(dkey(dd));}return s/n;}
 function computeStreak(){
-  const z=new Date();z.setHours(12,0,0,0);let cur=0;
-  for(let i=0;i<400;i++){const dd=new Date(z);dd.setDate(z.getDate()-i);const ok=adhPct(dkey(dd))>=0.8;
+  const z=today12();let cur=0;
+  for(let i=0;i<400;i++){const dd=addDays(z,-i);const ok=adhPct(dkey(dd))>=0.8;
     if(ok)cur++;else if(i===0)continue;else break;}
   let best=0,run=0;const keys=Object.keys(db.daily||{}).sort();
   if(keys.length){let d0=new Date(keys[0]+"T12:00:00");for(let dd=new Date(d0);dd<=z;dd.setDate(dd.getDate()+1)){const ok=adhPct(dkey(dd))>=0.8;run=ok?run+1:0;best=Math.max(best,run);}}
@@ -1420,30 +1433,15 @@ function computeStreak(){
 }
 function renderAdherence(){
   const today=adhPct(dkey(new Date()));
-  $("#adhKpi").innerHTML=`<div class="box"><div class="v">${Math.round(today*100)}%</div><div class="k">hoje</div></div>
-    <div class="box"><div class="v">${Math.round(avgAdh(7)*100)}%</div><div class="k">7 dias</div></div>
-    <div class="box"><div class="v">${Math.round(avgAdh(30)*100)}%</div><div class="k">30 dias</div></div>`;
+  $("#adhKpi").innerHTML=kpi3([Math.round(today*100)+"%","hoje"],[Math.round(avgAdh(7)*100)+"%","7 dias"],[Math.round(avgAdh(30)*100)+"%","30 dias"]);
   const st=computeStreak();$("#adhStreak").textContent=`sequência ${st.cur}d · recorde ${st.best}d`;
-  // heatmap
-  const el=$("#heat");el.innerHTML="";const tot=scheduleTotal();
-  const z=new Date();z.setHours(12,0,0,0);
-  const start=new Date(z);start.setDate(z.getDate()-83);start.setDate(start.getDate()-start.getDay());
-  const end=new Date(z);end.setDate(z.getDate()+(6-z.getDay()));
-  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-    const k=dkey(d);const cell=document.createElement("div");cell.className="cell";
-    if(d>z){cell.classList.add("future");}
-    else{
-      if(k===dkey(z))cell.classList.add("today");
-      const has=hasRecord(k);
-      if(has&&tot){const p=takenCount(k)/tot;cell.style.background=p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";}
-      cell.title=fmtD(k+"T12:00:00")+" — "+(has?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");
-      cell.onclick=()=>{diaDate=k;renderDiaryAll();window.scrollTo(0,0);};
-    }
-    el.appendChild(cell);
-  }
+  // heatmap (grade 13 semanas compartilhada via buildHeat)
+  buildHeat("#heat",k=>{const tot=scheduleTotal();if(!hasRecord(k)||!tot)return null;const p=takenCount(k)/tot;return p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";},
+    k=>{const tot=scheduleTotal();return fmtD(k+"T12:00:00")+" — "+(hasRecord(k)?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");});
   // por item (30d)
+  const z=today12();
   const ie=$("#adhItems");const days=[];
-  for(let i=0;i<30;i++){const dd=new Date(z);dd.setDate(z.getDate()-i);const k=dkey(dd);if(hasRecord(k))days.push(k);}
+  for(let i=0;i<30;i++){const dd=addDays(z,-i);const k=dkey(dd);if(hasRecord(k))days.push(k);}
   if(!days.length){ie.innerHTML='<div class="muted">Sem registros nos últimos 30 dias.</div>';return;}
   const items=[];(db.suppSchedule||[]).forEach(b=>b.items.forEach(it=>items.push(it)));
   const rows=items.map(it=>{const c=days.filter(k=>db.daily[k].supps&&db.daily[k].supps[it.id]).length;return {name:it.name,pct:Math.round(c/days.length*100)};});
@@ -1456,7 +1454,6 @@ function renderAdherence(){
 
 // ---------- TENDÊNCIA DE EXAMES ----------
 const TREND_MARKERS=[["e2","Estradiol","pg/mL"],["prol","Prolactina","ng/mL"],["tt","Testo Total","ng/dL"],["freeT","Testo Livre","pg/mL"],["shbg","SHBG","nmol/L"],["dht","DHT","ng/dL"],["hct","Hematócrito","%"],["hdl","HDL","mg/dL"],["ldl","LDL","mg/dL"],["vldl","VLDL","mg/dL"],["tg","Triglicérides","mg/dL"],["tgo","TGO","U/L"],["tgp","TGP","U/L"],["ggt","GGT","U/L"],["ur","Ureia","mg/dL"],["cr","Creatinina","mg/dL"],["cys","Cistatina C","mg/L"],["fer","Ferritina","ng/mL"]];
-let chTrend;
 function fillTrendMarker(){const s=$("#trendMarker");if(s.options.length)return;TREND_MARKERS.forEach(m=>s.add(new Option(m[1],m[0])));}
 $("#trendMarker").onchange=renderLabTrend;
 function renderLabTrend(){
@@ -1469,7 +1466,6 @@ function renderLabTrend(){
     $("#examDue").textContent=dd<0?`exame atrasado ${-dd}d`:`próximo exame em ${dd}d`;}
   else $("#examDue").textContent="";
   const ex=db.labs.filter(l=>l[key]!=null&&l[key]!=="").sort((a,b)=>new Date(a.date)-new Date(b.date));
-  if(chTrend)chTrend.destroy();
   if(!ex.length){clearCanvas("chTrend","sem dados deste marcador");$("#trendDelta").innerHTML='<span class="muted">Registre exames com este marcador.</span>';return;}
   const labels=ex.map(l=>fmtD(l.date)),vals=ex.map(l=>+l[key]);
   const ref=(db.settings.refs||{})[key]||[null,null];const ds=[];
@@ -1480,7 +1476,7 @@ function renderLabTrend(){
   else if(ref[0]!=null){ds.push({label:"_lo",data:vals.map(()=>ref[0]),borderColor:"rgba(248,113,113,.45)",borderDash:[5,5],pointRadius:0,fill:false});}
   const ptc=ex.map(l=>{const f=flag(key,+l[key]);return f==="flag-hi"?PAL.red:f==="flag-ok"?PAL.green:PAL.amber;});
   ds.push({label:meta[1]+(meta[2]?" ("+meta[2]+")":""),data:vals,borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.25,pointRadius:5,pointBackgroundColor:ptc,pointBorderColor:ptc});
-  chTrend=new Chart($("#chTrend"),{type:"line",data:{labels,datasets:ds},
+  mkChart("chTrend",{type:"line",data:{labels,datasets:ds},
     options:{...baseOpts,plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:7,filter:it=>!it.text.startsWith("_")}}},
       scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,beginAtZero:false}}}});
   const last=vals[vals.length-1],prev=vals.length>1?vals[vals.length-2]:null;
@@ -1492,7 +1488,7 @@ function renderLabTrend(){
 }
 
 // ---------- GLP-1 ----------
-let chGlpLevel,chGlpResult,gSelectedSite=null;
+let gSelectedSite=null;
 function glpDrugByName(n){return db.glp1Drugs.find(d=>d.name===n);}
 function glpDaysSinceSite(site){return daysSinceSiteAll(site);}
 function glpSuggestSite(){let best=null,bd=-1;GLP1_SITES.forEach(s=>{const d=glpDaysSinceSite(s);const v=d==null?1e9:d;if(v>bd){bd=v;best=s;}});return best;}
@@ -1525,11 +1521,9 @@ function renderGlpLog(){
   $("#gLogCount").textContent=list.length+" registros";
   const el=$("#gLog");if(!list.length){el.innerHTML='<div class="empty">Nenhuma aplicação ainda.</div>';return;}
   el.innerHTML="";
-  list.slice(0,50).forEach(i=>{const c=(glpDrugByName(i.drug)||{}).color||PAL.muted;
-    const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${i.drug}</div><div class="s">${i.site||"SC"} · ${fmtDate(i.date)}${i.note?" · "+i.note:""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
-    row.querySelector(".del").onclick=()=>{db.glp1=db.glp1.filter(x=>x.id!==i.id);save();renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();toast("Excluído",()=>{db.glp1.push(i);save();renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();});};
-    el.appendChild(row);});
+  const reGlp=()=>{renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();};
+  list.slice(0,50).forEach(i=>el.appendChild(logRow(i,(glpDrugByName(i.drug)||{}).color||PAL.muted,i.site||"SC",
+    ()=>{db.glp1=db.glp1.filter(x=>x.id!==i.id);save();reGlp();toast("Excluído",()=>{db.glp1.push(i);save();reGlp();});})));
 }
 function renderGlpNext(){
   const box=$("#gNextBox");const byDrug={};
@@ -1548,13 +1542,18 @@ function renderGlpNext(){
     box.appendChild(row);});
   renderDueBanner("#dueGlp",due);
 }
+// Zona do body map compartilhada (EAA e GLP-1); cor por frescor: vermelho <lo, âmbar <hi, senão verde.
+function bmZone(s,d,lo,hi){
+  let col=PAL.green,txt=d==null?"—":d+"d";
+  if(d!=null){if(d<lo)col=PAL.red;else if(d<hi)col=PAL.amber;}
+  const last=siteLastInfo(s);
+  const z=document.createElement("div");z.className="bm-zone";
+  z.innerHTML=`<div class="bm-dot" style="background:${col}">${txt}</div><div class="bm-info"><div class="lbl">${s}</div><div class="days">${last?"última: "+fmtD(last.date)+" · "+last.kind:"nunca"}</div></div>`;
+  return z;
+}
 function renderGlpMap(){
   const m=$("#gBodyMap");m.innerHTML="";
-  GLP1_SITES.forEach(s=>{const d=glpDaysSinceSite(s);let col=PAL.green,txt=d==null?"—":d+"d";if(d!=null){if(d<4)col=PAL.red;else if(d<8)col=PAL.amber;}
-    const last=siteLastInfo(s);
-    const z=document.createElement("div");z.className="bm-zone";
-    z.innerHTML=`<div class="bm-dot" style="background:${col}">${txt}</div><div class="bm-info"><div class="lbl">${s}</div><div class="days">${last?"última: "+fmtD(last.date)+" · "+last.kind:"nunca"}</div></div>`;
-    m.appendChild(z);});
+  GLP1_SITES.forEach(s=>m.appendChild(bmZone(s,glpDaysSinceSite(s),4,8)));
 }
 function bindScale(el){el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});}
 function buildGlpInputs(){
@@ -1581,7 +1580,7 @@ function glpTimeline(forecast){
   return {t0,labels,days,stepDays:step};
 }
 function renderGlpLevel(){
-  const tl=glpTimeline(14);if(chGlpLevel)chGlpLevel.destroy();
+  const tl=glpTimeline(14);
   if(!tl)return clearCanvas("chGlpLevel","registre aplicações");
   const N=tl.days.length,drugs=[...new Set(db.glp1.map(i=>i.drug))],per={};drugs.forEach(d=>per[d]=new Array(N).fill(0));
   db.glp1.forEach(i=>{const hl=(glpDrugByName(i.drug)||{}).hl||6;const k=Math.LN2/hl;const ti=+new Date(i.date);for(let x=0;x<N;x++){const dt=(+tl.days[x]-ti)/864e5;if(dt>=0)per[i.drug][x]+=i.doseMg*Math.exp(-k*dt);}});
@@ -1589,25 +1588,25 @@ function renderGlpLevel(){
   const ds=[];drugs.forEach(d=>{const c=(glpDrugByName(d)||{}).color||PAL.muted;ds.push(...splitForecast(per[d],nowIdx,c,d));});
   const doseArr=new Array(N).fill(null);db.glp1.forEach(i=>{const x=Math.round((+new Date(i.date)-tl.t0)/864e5/tl.stepDays);if(x>=0&&x<N)doseArr[x]=(doseArr[x]||0)+i.doseMg;});
   ds.push({type:"line",label:"Dose (mg)",data:doseArr,borderColor:"#e8e9ec",backgroundColor:"#e8e9ec",pointRadius:5,pointStyle:"rectRot",showLine:false,yAxisID:"y1"});
-  chGlpLevel=new Chart($("#chGlpLevel"),{type:"line",data:{labels:tl.labels,datasets:ds},
+  mkChart("chGlpLevel",{type:"line",data:{labels:tl.labels,datasets:ds},
     options:{...baseOpts,interaction:{mode:"index",intersect:false},elements:{point:{radius:0}},
       plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:6,filter:it=>!it.text.endsWith("·proj")}}},
-      scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"mg-eq",color:PAL.muted,font:{size:9}}},y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"mg",color:PAL.muted,font:{size:9}}}}}});
+      scales:{x:baseOpts.scales.x,y:leftY("mg-eq"),y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("mg")}}}});
 }
 function renderGlpResult(){
-  const tl=glpTimeline(0);if(chGlpResult)chGlpResult.destroy();
+  const tl=glpTimeline(0);
   if(!tl)return clearCanvas("chGlpResult","sem dados");
   const N=tl.days.length;const idxOf=iso=>{const x=Math.round((+new Date(iso)-tl.t0)/864e5/tl.stepDays);return x>=0&&x<N?x:null;};
   const weight=new Array(N).fill(null),app=new Array(N).fill(null),nau=new Array(N).fill(null);
   db.biometrics.forEach(b=>{if(b.weight==null)return;const x=idxOf(b.date);if(x!=null)weight[x]=b.weight;});
   db.glp1sym.forEach(s=>{const x=idxOf(s.date);if(x==null)return;if(s.appetite!=null)app[x]=s.appetite;if(s.nausea!=null)nau[x]=s.nausea;});
-  chGlpResult=new Chart($("#chGlpResult"),{data:{labels:tl.labels,datasets:[
+  mkChart("chGlpResult",{data:{labels:tl.labels,datasets:[
     {type:"line",label:"Peso (kg)",data:weight,borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y"},
     {type:"line",label:"Apetite",data:app,borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:1.8,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"},
     {type:"line",label:"Náusea",data:nau,borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:1.8,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"}
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,position:"left",title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",min:0,max:5,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"},stepSize:1},grid:{drawOnChartArea:false},title:{display:true,text:"0–5",color:PAL.muted,font:{size:9}}}}}});
+    y:leftY("kg"),
+    y1:{position:"right",min:0,max:5,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"},stepSize:1},grid:{drawOnChartArea:false},title:axisTitle("0–5")}}}});
 }
 function renderGlp(){fillGlpSelect();glpDrugContext();renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();renderGlpResult();}
 
@@ -1683,7 +1682,7 @@ function renderProtCalendar(){
   const kpi=$("#adProtKpi"),heat=$("#adProtHeat"),gaps=$("#adProtGaps");
   if(!dr){kpi.innerHTML="";heat.innerHTML="";gaps.innerHTML="";return;}
   const days=protocolDoseDays(dr.name,dr.kind);const tol=1,cad=dr.cadence;
-  const today=new Date();today.setHours(12,0,0,0);const T=+today;
+  const today=today12();const T=+today;
   // Slots esperados: reancorados a cada aplicação real (não um grid rígido desde a 1ª dose).
   // Cada dose gera um slot esperado em +cad dias; testamos se há uma dose real (a seguinte,
   // tipicamente) cobrindo esse slot dentro de meia-cadência. Reancorar a cada dose evita que
@@ -1709,23 +1708,12 @@ function renderProtCalendar(){
   const ints=[];for(let i=1;i<days.length;i++)ints.push((days[i]-days[i-1])/864e5);
   const meanInt=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:null;
   const dev=ints.length?ints.reduce((a,b)=>a+Math.abs(b-cad),0)/ints.length:null;
-  kpi.innerHTML=`<div class="box"><div class="v">${onTime}%</div><div class="k">no prazo</div></div>
-    <div class="box"><div class="v">${meanInt!=null?meanInt.toFixed(1):"—"}</div><div class="k">interv. (alvo ${cad}d)</div></div>
-    <div class="box"><div class="v">${dev!=null?"±"+dev.toFixed(1):"—"}</div><div class="k">desvio</div></div>`;
-  heat.innerHTML="";
-  const z=new Date(today);const start=new Date(z);start.setDate(z.getDate()-83);start.setDate(start.getDate()-start.getDay());
-  const end=new Date(z);end.setDate(z.getDate()+(6-z.getDay()));
+  kpi.innerHTML=kpi3([onTime+"%","no prazo"],[meanInt!=null?meanInt.toFixed(1):"—","interv. (alvo "+cad+"d)"],[dev!=null?"±"+dev.toFixed(1):"—","desvio"]);
+  // calendário read-only (sem navegação) usando a grade compartilhada de 13 semanas
   const slotKeys=new Set(slots.map(s=>dkey(new Date(s))));
-  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-    const k=dkey(d);const cell=document.createElement("div");cell.className="cell";
-    if(d>z){cell.classList.add("future");}
-    else{const tk=+new Date(k+"T12:00:00");let bg="#33363c",title=fmtD(k+"T12:00:00")+" — ";
-      if(doseSet.has(k)){bg="#34d399";title+="aplicada";}
-      else if(slotKeys.has(k)){if(days.some(t=>Math.abs(t-tk)<=tol*864e5)){bg="#34d399";title+="no prazo (±1d)";}else{bg="#7f1d1d";title+="esperada e faltou";}}
-      else title+="não esperada";
-      cell.style.background=bg;cell.title=title;}
-    heat.appendChild(cell);
-  }
+  const onTimeAt=k=>days.some(t=>Math.abs(t-(+new Date(k+"T12:00:00")))<=tol*864e5);
+  buildHeat("#adProtHeat",k=>doseSet.has(k)?"#34d399":slotKeys.has(k)?(onTimeAt(k)?"#34d399":"#7f1d1d"):"#33363c",
+    k=>fmtD(k+"T12:00:00")+" — "+(doseSet.has(k)?"aplicada":slotKeys.has(k)?(onTimeAt(k)?"no prazo (±1d)":"esperada e faltou"):"não esperada"),false);
   const gapList=[];for(let i=1;i<days.length;i++){const gap=(days[i]-days[i-1])/864e5;if(gap>cad*1.5)gapList.push({from:days[i-1],to:days[i],gap:Math.round(gap)});}
   gaps.innerHTML=gapList.length
     ? '<div class="muted" style="font-size:11px;margin-bottom:5px">Lacunas (intervalo &gt; 1,5× cadência):</div>'+gapList.slice(-6).reverse().map(g=>`<div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);padding:2px 0">${fmtD(new Date(g.from).toISOString())} → ${fmtD(new Date(g.to).toISOString())}: <b style="color:var(--red)">${g.gap}d</b></div>`).join("")
@@ -1736,17 +1724,10 @@ $("#adProtDrug").onchange=e=>{adProtSel=e.target.value;renderProtCalendar();};
 
 // ---------- BODY MAP ----------
 function renderBodyMap(){
-  $("#warnDisp").textContent=db.settings.warnDays;
+  const w=db.settings.warnDays;
+  $("#warnDisp").textContent=w;
   const m=$("#bodyMap");m.innerHTML="";
-  SITES.forEach(s=>{
-    const d=daysSinceSite(s);let col=PAL.green,txt=d==null?"—":d+"d";
-    if(d!=null){if(d<db.settings.warnDays)col=PAL.red;else if(d<db.settings.warnDays*2)col=PAL.amber;}
-    const last=siteLastInfo(s);
-    const z=document.createElement("div");z.className="bm-zone";
-    z.innerHTML=`<div class="bm-dot" style="background:${col}">${txt}</div>
-      <div class="bm-info"><div class="lbl">${s}</div><div class="days">${last?"última: "+fmtD(last.date)+" · "+last.kind:"nunca"}</div></div>`;
-    m.appendChild(z);
-  });
+  SITES.forEach(s=>m.appendChild(bmZone(s,daysSinceSite(s),w,w*2)));
 }
 
 // ---------- PK ----------
@@ -1779,7 +1760,6 @@ function buildTimeline(forecastDays){
 }
 
 // ---------- CHARTS ----------
-let chFreq,chConc,chCorr,chBio,chMood,chComp,chWtTrend,chIron,chSymHorm,chAdhResult;
 const baseOpts={responsive:true,maintainAspectRatio:false,
   plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:7}}},
   scales:{x:{ticks:{color:PAL.muted,font:{size:9,family:"IBM Plex Mono"},maxTicksLimit:7},grid:{color:"#33363c"}},
@@ -1801,9 +1781,8 @@ function renderFreq(){
   if(phaseFilter!=="__all__")inj=inj.filter(i=>(i.phase||"")===phaseFilter);
   const counts={};inj.forEach(i=>counts[i.drug]=(counts[i.drug]||0)+1);
   const labels=Object.keys(counts),data=labels.map(l=>counts[l]),colors=labels.map(l=>(drugByName(l)||{}).color||PAL.muted);
-  if(chFreq)chFreq.destroy();
   if(!labels.length)return clearCanvas("chFreq","sem dados no período");
-  chFreq=new Chart($("#chFreq"),{type:"bar",data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:6}]},
+  mkChart("chFreq",{type:"bar",data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:6}]},
     options:{...baseOpts,plugins:{legend:{display:false}},scales:{...baseOpts.scales,y:{...baseOpts.scales.y,beginAtZero:true,ticks:{...baseOpts.scales.y.ticks,precision:0}}}}});
 }
 $("#freqSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#freqSeg .on").classList.remove("on");b.classList.add("on");renderFreq();});
@@ -1818,13 +1797,12 @@ function splitForecast(arr,nowIdx,color,label,thick){
 }
 function renderConc(){
   const tl=buildTimeline(14);
-  if(chConc)chConc.destroy();
   if(!tl)return clearCanvas("chConc","registre aplicações para ver a curva");
   const ds=[];
   tl.drugs.forEach(dn=>{const c=(drugByName(dn)||{}).color||PAL.muted;ds.push(...splitForecast(tl.series[dn],tl.nowIdx,c,dn));});
   if(tl.totalInj.some(v=>v>0))ds.push(...splitForecast(tl.totalInj,tl.nowIdx,"#e8e9ec","Total injetáveis",true));
   if(tl.totalOral.some(v=>v>0))ds.push(...splitForecast(tl.totalOral,tl.nowIdx,"#7dd3fc","Total orais",true));
-  chConc=new Chart($("#chConc"),{type:"line",data:{labels:tl.labels,datasets:ds},
+  mkChart("chConc",{type:"line",data:{labels:tl.labels,datasets:ds},
     options:{...baseOpts,interaction:{mode:"index",intersect:false},elements:{point:{radius:0}},
       plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:6,filter:it=>!it.text.endsWith("·proj")}}}}});
 }
@@ -1850,7 +1828,6 @@ function renderSS(){
 
 function renderCorr(){
   const tl=buildTimeline(0);
-  if(chCorr)chCorr.destroy();
   if(!tl)return clearCanvas("chCorr","sem dados");
   const t0=tl.days[0];
   const idxFor=iso=>{const d=Math.round((+new Date(iso)-t0)/864e5);return d>=0&&d<tl.labels.length?d:null;};
@@ -1862,23 +1839,22 @@ function renderCorr(){
   if(e2.length)ds.push({type:"scatter",label:"E2 (pg/mL)",data:e2,borderColor:PAL.red,backgroundColor:PAL.red,pointRadius:5,yAxisID:"y1"});
   if(prol.length)ds.push({type:"scatter",label:"Prolactina (ng/mL)",data:prol,borderColor:PAL.violet,backgroundColor:PAL.violet,pointRadius:5,yAxisID:"y1"});
   if(ai.length)ds.push({type:"scatter",label:"AI (timing)",data:ai,borderColor:PAL.green,backgroundColor:PAL.green,pointStyle:"triangle",pointRadius:7,yAxisID:"y1"});
-  chCorr=new Chart($("#chCorr"),{data:{labels:tl.labels,datasets:ds},
+  mkChart("chCorr",{data:{labels:tl.labels,datasets:ds},
     options:{...baseOpts,scales:{x:baseOpts.scales.x,
-      y:{...baseOpts.scales.y,position:"left",beginAtZero:true,title:{display:true,text:"mg-eq",color:PAL.muted,font:{size:9}}},
-      y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"labs",color:PAL.muted,font:{size:9}}}}}});
+      y:leftY("mg-eq",{beginAtZero:true}),
+      y1:{position:"right",beginAtZero:true,ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("labs")}}}});
 }
 
 function renderBioChart(){
   const b=db.biometrics.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-  if(chBio)chBio.destroy();
   if(!b.length)return clearCanvas("chBio","sem biometria");
   const labels=b.map(x=>fmtD(x.date));
-  chBio=new Chart($("#chBio"),{data:{labels,datasets:[
+  mkChart("chBio",{data:{labels,datasets:[
     {type:"line",label:"Peso (kg)",data:b.map(x=>x.weight),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.3,yAxisID:"y",pointRadius:3,spanGaps:true},
     {type:"line",label:"%GC",data:b.map(x=>x.bf),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,tension:.3,yAxisID:"y1",pointRadius:3,spanGaps:true}
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,position:"left",title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"%",color:PAL.muted,font:{size:9}}}}}});
+    y:leftY("kg"),
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("%")}}}});
 }
 function renderBioList(){
   const el=$("#bioList");if(!el)return;
@@ -1928,11 +1904,10 @@ function delBio(x){
 }
 function renderMoodChart(){
   const c=db.checkins.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-  if(chMood)chMood.destroy();
   if(!c.length)return clearCanvas("chMood","sem check-ins");
   const labels=c.map(x=>fmtD(x.date)),cols=[PAL.pink,PAL.amber,PAL.green,PAL.blue,PAL.red];
   const ds=CHECKS.map((ch,i)=>({label:ch.lbl,data:c.map(x=>x[ch.k]??null),borderColor:cols[i],backgroundColor:cols[i],borderWidth:1.8,tension:.3,pointRadius:2,spanGaps:true}));
-  chMood=new Chart($("#chMood"),{type:"line",data:{labels,datasets:ds},
+  mkChart("chMood",{type:"line",data:{labels,datasets:ds},
     options:{...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,min:0,max:5,ticks:{...baseOpts.scales.y.ticks,stepSize:1}}}}});
 }
 
@@ -2007,7 +1982,7 @@ function buildCheckScales(){
     const row=document.createElement("div");row.className="scale-row";
     row.innerHTML=`<label>${ch.lbl}</label><div class="scale" data-k="${ch.k}">${[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}">${n}</button>`).join("")}</div>
       <div class="cap"><span>1 · ${ch.lo}</span><span>${ch.hi} · 5</span></div>`;
-    row.querySelectorAll(".scale button").forEach(b=>b.onclick=()=>{row.querySelectorAll(".scale button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
+    bindScale(row.querySelector(".scale"));
     c.appendChild(row);
   });
 }
@@ -2132,10 +2107,7 @@ function renderResumo(){
   const lastExam=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   let examTxt="—";
   if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);examTxt=dd<=0?"vencido":"em "+dd+"d";}
-  $("#resumoKpi").innerHTML='<div class="box"><div class="v">'+(cd!=null?cd:"—")+'</div><div class="k">dia do ciclo</div></div>'+
-    '<div class="box"><div class="v">'+(lw?lw.weight.toFixed(1):"—")+'</div><div class="k">peso (kg)</div></div>'+
-    '<div class="box"><div class="v" style="color:'+trendCol+';font-size:13px">'+trendTxt+'</div><div class="k">tendência 7d</div></div>'+
-    '<div class="box"><div class="v" style="font-size:14px">'+examTxt+'</div><div class="k">próx. exame</div></div>';
+  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?lw.weight.toFixed(1):"—","peso (kg)"],[trendTxt,"tendência 7d","color:"+trendCol+";font-size:13px"],[examTxt,"próx. exame","font-size:14px"]);
   renderResumoNext();renderAppAdherence();renderCoProtocol();renderRitual();
 }
 function renderResumoNext(){
@@ -2160,9 +2132,7 @@ function renderAppAdherence(){
   let streak=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(dayHasRecord(k))streak++;else if(i===0)continue;else break;}
   let days7=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(dayHasRecord(dkey(d)))days7++;}
   const lw=lastBioWeight();const noWeight=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
-  $("#appAdhKpi").innerHTML='<div class="box"><div class="v">'+streak+'</div><div class="k">dias seguidos</div></div>'+
-    '<div class="box"><div class="v">'+days7+'/7</div><div class="k">últimos 7 dias</div></div>'+
-    '<div class="box"><div class="v">'+(noWeight==null?"—":noWeight+"d")+'</div><div class="k">sem pesar</div></div>';
+  $("#appAdhKpi").innerHTML=kpi3([streak,"dias seguidos"],[days7+"/7","últimos 7 dias"],[noWeight==null?"—":noWeight+"d","sem pesar"]);
   const n=[];
   if(noWeight!=null&&noWeight>=4)n.push("Peso não registrado há "+noWeight+" dias — num cut a tendência 7d perde precisão sem dados regulares.");
   if(days7<=3)n.push("Poucos registros nesta semana. Registros diários mantêm gráficos e adesão fiéis.");
@@ -2173,20 +2143,17 @@ function renderAppAdherence(){
 function renderBodyComp(){
   const s=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).map(x=>({t:+new Date(x.date),date:x.date,weight:x.weight,bf:x.bf,smm:x.smm!=null?x.smm:null,visceral:x.visceral!=null?x.visceral:null,lean:x.weight*(1-x.bf/100),fat:x.weight*(x.bf/100)})).sort((a,b)=>a.t-b.t);
   const hM=(db.settings.heightCm||176)/100;const kpi=$("#compKpi"),note=$("#compNote");
-  if(chComp)chComp.destroy();
   if(!s.length){kpi.innerHTML="";note.innerHTML="";clearCanvas("chComp","registre peso + %GC");return;}
   const last=s[s.length-1],first=s[0];const ffmi=last.lean/(hM*hM);
   // MME e gordura visceral: último valor disponível + variação vs primeiro disponível
   const smmPts=s.filter(x=>x.smm!=null),viscPts=s.filter(x=>x.visceral!=null);
   const lastSmm=smmPts[smmPts.length-1],firstSmm=smmPts[0];
   const lastVisc=viscPts[viscPts.length-1],firstVisc=viscPts[0];
-  let kpiH='<div class="box"><div class="v">'+last.lean.toFixed(1)+'</div><div class="k">massa magra (kg)</div></div>'+
-    '<div class="box"><div class="v">'+last.fat.toFixed(1)+'</div><div class="k">gordura (kg)</div></div>'+
-    '<div class="box"><div class="v">'+ffmi.toFixed(1)+'</div><div class="k">FFMI</div></div>';
+  let kpiH=kpi3([last.lean.toFixed(1),"massa magra (kg)"],[last.fat.toFixed(1),"gordura (kg)"],[ffmi.toFixed(1),"FFMI"]);
   if(lastSmm){const dS=firstSmm&&smmPts.length>1?lastSmm.smm-firstSmm.smm:null;
-    kpiH+='<div class="box"><div class="v">'+lastSmm.smm.toFixed(1)+'</div><div class="k">MME (kg)'+(dS!=null?' · '+(dS>=0?"+":"")+dS.toFixed(1):"")+'</div></div>';}
+    kpiH+=kpiBox(lastSmm.smm.toFixed(1),"MME (kg)"+(dS!=null?' · '+(dS>=0?"+":"")+dS.toFixed(1):""));}
   if(lastVisc){const dV=firstVisc&&viscPts.length>1?lastVisc.visceral-firstVisc.visceral:null;
-    kpiH+='<div class="box"><div class="v">'+(+lastVisc.visceral.toFixed(1))+'</div><div class="k">g. visceral'+(dV!=null?' · '+(dV>=0?"+":"")+(+dV.toFixed(1)):"")+'</div></div>';}
+    kpiH+=kpiBox(+lastVisc.visceral.toFixed(1),"g. visceral"+(dV!=null?' · '+(dV>=0?"+":"")+(+dV.toFixed(1)):""));}
   kpi.innerHTML=kpiH;
   const labels=s.map(x=>fmtD(x.date));
   const datasets=[
@@ -2195,9 +2162,9 @@ function renderBodyComp(){
   ];
   if(smmPts.length)datasets.push({type:"line",label:"MME (medida)",data:s.map(x=>x.smm!=null?+x.smm.toFixed(2):null),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,borderDash:[5,3],tension:.3,pointRadius:2,spanGaps:true});
   if(viscPts.length)datasets.push({type:"line",label:"G. visceral",data:s.map(x=>x.visceral!=null?+x.visceral.toFixed(1):null),borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:1.6,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y1"});
-  const opts={...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}};
-  if(viscPts.length)opts.scales.y1={position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"visceral",color:PAL.muted,font:{size:9}}};
-  chComp=new Chart($("#chComp"),{data:{labels,datasets},options:opts});
+  const opts={...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("kg")}};
+  if(viscPts.length)opts.scales.y1={position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("visceral")};
+  mkChart("chComp",{data:{labels,datasets},options:opts});
   if(s.length>=2){const dLean=last.lean-first.lean,dFat=last.fat-first.fat,dW=last.weight-first.weight;let msg,cls="";
     if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+dLean.toFixed(1)+"kg vs "+dFat.toFixed(1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
     else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+dFat.toFixed(1)+"kg, magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg no período.";}
@@ -2275,7 +2242,6 @@ function renderGoals(){
 // ---------- M6: tendência de peso ----------
 function renderWeightTrend(){
   const s=weightSeries();const kpi=$("#wtTrendKpi"),note=$("#wtTrendNote");
-  if(chWtTrend)chWtTrend.destroy();
   if(s.length<2){kpi.innerHTML="";note.innerHTML="";clearCanvas("chWtTrend","registre peso na aba Saúde");return;}
   const ma=s.map(p=>{const win=s.filter(q=>q.t<=p.t&&q.t>=p.t-7*864e5);return {t:p.t,date:p.date,raw:p.w,ma:win.reduce((a,b)=>a+b.w,0)/win.length};});
   const recent=ma.filter(p=>p.t>=Date.now()-28*864e5);const reg=recent.length>=2?recent:ma;
@@ -2286,16 +2252,14 @@ function renderWeightTrend(){
   if(goal&&rate&&rate<-.02&&curMA>goal){const eta=new Date(Date.now()+(curMA-goal)/-rate*7*864e5);etaTxt=eta.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
   else if(goal&&curMA<=goal)etaTxt="atingida ✓";
   const plateau=rate!=null&&Math.abs(rate)<0.1&&(ma[ma.length-1].t-ma[0].t)>=21*864e5;
-  kpi.innerHTML='<div class="box"><div class="v">'+curMA.toFixed(1)+'</div><div class="k">média 7d (kg)</div></div>'+
-    '<div class="box"><div class="v" style="color:'+(rate<-.02?PAL.green:rate>.02?PAL.red:PAL.muted)+';font-size:15px">'+(rate==null?"—":(rate>0?"+":"")+rate.toFixed(2))+'</div><div class="k">kg/semana</div></div>'+
-    '<div class="box"><div class="v" style="font-size:13px">'+(goal?etaTxt:"defina alvo")+'</div><div class="k">ETA alvo</div></div>';
+  kpi.innerHTML=kpi3([curMA.toFixed(1),"média 7d (kg)"],[rate==null?"—":(rate>0?"+":"")+rate.toFixed(2),"kg/semana","color:"+(rate<-.02?PAL.green:rate>.02?PAL.red:PAL.muted)+";font-size:15px"],[goal?etaTxt:"defina alvo","ETA alvo","font-size:13px"]);
   const labels=ma.map(p=>fmtD(p.date));
   const ds=[
     {type:"line",label:"Peso",data:ma.map(p=>+p.raw.toFixed(2)),borderColor:PAL.muted,backgroundColor:PAL.muted,borderWidth:1,tension:.2,pointRadius:2,spanGaps:true},
     {type:"line",label:"Média 7d",data:ma.map(p=>+p.ma.toFixed(2)),borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2.4,tension:.3,pointRadius:0,spanGaps:true}
   ];
   if(goal)ds.push({type:"line",label:"Alvo",data:ma.map(()=>goal),borderColor:PAL.green,borderWidth:1,borderDash:[5,4],pointRadius:0});
-  chWtTrend=new Chart($("#chWtTrend"),{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}}});
+  mkChart("chWtTrend",{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("kg")}}});
   note.innerHTML=plateau?'<div class="note warn" style="margin-top:10px">Possível platô: variação &lt;0,1 kg/sem nas últimas semanas. Se a meta não foi atingida, é tema de ajuste (dose/déficit) com o médico.</div>':"";
 }
 
@@ -2361,18 +2325,17 @@ function renderIron(){
       out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fc.slopeWk.toFixed(2)+"%/sem (≈"+(fc.slopeWk*4.3).toFixed(1)+"%/mês) → cruza "+ulnHct+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
   }
   el.innerHTML=out.length?out.map(x=>'<div class="note '+x[0]+'" style="margin:6px 0 0">'+x[1]+'</div>').join(""):'<div class="muted" style="font-size:12px">Registre Hct e ferritina nos exames.</div>';
-  if(chIron)chIron.destroy();
   const all=[...new Set(db.labs.filter(l=>l.hct!=null||l.fer!=null).map(l=>l.date))].sort((a,b)=>new Date(a)-new Date(b));
   if(!all.length){clearCanvas("chIron","sem Hct/ferritina");renderDonList();return;}
   const labels=all.map(d=>fmtD(d));
   const hctD=all.map(d=>{const l=db.labs.find(x=>x.date===d&&x.hct!=null);return l?l.hct:null;});
   const ferD=all.map(d=>{const l=db.labs.find(x=>x.date===d&&x.fer!=null);return l?l.fer:null;});
-  chIron=new Chart($("#chIron"),{data:{labels,datasets:[
+  mkChart("chIron",{data:{labels,datasets:[
     {type:"line",label:"Hct %",data:hctD,borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:2,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y"},
     {type:"line",label:"Ferritina",data:ferD,borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"}
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,position:"left",title:{display:true,text:"Hct %",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"Ferr",color:PAL.muted,font:{size:9}}}}}});
+    y:leftY("Hct %"),
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("Ferr")}}}});
   renderDonList();
 }
 function renderDonList(){
@@ -2385,7 +2348,6 @@ function renderDonList(){
 
 // ---------- M10: sintomas × hormônios ----------
 function renderSymptomHormone(){
-  if(chSymHorm)chSymHorm.destroy();
   const c=db.checkins.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   const labs=db.labs.filter(l=>l.e2!=null||l.prol!=null).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(!c.length&&!labs.length)return clearCanvas("chSymHorm","sem check-ins/exames");
@@ -2399,9 +2361,9 @@ function renderSymptomHormone(){
     {type:"line",label:"E2",data:dates.map(d=>pick(labs,d,"e2")),borderColor:PAL.violet,backgroundColor:PAL.violet,borderWidth:2.2,borderDash:[5,3],tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"},
     {type:"line",label:"PRL",data:dates.map(d=>pick(labs,d,"prol")),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2.2,borderDash:[2,2],tension:.3,pointRadius:3,spanGaps:true,yAxisID:"y1"}
   ];
-  chSymHorm=new Chart($("#chSymHorm"),{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,min:0,max:5,position:"left",title:{display:true,text:"1–5",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:{display:true,text:"pg·ng/mL",color:PAL.muted,font:{size:9}}}}}});
+  mkChart("chSymHorm",{data:{labels,datasets:ds},options:{...baseOpts,scales:{x:baseOpts.scales.x,
+    y:{...baseOpts.scales.y,min:0,max:5,position:"left",title:axisTitle("1–5")},
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("pg·ng/mL")}}}});
 }
 
 // ============================================================
@@ -2423,7 +2385,7 @@ function renderFotos(){renderFotoCapture();renderFotoCompare();renderFotoTimelin
 function renderFotoCapture(){
   const wrap=$("#fotoSlots");if(!wrap)return;
   const date=$("#fotoDate").value||todayInput();
-  if($("#fotoDateLbl"))$("#fotoDateLbl").textContent=fmtD(date);
+  setText("fotoDateLbl",fmtD(date));
   wrap.innerHTML="";
   ANGLES.forEach(([ang,lbl])=>{
     const p=photoFor(date,ang);const col=document.createElement("div");
@@ -2462,7 +2424,7 @@ function drawCompare(){
 }
 function renderFotoTimeline(){
   const el=$("#fotoTimeline");if(!el)return;
-  if($("#fotoCount"))$("#fotoCount").textContent=photoCache.length+" fotos";
+  setText("fotoCount",photoCache.length+" fotos");
   const dates=photoDates();
   if(!dates.length){el.innerHTML='<div class="empty">Nenhuma foto ainda.</div>';return;}
   el.innerHTML="";
@@ -2531,7 +2493,7 @@ function renderTrainingCard(){
   if($("#trainPlanLbl")){const eHdr=trainEntry(date);$("#trainPlanLbl").textContent=eHdr?("✓ "+(eHdr.type==="rest"?"descanso":(isRegen(eHdr.letter)?"regenerativo":eHdr.letter))):fmtD(date+"T12:00:00");}
   const ring=$("#trainRing");ring.innerHTML="";
   const cycleStart=new Date(date+"T12:00:00");cycleStart.setDate(cycleStart.getDate()-idx);
-  for(let i=0;i<len;i++){const d=new Date(cycleStart);d.setDate(cycleStart.getDate()+i);const k=dkey(d);const pl=p[i];
+  for(let i=0;i<len;i++){const d=addDays(cycleStart,+i);const k=dkey(d);const pl=p[i];
     const e=trainEntry(k);const done=e&&((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"));
     const isToday=k===date;const cls=isRest(pl)?"rest":isRegen(pl)?"regen":"train";
     const seg=document.createElement("div");seg.className="tseg "+cls+(isToday?" today":"")+(done?" done":"");
@@ -2563,22 +2525,20 @@ function thisWeekTrain(){let t=0,r=0;const dow=new Date().getDay();for(let i=0;i
 function renderTrainScore(){
   if(!$("#trainScoreKpi"))return;
   const s4=windowScore(trainHit,28),s12=windowScore(trainHit,84);
-  if($("#trainStreak"))$("#trainStreak").textContent="🔥 "+streakOf(k=>!!trainEntry(k))+"d seguidos";
-  $("#trainScoreKpi").innerHTML='<div class="box"><div class="v">'+(s4.pct!=null?s4.pct+"%":"—")+'</div><div class="k">no plano · 4 sem</div></div>'+
-    '<div class="box"><div class="v">'+(s12.pct!=null?s12.pct+"%":"—")+'</div><div class="k">no plano · 12 sem</div></div>'+
-    '<div class="box"><div class="v" style="font-size:13px">'+thisWeekTrain()+'</div><div class="k">esta semana</div></div>';
+  setText("trainStreak","🔥 "+streakOf(k=>!!trainEntry(k))+"d seguidos");
+  $("#trainScoreKpi").innerHTML=kpi3([s4.pct!=null?s4.pct+"%":"—","no plano · 4 sem"],[s12.pct!=null?s12.pct+"%":"—","no plano · 12 sem"],[thisWeekTrain(),"esta semana","font-size:13px"]);
 }
-function buildHeat(id,colorFn,titleFn){
+function buildHeat(id,colorFn,titleFn,click=true){
   const el=$(id);if(!el)return;el.innerHTML="";
-  const today=new Date();today.setHours(12,0,0,0);
+  const today=today12();
   const start=new Date(today);start.setDate(start.getDate()-83);start.setDate(start.getDate()-start.getDay());
   const tk=dkey(today);
-  for(let i=0;i<13*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);
+  for(let i=0;i<13*7;i++){const d=addDays(start,+i);
     const cell=document.createElement("div");cell.className="cell";
     if(d>today){cell.className="cell future";el.appendChild(cell);continue;}
     const k=dkey(d);if(k===tk)cell.classList.add("today");const col=colorFn(k,d);if(col)cell.style.background=col;
     if(titleFn)cell.title=titleFn(k,d);
-    cell.onclick=()=>{diaDate=k;if($("#diaDate"))$("#diaDate").value=k;renderDiaryAll();};
+    if(click)cell.onclick=()=>{diaDate=k;if($("#diaDate"))$("#diaDate").value=k;renderDiaryAll();};
     el.appendChild(cell);}
 }
 function renderTrainHeat(){buildHeat("#trainHeat",(k)=>{const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);const ok=(isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train");if(!ok)return "#F59E0B";return e.type==="rest"?"#60a5fa":"#34d399";},(k)=>{const e=trainEntry(k);return fmtD(k+"T12:00:00")+" · prev:"+plannedFor(k)+(e?" · feito:"+(e.type==="rest"?"descanso":e.letter):"");});}
@@ -2598,49 +2558,45 @@ function renderDietCard(){
   ind.innerHTML='Proteína (total): 🔥 <b style="color:var(--green)">'+pstreak+'d</b> seguidos · <b>'+(pc?Math.round(ps/pc*100):0)+'%</b> dos dias registrados (30d)';
   tg.appendChild(ind);
   const m=$("#dietMeals");if(m){m.innerHTML="";["R1","R2","R3","R4","R5","R6"].forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=(on?"✓ ":"")+R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});}
-  const done=pulseCount(date);if($("#pulseDayCount"))$("#pulseDayCount").textContent=done+"/6 pulsos";
+  const done=pulseCount(date);setText("pulseDayCount",done+"/6 pulsos");
 }
 function renderPulse(){
   if(!$("#pulseKpi"))return;
   const today=pulseCount(diaDate||todayInput());
   const avg=(days)=>{let s=0,c=0;for(let i=0;i<days;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(pulseLogged(k)){s+=pulseCount(k);c++;}}return c?(s/c):null;};
   const a4=avg(28),a12=avg(84);
-  if($("#pulseStreak"))$("#pulseStreak").textContent="🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=4)+"d ≥4";
-  $("#pulseKpi").innerHTML='<div class="box"><div class="v">'+today+'/6</div><div class="k">pulsos hoje</div></div>'+
-    '<div class="box"><div class="v">'+(a4!=null?a4.toFixed(1):"—")+'</div><div class="k">média/dia · 4 sem</div></div>'+
-    '<div class="box"><div class="v">'+(a12!=null?a12.toFixed(1):"—")+'</div><div class="k">média/dia · 12 sem</div></div>';
+  setText("pulseStreak","🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=4)+"d ≥4");
+  $("#pulseKpi").innerHTML=kpi3([today+"/6","pulsos hoje"],[a4!=null?a4.toFixed(1):"—","média/dia · 4 sem"],[a12!=null?a12.toFixed(1):"—","média/dia · 12 sem"]);
 }
 function renderPulseHeat(){buildHeat("#pulseHeat",(k)=>{if(!pulseLogged(k))return null;const n=pulseCount(k);return n>=4?"#34d399":n>=2?"#F59E0B":"#7f1d1d";},(k)=>fmtD(k+"T12:00:00")+" · "+pulseCount(k)+"/6 pulsos");}
 function renderDietScore(){
   if(!$("#dietScoreKpi"))return;
   const s4=windowScore(dietScore,28),s12=windowScore(dietScore,84);
-  if($("#dietStreak"))$("#dietStreak").textContent="🔥 "+streakOf(k=>!!dietEntry(k))+"d seguidos";
-  $("#dietScoreKpi").innerHTML='<div class="box"><div class="v">'+(s4.pct!=null?s4.pct+"%":"—")+'</div><div class="k">adesão · 4 sem</div></div>'+
-    '<div class="box"><div class="v">'+(s12.pct!=null?s12.pct+"%":"—")+'</div><div class="k">adesão · 12 sem</div></div>'+
-    '<div class="box"><div class="v">'+s4.c+'</div><div class="k">dias reg. · 4 sem</div></div>';
+  setText("dietStreak","🔥 "+streakOf(k=>!!dietEntry(k))+"d seguidos");
+  $("#dietScoreKpi").innerHTML=kpi3([s4.pct!=null?s4.pct+"%":"—","adesão · 4 sem"],[s12.pct!=null?s12.pct+"%":"—","adesão · 12 sem"],[s4.c,"dias reg. · 4 sem"]);
 }
 function renderDietHeat(){buildHeat("#dietHeat",(k)=>{const s=dietScore(k);if(s==null)return null;return s>=1?"#34d399":s>=.5?"#F59E0B":"#7f1d1d";},(k)=>{const e=dietEntry(k);return fmtD(k+"T12:00:00")+(e&&e.status?" · "+e.status:"");});}
 
 function renderAdhResult(){
-  if(!$("#chAdhResult"))return;if(chAdhResult)chAdhResult.destroy();
-  const weeks=8,labels=[],adh=[],wt=[];const now=new Date();now.setHours(12,0,0,0);
-  for(let w=weeks-1;w>=0;w--){const start=new Date(now);start.setDate(now.getDate()-w*7-6);
+  if(!$("#chAdhResult"))return;
+  const weeks=8,labels=[],adh=[],wt=[];const now=today12();
+  for(let w=weeks-1;w>=0;w--){const start=addDays(now,-w*7-6);
     labels.push(fmtD(dkey(start)+"T12:00:00"));let s=0,c=0,ws=0,wc=0;
-    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(d>now)break;const k=dkey(d);
+    for(let i=0;i<7;i++){const d=addDays(start,+i);if(d>now)break;const k=dkey(d);
       const th=trainHit(k),ds=dietScore(k);if(th!=null){s+=th;c++;}if(ds!=null){s+=ds;c++;}
       const b=db.biometrics.find(x=>dkey(x.date)===k&&x.weight!=null);if(b){ws+=b.weight;wc++;}}
     adh.push(c?Math.round(s/c*100):null);wt.push(wc?+(ws/wc).toFixed(1):null);}
-  chAdhResult=new Chart($("#chAdhResult"),{data:{labels,datasets:[
+  mkChart("chAdhResult",{data:{labels,datasets:[
     {type:"bar",label:"Adesão %",data:adh,backgroundColor:"rgba(245,158,11,.5)",borderColor:PAL.amber,borderWidth:1,yAxisID:"y",order:2},
     {type:"line",label:"Peso (kg)",data:wt,borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true,yAxisID:"y1",order:1}
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,
-    y:{...baseOpts.scales.y,min:0,max:100,position:"left",title:{display:true,text:"adesão %",color:PAL.muted,font:{size:9}}},
-    y1:{position:"right",grid:{drawOnChartArea:false},ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},title:{display:true,text:"kg",color:PAL.muted,font:{size:9}}}}}});
+    y:{...baseOpts.scales.y,min:0,max:100,position:"left",title:axisTitle("adesão %")},
+    y1:{position:"right",grid:{drawOnChartArea:false},ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},title:axisTitle("kg")}}}});
 }
 function renderRitual(){
   if(!$("#ritualBox"))return;
   const k=todayInput();const pl=plannedFor(k);const te=trainEntry(k),de=dietEntry(k);
-  if($("#ritualStreak"))$("#ritualStreak").textContent="🔥 "+streakOf(x=>trainEntry(x)&&dietEntry(x))+"d";
+  setText("ritualStreak","🔥 "+streakOf(x=>trainEntry(x)&&dietEntry(x))+"d");
   const box=$("#ritualBox");box.innerHTML="";
   const r1=document.createElement("div");r1.style.cssText="display:flex;gap:8px";
   if(te){const s=document.createElement("span");s.className="tribtn on-good";s.style.flex="1";s.textContent="Treino: "+(te.type==="rest"?"descanso ✓":(te.letter||"")+" ✓");r1.appendChild(s);}
@@ -2819,7 +2775,7 @@ function initAll(){
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames · v${APP_VERSION}`:`monitor de aplicações · v${APP_VERSION}`;
-  if($("#verFooter"))$("#verFooter").textContent="Control · v"+APP_VERSION;
+  setText("verFooter","Control · v"+APP_VERSION);
 }
 initAll();
 

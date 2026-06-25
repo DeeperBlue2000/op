@@ -271,7 +271,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
     <div class="grid2">
       <div class="field">
-        <label>Dose (mg) <span class="muted">— embalagem</span></label>
+        <label>Dose (mg)</label>
         <input id="inDose" type="number" inputmode="decimal" placeholder="200" class="num">
       </div>
       <div class="field">
@@ -560,12 +560,12 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <!-- ============ SAÚDE ============ -->
 <section class="view" id="v-bio">
   <div class="card">
-    <h2>Biometria</h2>
+    <h2>Biometria <span class="hint" id="bioDue"></span></h2>
     <div class="grid3">
       <div class="field"><label>Peso (kg)</label><input id="bWeight" type="number" inputmode="decimal" class="num" placeholder="79.6"></div>
       <div class="field"><label>%GC</label><input id="bBf" type="number" inputmode="decimal" class="num" placeholder="21.3"></div>
       <div class="field"><label>Método</label><select id="bMethod"><option>Pollock 7</option><option>InBody</option><option>Faulkner</option><option>Guedes</option><option>Outro</option></select></div>
-      <div class="field"><label>MME — massa muscular esq. (kg)</label><input id="bSmm" type="number" inputmode="decimal" class="num" placeholder="38.7"></div>
+      <div class="field"><label>MME (kg)</label><input id="bSmm" type="number" inputmode="decimal" class="num" placeholder="38.7"></div>
       <div class="field"><label>Gordura visceral (nível)</label><input id="bVisc" type="number" inputmode="decimal" class="num" placeholder="nível ou cm²"></div>
     </div>
     <div class="field"><label>Data</label><input id="bDate" type="date"></div>
@@ -731,6 +731,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Alerta de reuso (dias)</label><input id="setWarn" type="number" inputmode="numeric" class="num" value="5"></div>
       <div class="field"><label>Meta de água (ml/dia)</label><input id="setWater" type="number" inputmode="numeric" class="num" value="4000"></div>
       <div class="field"><label>Intervalo de exames (dias)</label><input id="setExam" type="number" inputmode="numeric" class="num" value="120"></div>
+      <div class="field"><label>Intervalo de biometria (dias)</label><input id="setBio" type="number" inputmode="numeric" class="num" value="30"></div>
       <div class="field"><label>Altura (cm)</label><input id="setHeight" type="number" inputmode="decimal" class="num" value="176"></div>
       <div class="field"><label>Peso-alvo (kg, opcional)</label><input id="setGoal" type="number" inputmode="decimal" class="num" placeholder="—"></div>
       <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="number" inputmode="decimal" class="num" value="4.3"></div>
@@ -788,7 +789,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.01</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.02</div>
 </section>
 
 </main>
@@ -959,7 +960,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.01";
+const APP_VERSION="4.02";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -982,7 +983,7 @@ function fresh(){
   return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],
     training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
-    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,heightCm:176,goalWeight:null,albumin:4.3,
+    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
       coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
 }
@@ -996,6 +997,7 @@ function migrate(r){
   s.refs=Object.assign({},DEFAULT_REFS,s.refs||{});
   if(s.waterTarget==null)s.waterTarget=4000;
   if(s.examDays==null)s.examDays=120;
+  if(s.bioDays==null)s.bioDays=30;
   if(s.heightCm==null)s.heightCm=176;
   if(s.goalWeight===undefined)s.goalWeight=null;
   if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
@@ -1881,6 +1883,16 @@ function renderBioChart(){
 function renderBioList(){
   const el=$("#bioList");if(!el)return;
   const b=db.biometrics.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  // Alerta de biometria — dias desde a última vs. intervalo configurado
+  const due=$("#bioDue");
+  if(due){
+    if(b.length){const bd=db.settings.bioDays||30;
+      const dd=Math.ceil((+new Date(b[0].date)+bd*864e5-Date.now())/864e5);
+      if(dd<=0){due.textContent="medição atrasada "+(-dd)+"d";due.style.color=PAL.red;}
+      else if(dd<=3){due.textContent="próxima em "+dd+"d";due.style.color=PAL.amber;}
+      else{due.textContent="próxima em "+dd+"d";due.style.color="";}
+    } else {due.textContent="";due.style.color="";}
+  }
   if(!b.length){el.innerHTML='<div class="empty">Nenhum registro de biometria.</div>';return;}
   el.innerHTML='<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Registros ('+b.length+')</div>';
   const mkRow=x=>{
@@ -2101,8 +2113,15 @@ function renderCoProtoEditor(){
 function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
   const due=dueList();const dueEl=$("#resumoDue");
-  if(due.length)dueEl.innerHTML='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>x.name+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
-  else dueEl.innerHTML='<div class="note ok" style="margin:0 0 10px">✓ Nenhuma aplicação pendente hoje.</div>';
+  let dueHtml="";
+  if(due.length)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>x.name+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
+  else dueHtml+='<div class="note ok" style="margin:0 0 10px">✓ Nenhuma aplicação pendente hoje.</div>';
+  // Alerta de biometria atrasada
+  {const lb=db.biometrics.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];const bd=db.settings.bioDays||30;
+   if(lb){const dd=Math.ceil((+new Date(lb.date)+bd*864e5-Date.now())/864e5);
+     if(dd<=0)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Biometria atrasada <b>'+(-dd)+'d</b> — última medição em '+fmtD(lb.date)+'.</div>';}
+   else dueHtml+='<div class="note" style="margin:0 0 10px">Sem biometria registrada — faça a primeira medição na aba Saúde.</div>';}
+  dueEl.innerHTML=dueHtml;
   const cd=cycleDay();const lw=lastBioWeight();const series=weightSeries();
   let trendTxt="—",trendCol=PAL.muted;
   if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
@@ -2713,6 +2732,7 @@ $("#saveSet").onclick=()=>{
   db.settings.cycleMode=$("#setCycle").checked;
   db.settings.waterTarget=+$("#setWater").value||4000;
   db.settings.examDays=+$("#setExam").value||120;
+  db.settings.bioDays=+$("#setBio").value||30;
   db.settings.heightCm=+$("#setHeight").value||176;
   db.settings.goalWeight=$("#setGoal").value!==""?+$("#setGoal").value:null;
   // Espelha o peso-alvo no objeto de metas e no card de Metas/objetivos
@@ -2777,7 +2797,7 @@ function initAll(){
   diaDate=todayInput();$("#diaDate").value=diaDate;
   $("#inDate").value=nowLocalInput();$("#gDate").value=nowLocalInput();$("#gSymDate").value=todayInput();
   $("#bDate").value=todayInput();$("#lDate").value=todayInput();$("#cDate").value=todayInput();
-  $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;
+  $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;$("#setBio").value=db.settings.bioDays;
   $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
   {const g=db.settings.goals||{};
    if($("#goalW"))$("#goalW").value=g.weight!=null?g.weight:"";
@@ -2799,6 +2819,7 @@ function initAll(){
   updatePhaseChip();
   const c=db.injections.length;
   $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames · v${APP_VERSION}`:`monitor de aplicações · v${APP_VERSION}`;
+  if($("#verFooter"))$("#verFooter").textContent="Control · v"+APP_VERSION;
 }
 initAll();
 

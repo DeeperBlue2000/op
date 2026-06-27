@@ -789,7 +789,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.04</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.05</div>
 </section>
 
 </main>
@@ -988,7 +988,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.04";
+const APP_VERSION="4.05";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1695,39 +1695,29 @@ function renderProtCalendar(){
   const dr=loggedProtocolDrugs().find(d=>d.name===adProtSel);
   const kpi=$("#adProtKpi"),heat=$("#adProtHeat"),gaps=$("#adProtGaps");
   if(!dr){kpi.innerHTML="";heat.innerHTML="";gaps.innerHTML="";return;}
-  const days=protocolDoseDays(dr.name,dr.kind);const tol=1,cad=dr.cadence;
+  const days=protocolDoseDays(dr.name,dr.kind);const tol=1,cad=dr.cadence;const DAY=864e5;
   const today=today12();const T=+today;
-  // Slots esperados: reancorados a cada aplicação real (não um grid rígido desde a 1ª dose).
-  // Cada dose gera um slot esperado em +cad dias; testamos se há uma dose real (a seguinte,
-  // tipicamente) cobrindo esse slot dentro de meia-cadência. Reancorar a cada dose evita que
-  // o "drift" natural de horário/dia acumule e marque dias como perdidos indevidamente.
-  const halfCad=Math.max(cad/2,tol)*864e5;
-  const slots=[];
-  for(let i=0;i<days.length-1;i++)slots.push(days[i]+cad*864e5); // slot entre dose i e i+1
-  // slot final em aberto (da última dose até hoje), mas só enquanto a pausa não
-  // configurar uma lacuna real de protocolo — mesmo critério de "Períodos de uso":
-  // 3× cadência (mín. 10 dias). Além disso é lacuna, não falhas diárias acumuladas.
-  const lastDose=days[days.length-1];
-  const gapThr=Math.max(3*cad,10)*864e5;
-  if(lastDose!=null&&(T-lastDose)<=gapThr){
-    let s=lastDose+cad*864e5;
-    while(s<=T+tol*864e5){if(!slots.includes(s))slots.push(s);s+=cad*864e5;}
-  }
-  slots.sort((a,b)=>a-b);
   const doseSet=new Set(days.map(t=>dkey(new Date(t))));
-  const hitTol=halfCad;
-  let hits=0,past=0;
-  slots.forEach(s=>{if(s>T+tol*864e5)return;past++;if(days.some(t=>Math.abs(t-s)<=hitTol))hits++;});
-  const onTime=past?Math.round(hits/past*100):0;
-  const ints=[];for(let i=1;i<days.length;i++)ints.push((days[i]-days[i-1])/864e5);
+  // Modelo por intervalo (gap): você está "no prazo" enquanto não passar (cadência + tolerância)
+  // dias desde a última dose. Dosar com mais frequência que a cadência NUNCA gera atraso; só uma
+  // lacuna real (gap > cadência+tol) pinta vermelho. Sem "slots" rígidos nem flip por ±1 dia.
+  const overdueAfter=(cad+tol)*DAY;
+  const lastDoseBefore=t=>{let r=null;for(const d of days){if(d<=t)r=d;else break;}return r;};
+  // KPI "no prazo": % de intervalos (inclui o aberto até hoje) dentro de cadência+tolerância.
+  let onSched=0,total=0;
+  for(let i=1;i<days.length;i++){total++;if(days[i]-days[i-1]<=overdueAfter)onSched++;}
+  if(days.length){total++;if(T-days[days.length-1]<=overdueAfter)onSched++;}
+  const onTime=total?Math.round(onSched/total*100):100;
+  const ints=[];for(let i=1;i<days.length;i++)ints.push((days[i]-days[i-1])/DAY);
   const meanInt=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:null;
   const dev=ints.length?ints.reduce((a,b)=>a+Math.abs(b-cad),0)/ints.length:null;
   kpi.innerHTML=kpi3([onTime+"%","no prazo"],[meanInt!=null?meanInt.toFixed(1):"—","interv. (alvo "+cad+"d)"],[dev!=null?"±"+dev.toFixed(1):"—","desvio"]);
-  // calendário read-only (sem navegação) usando a grade compartilhada de 13 semanas
-  const slotKeys=new Set(slots.map(s=>dkey(new Date(s))));
-  const onTimeAt=k=>days.some(t=>Math.abs(t-(+new Date(k+"T12:00:00")))<=tol*864e5);
-  buildHeat("#adProtHeat",k=>doseSet.has(k)?"#34d399":slotKeys.has(k)?(onTimeAt(k)?"#34d399":"#7f1d1d"):"#33363c",
-    k=>fmtD(k+"T12:00:00")+" — "+(doseSet.has(k)?"aplicada":slotKeys.has(k)?(onTimeAt(k)?"no prazo (±1d)":"esperada e faltou"):"não esperada"),false);
+  // calendário read-only — verde: aplicada · vermelho: atraso (passou da cadência sem dosar) · cinza: ok
+  const overdueDays=k=>{const ld=lastDoseBefore(+new Date(k+"T12:00:00"));return ld==null?null:Math.round((+new Date(k+"T12:00:00")-ld)/DAY);};
+  buildHeat("#adProtHeat",
+    k=>{if(doseSet.has(k))return "#34d399";const od=overdueDays(k);return (od!=null&&od>cad+tol)?"#7f1d1d":"#33363c";},
+    k=>{const base=fmtD(k+"T12:00:00");if(doseSet.has(k))return base+" — aplicada";const od=overdueDays(k);if(od==null)return base+" — antes da 1ª dose";return base+(od>cad+tol?` — atraso (${od}d desde a última · alvo ${cad}d)`:` — ok (${od}d desde a última)`);},
+    false);
   const gapList=[];for(let i=1;i<days.length;i++){const gap=(days[i]-days[i-1])/864e5;if(gap>cad*1.5)gapList.push({from:days[i-1],to:days[i],gap:Math.round(gap)});}
   gaps.innerHTML=gapList.length
     ? '<div class="muted" style="font-size:11px;margin-bottom:5px">Lacunas (intervalo &gt; 1,5× cadência):</div>'+gapList.slice(-6).reverse().map(g=>`<div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);padding:2px 0">${fmtD(new Date(g.from).toISOString())} → ${fmtD(new Date(g.to).toISOString())}: <b style="color:var(--red)">${g.gap}d</b></div>`).join("")

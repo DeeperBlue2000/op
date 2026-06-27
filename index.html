@@ -560,6 +560,13 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <!-- ============ SAÚDE ============ -->
 <section class="view" id="v-bio">
   <div class="card">
+    <h2>Risco cardiovascular <span class="hint">visão consolidada</span> <span class="help" data-note-id="helpCV" data-help-title="Risco cardiovascular">?</span></h2>
+    <div id="cvVerdict"></div>
+    <div id="cvSignals" style="margin-top:10px"></div>
+    <template class="help-src" id="helpCV">Reúne num só lugar os sinais de risco que o app já coleta — pressão arterial, FC de repouso, HDL, LDL, não-HDL, TG:HDL e hematócrito — cada um com farol verde/âmbar/vermelho. O veredito destaca o sinal mais crítico do momento. EAA (sobretudo orais) e estimulantes pioram vários desses ao mesmo tempo. Ferramenta de leitura — decisões com seu médico.</template>
+  </div>
+
+  <div class="card">
     <h2>Biometria <span class="hint" id="bioDue"></span></h2>
     <div class="grid3">
       <div class="field"><label>Peso (kg)</label><input id="bWeight" type="number" inputmode="decimal" class="num" placeholder="79.6"></div>
@@ -645,6 +652,23 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="btn-ghost btn-sm" id="donSave" style="white-space:nowrap">+ Doação</button>
     </div>
     <div id="donList" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Pressão arterial <span class="hint" id="bpHint"></span> <span class="help" data-note-id="helpBP" data-help-title="Pressão arterial">?</span></h2>
+    <div class="kpi" id="bpKpi"></div>
+    <div id="bpStatus"></div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="field"><label>Sistólica</label><input id="bpSys" type="number" inputmode="numeric" class="num" placeholder="120"></div>
+      <div class="field"><label>Diastólica</label><input id="bpDia" type="number" inputmode="numeric" class="num" placeholder="80"></div>
+      <div class="field"><label>FC repouso (bpm)</label><input id="bpHr" type="number" inputmode="numeric" class="num" placeholder="opcional"></div>
+    </div>
+    <div class="field"><label>Data e hora</label><input id="bpDate" type="datetime-local"></div>
+    <div class="field"><label>Nota (opcional)</label><input id="bpNote" type="text" placeholder="ex.: manhã, pré-treino, em jejum"></div>
+    <button class="btn btn-ghost" id="bpSave">Salvar pressão</button>
+    <div class="chart-wrap" style="margin-top:16px"><canvas id="chBP"></canvas></div>
+    <div id="bpList" style="margin-top:12px"></div>
+    <template class="help-src" id="helpBP">Classificação (AHA): normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
   </div>
 
   <div class="card">
@@ -789,7 +813,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.05</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.10</div>
 </section>
 
 </main>
@@ -988,7 +1012,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.05";
+const APP_VERSION="4.10";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1008,7 +1032,7 @@ function load(){
   return fresh();
 }
 function fresh(){
-  return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],
+  return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],pressures:[],
     training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
@@ -1033,6 +1057,7 @@ function migrate(r){
   if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
   r.daily=r.daily||{};
   r.donations=r.donations||[];
+  r.pressures=r.pressures||[];
   r.training=r.training||{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}};
   if(!r.training.pattern||!r.training.pattern.length)r.training.pattern=["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"];
   {const _old=[JSON.stringify(["descanso","D","E","A","B"]),JSON.stringify(["descanso","D","E","A","B","descanso","D","C","E","A","descanso","D","B","C","E","descanso","D","A","B","C"]),JSON.stringify(["descanso","D","A","B","descanso","D","C","E"])];
@@ -1125,7 +1150,7 @@ $$("#nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.v==="charts"){fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();}
   if(b.dataset.v==="diario")renderDiaryAll();
   if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
-  if(b.dataset.v==="bio"){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();}
+  if(b.dataset.v==="bio"){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderCVDashboard();}
   if(b.dataset.v==="fotos")renderFotos();
   if(b.dataset.v==="data"){renderDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
 });
@@ -2280,6 +2305,90 @@ function calcFreeT(ttNgDl,shbgNmol,albGdl){
   if(!isFinite(FT)||FT<=0)return null;
   return FT*288.4*1e9; // mol/L -> ng/L = pg/mL
 }
+// ---------- PRESSÃO ARTERIAL & RISCO CARDIOVASCULAR ----------
+// Classificação AHA. lvl: 0 normal · 1 elevada · 2 estágio 1 · 3 estágio 2 · 4 crise.
+function bpClass(s,d){
+  if(s==null||d==null)return {lbl:"—",col:PAL.muted,lvl:0};
+  if(s>=180||d>=120)return {lbl:"crise hipertensiva",col:PAL.red,lvl:4};
+  if(s>=140||d>=90)return {lbl:"estágio 2",col:PAL.red,lvl:3};
+  if(s>=130||d>=80)return {lbl:"estágio 1",col:PAL.amber,lvl:2};
+  if(s>=120)return {lbl:"elevada",col:PAL.amber,lvl:1};
+  return {lbl:"normal",col:PAL.green,lvl:0};
+}
+const latestPressure=()=>db.pressures.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null;
+function renderPressure(){
+  if(!$("#bpKpi"))return;
+  const list=db.pressures.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const last=list[0];
+  const wk=Date.now()-7*864e5, recent=list.filter(p=>+new Date(p.date)>=wk);
+  const avg=arr=>{const v=arr.filter(x=>x!=null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null;};
+  const aS=avg(recent.map(p=>p.sys)),aD=avg(recent.map(p=>p.dia)),aH=avg(recent.map(p=>p.hr));
+  const cls=last?bpClass(last.sys,last.dia):bpClass(null,null);
+  setText("bpHint",last?cls.lbl:"sem registros");
+  $("#bpKpi").innerHTML=kpi3(
+    [last?`${last.sys}/${last.dia}`:"—","última",last?"color:"+cls.col:""],
+    [aS!=null?`${aS}/${aD}`:"—","média 7d",aS!=null?"color:"+bpClass(aS,aD).col:""],
+    [aH!=null?aH:(last&&last.hr!=null?last.hr:"—"),"FC repouso"]);
+  const st=$("#bpStatus");
+  if(last){
+    let cl="note",msg=`Última: <b>${last.sys}/${last.dia}</b> — ${cls.lbl}.`;
+    if(cls.lvl>=4){cl="note warn";msg+=" <b>Crise:</b> procure atendimento se houver dor no peito, falta de ar ou déficit visual/neurológico.";}
+    else if(cls.lvl>=2){cl="note warn";msg+=" EAA + estimulantes elevam a PA — considere reduzir ioimbina/cafeína e sódio, e revise com o médico.";}
+    else if(cls.lvl>=1){cl="note";msg+=" Ainda não é hipertensão, mas merece atenção.";}
+    else {cl="note ok";msg+=" Dentro da faixa.";}
+    st.className=cl;st.style.margin="8px 0 0";st.innerHTML=msg;
+  }else{st.className="";st.innerHTML="";}
+  const pts=list.slice().reverse();
+  if(!pts.length)clearCanvas("chBP","sem registros de pressão");
+  else mkChart("chBP",{type:"line",data:{labels:pts.map(p=>fmtDate(p.date)),datasets:[
+    {label:"Sistólica",data:pts.map(p=>p.sys),borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true},
+    {label:"Diastólica",data:pts.map(p=>p.dia),borderColor:PAL.blue,backgroundColor:PAL.blue,borderWidth:2,tension:.3,pointRadius:2,spanGaps:true},
+    {label:"FC",data:pts.map(p=>p.hr),borderColor:PAL.muted,backgroundColor:PAL.muted,borderWidth:1.5,borderDash:[4,3],tension:.3,pointRadius:0,spanGaps:true}
+  ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("mmHg / bpm",{beginAtZero:false})}}});
+  const el=$("#bpList");el.innerHTML="";
+  list.slice(0,30).forEach(p=>{
+    const c=bpClass(p.sys,p.dia);
+    const row=document.createElement("div");row.className="log-item";
+    row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${fmtDate(p.date)}${p.note?" · "+p.note:""}</div></div><button class="del">×</button>`;
+    row.querySelector(".del").onclick=()=>{db.pressures=db.pressures.filter(x=>x.id!==p.id);save();renderPressure();renderCVDashboard();toast("Registro removido",()=>{db.pressures.push(p);save();renderPressure();renderCVDashboard();});};
+    el.appendChild(row);
+  });
+}
+$("#bpSave").onclick=()=>{
+  const s=parseInt($("#bpSys").value,10),d=parseInt($("#bpDia").value,10),h=parseInt($("#bpHr").value,10);
+  if(isNaN(s)||isNaN(d))return toast("Informe sistólica e diastólica");
+  db.pressures.push({id:uid(),date:$("#bpDate").value||nowLocalInput(),sys:s,dia:d,hr:isNaN(h)?null:h,note:$("#bpNote").value||""});
+  save();$("#bpSys").value="";$("#bpDia").value="";$("#bpHr").value="";$("#bpNote").value="";
+  renderPressure();renderCVDashboard();toast("Pressão salva ✓");
+};
+function renderCVDashboard(){
+  if(!$("#cvSignals"))return;
+  const bp=latestPressure(),sig=[];
+  // valor mais recente de cada marcador (painéis podem ser parciais — não exige tudo no mesmo exame)
+  const lv=key=>{const a=db.labs.filter(l=>l[key]!=null).sort((x,y)=>new Date(y.date)-new Date(x.date));return a.length?a[0][key]:null;};
+  const hdl=lv("hdl"),ldl=lv("ldl"),vldl=lv("vldl"),tg=lv("tg"),hct=lv("hct");
+  const tone=lvl=>lvl>=3?PAL.red:lvl>=1?PAL.amber:PAL.green;
+  const add=(lbl,val,lvl,hint)=>sig.push({lbl,val,lvl,col:tone(lvl),hint:hint||""});
+  if(bp){const c=bpClass(bp.sys,bp.dia);add("Pressão arterial",`${bp.sys}/${bp.dia}`,c.lvl,c.lbl);}
+  if(bp&&bp.hr!=null){const hr=bp.hr;let lvl=hr>100?3:(hr>80||hr<40)?1:0;add("FC de repouso",hr+" bpm",lvl,lvl?(hr>80?"elevada":"baixa"):"ok");}
+  if(hdl!=null){let lvl=hdl<40?3:hdl<50?1:0;add("HDL",hdl+" mg/dL",lvl,lvl?"baixo (orais derrubam o HDL)":"ok");}
+  if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
+  const nh=(ldl!=null||vldl!=null)?((ldl||0)+(vldl||0)):null;
+  if(nh){let lvl=nh>=160?3:nh>=130?1:0;add("Não-HDL",nh+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
+  if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",r.toFixed(1),lvl,lvl?"resistência insulínica / aterogênico":"ok");}
+  if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",hct+" %",lvl,lvl>=3?"eritrocitose — considere doar":lvl?"próximo do teto":"ok");}
+  const v=$("#cvVerdict"),box=$("#cvSignals");
+  if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial e um exame para ver o painel.</div>';box.innerHTML="";return;}
+  const worst=sig.reduce((m,s)=>s.lvl>m.lvl?s:m,sig[0]);
+  const vcol=tone(worst.lvl),vtxt=worst.lvl>=3?"Atenção":worst.lvl>=1?"Vigiar":"Tudo no verde";
+  v.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:${vcol};flex:none"></span><b style="color:${vcol};font-size:14px">${vtxt}</b><span class="muted" style="font-size:12px">${worst.lvl>=1?`${worst.lbl}: ${worst.val}${worst.hint?" ("+worst.hint+")":""}`:"nenhum sinal de alerta"}</span></div>`;
+  box.innerHTML="";
+  sig.sort((a,b)=>b.lvl-a.lvl).forEach(s=>{
+    const row=document.createElement("div");row.className="bm-zone";row.style.marginBottom="6px";
+    row.innerHTML=`<div class="bm-info" style="flex:1"><div class="lbl">${s.lbl}</div><div class="days">${s.hint}</div></div><div class="log-dose" style="color:${s.col}">${s.val}</div>`;
+    box.appendChild(row);
+  });
+}
 function renderDerived(){
   const el=$("#derivedBox");
   const last=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
@@ -2757,6 +2866,7 @@ function initAll(){
   diaDate=todayInput();$("#diaDate").value=diaDate;
   $("#inDate").value=nowLocalInput();$("#gDate").value=nowLocalInput();$("#gSymDate").value=todayInput();
   $("#bDate").value=todayInput();$("#lDate").value=todayInput();$("#cDate").value=todayInput();
+  if($("#bpDate"))$("#bpDate").value=nowLocalInput();
   $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;$("#setBio").value=db.settings.bioDays;
   $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
   {const g=db.settings.goals||{};
@@ -2767,7 +2877,7 @@ function initAll(){
    if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";}
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();renderGoals();
+  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();renderGoals();renderPressure();renderCVDashboard();
   if($("#trSavePat"))$("#trSavePat").onclick=saveTrainPattern;
   if($("#trShiftL"))$("#trShiftL").onclick=()=>shiftAnchor(-1);
   if($("#trShiftR"))$("#trShiftR").onclick=()=>shiftAnchor(1);

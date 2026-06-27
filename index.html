@@ -668,7 +668,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="btn btn-ghost" id="bpSave">Salvar pressão</button>
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chBP"></canvas></div>
     <div id="bpList" style="margin-top:12px"></div>
-    <template class="help-src" id="helpBP">Classificação (AHA): normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
+    <template class="help-src" id="helpBP">Classificação por <b>ACC/AHA 2017</b> (Whelton et al., Hypertension 2018), cortes de consultório: normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. Diretrizes europeia (ESC) e brasileira (SBC) só rotulam hipertensão a partir de ≥140/90. Medições em casa tendem a ser mais baixas que no consultório. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
   </div>
 
   <div class="card">
@@ -813,7 +813,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.10</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.11</div>
 </section>
 
 </main>
@@ -1012,7 +1012,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.10";
+const APP_VERSION="4.11";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},

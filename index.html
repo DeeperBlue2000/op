@@ -910,8 +910,20 @@ async function sbInit(){
       // Primeiro login num dispositivo que já tem dados → sobe local
       await sbPush(true);
     } else if(remote.payload){
-      // Dispositivo novo ou dados remotos são a referência
-      localStorage.setItem(KEY,JSON.stringify(remote.payload));
+      // Last-write-wins: só adota o remoto se ele for mais novo que a última mudança local.
+      // Evita que um remoto desatualizado desfaça exclusões/edições feitas localmente.
+      const localTs=localData?._syncTs||0;
+      const remoteTs=remote.payload._syncTs||0;
+      const dirty=!!localStorage.getItem(SB_PENDING_KEY);
+      if(localTs>remoteTs||(dirty&&localTs>=remoteTs)){
+        // Local é mais recente (ou tem mudança pendente) → mantém local e empurra para o remoto.
+        await sbPush(true);
+      }else{
+        // Remoto é a referência mais nova → adota e recarrega a UI para refletir.
+        localStorage.setItem(KEY,JSON.stringify(remote.payload));
+        localStorage.removeItem(SB_PENDING_KEY);
+        try{db=migrate(JSON.parse(localStorage.getItem(KEY)));initAll();}catch(e){}
+      }
     }
   }
   // Despacha pendentes
@@ -1039,7 +1051,9 @@ function migrate(r){
 }
 let lastSnap=0;
 function save(){
+  db._syncTs=Date.now();                       // carimbo da última mudança local (last-write-wins)
   localStorage.setItem(KEY,JSON.stringify(db));
+  localStorage.setItem(SB_PENDING_KEY,"1");     // há mudança local ainda não confirmada no remoto
   const now=Date.now();
   if(now-lastSnap>120000){lastSnap=now;pushSnap();}
   sbPush(true); // sync em background, silencioso

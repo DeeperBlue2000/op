@@ -302,15 +302,15 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Dose semanal <span class="hint">janela móvel 7d · vs alvo</span></h2>
-    <div id="weeklyBox"><div class="empty">Sem aplicações nos últimos 7 dias.</div></div>
-  </div>
-
-  <div class="card">
     <h2>Próxima dose <span class="hint" id="icsBtnWrap"></span></h2>
     <div id="dueEaa"></div>
     <div id="nextDoseBox"><div class="empty">Sem aplicações registradas.</div></div>
     <button class="btn btn-ghost btn-sm" id="btnIcs" style="width:100%;margin-top:11px;display:none">📅 Exportar próximas doses (.ics)</button>
+  </div>
+
+  <div class="card">
+    <h2>Dose semanal <span class="hint">janela móvel 7d · vs alvo</span></h2>
+    <div id="weeklyBox"><div class="empty">Sem aplicações nos últimos 7 dias.</div></div>
   </div>
 
   <div class="card">
@@ -737,7 +737,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card">
     <h2>Drogas & protocolo <span class="hint">tudo editável</span></h2>
-    <div id="drugEditor"></div>
+    <details id="drugEditorWrap"><summary>Drogas cadastradas</summary>
+      <div id="drugEditor" style="margin-top:9px"></div>
+    </details>
     <details style="margin-top:8px"><summary>Adicionar nova droga</summary>
       <div class="mini" style="margin-top:9px">
         <div style="grid-column:span 3"><label>Nome</label><input id="ndName" placeholder="nome"></div>
@@ -820,7 +822,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.30</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.31</div>
 </section>
 
 </main>
@@ -1023,7 +1025,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.30";
+const APP_VERSION="4.31";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1678,15 +1680,17 @@ function renderGlpWeekly(){
   box.innerHTML="";
   keys.sort((a,b)=>sums[b]-sums[a]).forEach(k=>{
     const d=glpDrugByName(k)||{},c=d.color||PAL.muted;
-    const tgt=(d.doseTarget&&d.cadence)?+(d.doseTarget*7/d.cadence).toFixed(2):0;
+    // alvo semanal: usa o ajuste manual (d.weekly) se houver; senão deriva de doseTarget×7/cadência
+    const tgt=d.weekly!=null?d.weekly:((d.doseTarget&&d.cadence)?+(d.doseTarget*7/d.cadence).toFixed(2):0);
     const pct=tgt?Math.round(sums[k]/tgt*100):0,w=tgt?Math.min(100,pct):100;
     const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${k}</b><span class="mg">${+sums[k].toFixed(2)} mg${tgt?" / "+tgt:""}</span></div>
+    row.innerHTML=`<div class="top"><b>${k}</b><span class="mg">${+sums[k].toFixed(2)} mg / <input type="number" step="0.05" inputmode="decimal" class="num gwkTgt" data-drug="${k}" value="${tgt}" style="width:62px;display:inline-block;padding:2px 6px;font-size:12px;text-align:right"> mg/sem</span></div>
       <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
-      <div class="pct">${tgt?pct+"% do alvo semanal (cad "+d.cadence+"d)":"sem alvo definido"}</div>`;
+      <div class="pct">${tgt?pct+"% do alvo semanal (cad "+(d.cadence||"—")+"d)":"defina o alvo semanal"}</div>`;
     box.appendChild(row);
   });
+  box.querySelectorAll(".gwkTgt").forEach(inp=>inp.onchange=()=>{const d=glpDrugByName(inp.dataset.drug);if(d){d.weekly=inp.value===""?null:parseFloat(inp.value);save();renderGlpWeekly();}});
 }
 $("#gPhaseFilter").onchange=e=>{glpPhaseFilter=e.target.value;renderGlpLevel();renderGlpResult();renderGlpWeekly();};
 function renderGlp(){fillGlpSelect();glpDrugContext();fillGlpPhaseFilter();renderGlpLog();renderGlpNext();renderGlpWeekly();renderGlpMap();renderGlpLevel();renderGlpResult();}

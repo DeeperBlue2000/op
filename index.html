@@ -784,7 +784,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         </div>
         <div class="grid2">
           <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="number" inputmode="decimal" class="num" placeholder="0.20"></div>
-          <div class="field"><label>Anastrozol — horas após testo</label><input id="cpAnaOff" type="number" inputmode="numeric" class="num" placeholder="24"></div>
+          <div class="field"><label>Anastrozol — frequência (dias)</label><input id="cpAnaFreq" type="number" inputmode="numeric" class="num" placeholder="2"></div>
           <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="number" inputmode="decimal" class="num" placeholder="0.25"></div>
         </div>
         <label style="font-size:11px;color:var(--muted)">Cabergolina — dias da semana</label>
@@ -825,7 +825,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.32</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.33</div>
 </section>
 
 </main>
@@ -1028,7 +1028,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.32";
+const APP_VERSION="4.33";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1053,7 +1053,7 @@ function fresh(){
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
-      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
+      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
 }
 function migrate(r){
   r.schemaVersion=2;
@@ -1071,7 +1071,9 @@ function migrate(r){
   if(s.goalWeight===undefined)s.goalWeight=null;
   if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
   if(s.albumin==null)s.albumin=4.3;
-  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",offsetH:24,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
+  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
+  // Anastrozol agora é independente do EAA (frequência em dias). Converte config antiga (offsetH).
+  if(s.coProtocol&&s.coProtocol.anastrozol&&s.coProtocol.anastrozol.everyDays==null){s.coProtocol.anastrozol.everyDays=2;delete s.coProtocol.anastrozol.offsetH;}
   r.daily=r.daily||{};
   r.donations=r.donations||[];
   r.pressures=r.pressures||[];
@@ -2098,20 +2100,22 @@ const WD_PT=["dom","seg","ter","qua","qui","sex","sáb"];
 function coProtocolDue(){
   const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
   const out=[];const now=Date.now();
-  if(cp.anastrozol){const a=cp.anastrozol;const shot=lastTestoInjection();
-    if(shot){const T=+new Date(shot.date);const dueT=T+(a.offsetH||24)*3600e3;
-      const paired=db.injections.some(i=>i.drug===a.drug&&+new Date(i.date)>=T);
-      // Botão disponível assim que o dia previsto chega (mesmo dia do vencimento),
-      // não só depois de vencido — fluxo unificado com a Cabergolina.
-      const dueToday=dkey(new Date(dueT))===dkey(new Date(now));
+  if(cp.anastrozol){const a=cp.anastrozol;const every=a.everyDays||2;
+    // Independente do EAA: cadência própria em dias, ancorada na última aplicação de Anastrozol.
+    const anas=db.injections.filter(i=>i.drug===a.drug).sort((x,y)=>new Date(y.date)-new Date(x.date));
+    const last=anas[0];
+    if(!last){
+      out.push({drug:a.drug,dose:a.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});
+    }else{
+      const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
+      const loggedToday=dkey(last.date)===dkey(new Date(now));
       let status;
-      if(paired)status="done";
+      if(loggedToday)status="done";
       else if(now>=dueT)status="overdue";
-      else if(dueToday)status="due";
+      else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
       else status="upcoming";
-      out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,
-        reason:(a.offsetH||24)+"h após "+shot.drug.replace("Testosterona ","Test ")+" de "+fmtD(shot.date)});
-    } else out.push({drug:a.drug,dose:a.dose,dueTime:null,status:"none",reason:"sem aplicação de testo registrada"});
+      out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
+    }
   }
   if(cp.cabergolina){const c=cp.cabergolina;const days=c.days||[2,5];
     const today=new Date();const wd=today.getDay();const isToday=days.includes(wd);
@@ -2156,7 +2160,7 @@ function renderCoProtoEditor(){
   const cp=db.settings.coProtocol||{};
   if($("#cpEnabled"))$("#cpEnabled").checked=cp.enabled!==false;
   if($("#cpAnaDose"))$("#cpAnaDose").value=cp.anastrozol?cp.anastrozol.dose:"";
-  if($("#cpAnaOff"))$("#cpAnaOff").value=cp.anastrozol?cp.anastrozol.offsetH:"";
+  if($("#cpAnaFreq"))$("#cpAnaFreq").value=cp.anastrozol?cp.anastrozol.everyDays:"";
   if($("#cpCabDose"))$("#cpCabDose").value=cp.cabergolina?cp.cabergolina.dose:"";
   const days=(cp.cabergolina&&cp.cabergolina.days)||[];
   const box=$("#cpCabDays");if(!box)return;box.innerHTML="";
@@ -2889,7 +2893,7 @@ $("#saveSet").onclick=()=>{
   db.settings.albumin=+$("#setAlb").value||4.3;
   const cp=db.settings.coProtocol||{};
   cp.enabled=$("#cpEnabled").checked;
-  cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,offsetH:+$("#cpAnaOff").value||24};
+  cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,everyDays:+$("#cpAnaFreq").value||2};
   const cabDays=[...$("#cpCabDays").querySelectorAll("button.on")].map(b=>+b.dataset.d);
   cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,days:cabDays.length?cabDays:[2,5]};
   db.settings.coProtocol=cp;

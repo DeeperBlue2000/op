@@ -786,9 +786,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
           <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="number" inputmode="decimal" class="num" placeholder="0.20"></div>
           <div class="field"><label>Anastrozol — frequência (dias)</label><input id="cpAnaFreq" type="number" inputmode="numeric" class="num" placeholder="2"></div>
           <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="number" inputmode="decimal" class="num" placeholder="0.25"></div>
+          <div class="field"><label>Cabergolina — frequência (dias)</label><input id="cpCabFreq" type="number" inputmode="numeric" class="num" placeholder="3"></div>
         </div>
-        <label style="font-size:11px;color:var(--muted)">Cabergolina — dias da semana</label>
-        <div id="cpCabDays" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px"></div>
       </div>
     </details>
     <details style="margin:8px 0"><summary>Ciclo de treino <span class="help" data-note-id="help15" data-help-title="Ciclo de treino" data-help-inline="1">?</span></summary>
@@ -825,7 +824,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.33</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.40</div>
 </section>
 
 </main>
@@ -1028,7 +1027,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.33";
+const APP_VERSION="4.40";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1053,7 +1052,7 @@ function fresh(){
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
-      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}}}};
+      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}}}};
 }
 function migrate(r){
   r.schemaVersion=2;
@@ -1071,9 +1070,11 @@ function migrate(r){
   if(s.goalWeight===undefined)s.goalWeight=null;
   if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
   if(s.albumin==null)s.albumin=4.3;
-  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",days:[2,5],dose:0.25}};
+  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}};
   // Anastrozol agora é independente do EAA (frequência em dias). Converte config antiga (offsetH).
   if(s.coProtocol&&s.coProtocol.anastrozol&&s.coProtocol.anastrozol.everyDays==null){s.coProtocol.anastrozol.everyDays=2;delete s.coProtocol.anastrozol.offsetH;}
+  // Cabergolina agora é frequência em dias (igual ao Anastrozol). Converte config antiga (days da semana).
+  if(s.coProtocol&&s.coProtocol.cabergolina&&s.coProtocol.cabergolina.everyDays==null){s.coProtocol.cabergolina.everyDays=3;delete s.coProtocol.cabergolina.days;}
   r.daily=r.daily||{};
   r.donations=r.donations||[];
   r.pressures=r.pressures||[];
@@ -2096,7 +2097,6 @@ function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(dru
 // ---------- C1: co-protocolo (ancilares vinculados) ----------
 function isTesto(name){return /testosterona|durateston|sustanon/i.test(name||"");}
 function lastTestoInjection(){const t=db.injections.filter(i=>isTesto(i.drug)).sort((a,b)=>new Date(b.date)-new Date(a.date));return t[0]||null;}
-const WD_PT=["dom","seg","ter","qua","qui","sex","sáb"];
 function coProtocolDue(){
   const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
   const out=[];const now=Date.now();
@@ -2117,13 +2117,22 @@ function coProtocolDue(){
       out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
     }
   }
-  if(cp.cabergolina){const c=cp.cabergolina;const days=c.days||[2,5];
-    const today=new Date();const wd=today.getDay();const isToday=days.includes(wd);
-    let off=99;for(let k=0;k<8;k++){if(days.includes((wd+k)%7)){off=k;break;}}
-    const nd=new Date();nd.setDate(nd.getDate()+off);nd.setHours(12,0,0,0);
-    const loggedToday=db.injections.some(i=>i.drug===c.drug&&dkey(i.date)===dkey(today));
-    const status=isToday?(loggedToday?"done":"due"):"upcoming";
-    out.push({drug:c.drug,dose:c.dose,dueTime:+nd,status,reason:"agenda fixa "+days.map(d=>WD_PT[d]).join("/")});
+  if(cp.cabergolina){const c=cp.cabergolina;const every=c.everyDays||3;
+    // Independente do EAA: cadência própria em dias, ancorada na última aplicação de Cabergolina.
+    const cabs=db.injections.filter(i=>i.drug===c.drug).sort((x,y)=>new Date(y.date)-new Date(x.date));
+    const last=cabs[0];
+    if(!last){
+      out.push({drug:c.drug,dose:c.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});
+    }else{
+      const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
+      const loggedToday=dkey(last.date)===dkey(new Date(now));
+      let status;
+      if(loggedToday)status="done";
+      else if(now>=dueT)status="overdue";
+      else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
+      else status="upcoming";
+      out.push({drug:c.drug,dose:c.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
+    }
   }
   return out;
 }
@@ -2155,20 +2164,13 @@ function renderCoProtocol(){
   });
   if(!items.length)el.innerHTML='<div class="muted" style="font-size:12px">Nenhum ancilar configurado.</div>';
 }
-const WD_FULL=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 function renderCoProtoEditor(){
   const cp=db.settings.coProtocol||{};
   if($("#cpEnabled"))$("#cpEnabled").checked=cp.enabled!==false;
   if($("#cpAnaDose"))$("#cpAnaDose").value=cp.anastrozol?cp.anastrozol.dose:"";
   if($("#cpAnaFreq"))$("#cpAnaFreq").value=cp.anastrozol?cp.anastrozol.everyDays:"";
   if($("#cpCabDose"))$("#cpCabDose").value=cp.cabergolina?cp.cabergolina.dose:"";
-  const days=(cp.cabergolina&&cp.cabergolina.days)||[];
-  const box=$("#cpCabDays");if(!box)return;box.innerHTML="";
-  WD_FULL.forEach((lbl,i)=>{const on=days.includes(i);const b=document.createElement("button");b.type="button";b.textContent=lbl;b.dataset.d=i;
-    b.className="daychip"+(on?" on":"");
-    b.style.cssText="padding:5px 9px;border-radius:8px;border:1.5px solid var(--line);background:"+(on?"var(--amber)":"var(--panel-2)")+";color:"+(on?"#0a0a0a":"var(--txt)")+";font-size:11px;cursor:pointer";
-    b.onclick=()=>{const nx=b.classList.toggle("on");b.style.background=nx?"var(--amber)":"var(--panel-2)";b.style.color=nx?"#0a0a0a":"var(--txt)";};
-    box.appendChild(b);});
+  if($("#cpCabFreq"))$("#cpCabFreq").value=cp.cabergolina?cp.cabergolina.everyDays:"";
 }
 function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
@@ -2638,7 +2640,14 @@ function isRegen(x){return (x||"").toLowerCase().slice(0,4)==="rege";}
 function segLabel(x){return isRest(x)?"Desc":isRegen(x)?"Reg":x;}
 function trainPattern(){return (db.training&&db.training.pattern&&db.training.pattern.length)?db.training.pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"];}
 function trainAnchor(){if(!db.training.anchor){db.training.anchor=todayInput();save();}return db.training.anchor;}
-function plannedFor(dateStr){const p=trainPattern();return p[mod(diffDays(dateStr,trainAnchor()),p.length)];}
+function rawPlan(dateStr){const p=trainPattern();return p[mod(diffDays(dateStr,trainAnchor()),p.length)];}
+function fichaOrder(){const seen=[];trainPattern().forEach(x=>{if(!isRest(x)&&!isRegen(x)&&!seen.includes(x))seen.push(x);});return seen;}
+// slots de treino (A–D) em (fromStr, toStr] — descanso/regenerativo são fixos e não contam
+function countTrainSlots(fromStr,toStr){let c=0,d=new Date(fromStr+"T12:00:00");const end=new Date(toStr+"T12:00:00");while(d<end){d.setDate(d.getDate()+1);const raw=rawPlan(dkey(d));if(!isRest(raw)&&!isRegen(raw))c++;}return c;}
+// ficha dinâmica: continua a rotação A→B→C→D a partir do último treino REALMENTE registrado antes do dia
+function dynamicFicha(dateStr){const order=fichaOrder();if(order.length<2)return null;const logs=db.training.log||{};let bestK=null;for(const k in logs){const e=logs[k];if(e&&e.type==="train"&&order.includes(e.letter)&&k<dateStr&&(!bestK||k>bestK))bestK=k;}if(!bestK)return null;const cnt=countTrainSlots(bestK,dateStr);if(cnt<=0)return null;return order[mod(order.indexOf(logs[bestK].letter)+cnt,order.length)];}
+// planejado do dia: categoria (descanso/regen/treino) é fixa por posição; a letra A–D segue a rotação dinâmica
+function plannedFor(dateStr){const raw=rawPlan(dateStr);if(isRest(raw)||isRegen(raw))return raw;return dynamicFicha(dateStr)||raw;}
 function nextWorkout(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl))return {date:k,letter:pl};}return null;}
 function nextFicha(fromStr){const base=fromStr||todayInput();for(let i=1;i<=21;i++){const dt=new Date(base+"T12:00:00");dt.setDate(dt.getDate()+i);const k=dkey(dt);const pl=plannedFor(k);if(!isRest(pl)&&!isRegen(pl))return {date:k,letter:pl};}return null;}
 function trainEntry(k){return (db.training.log||{})[k]||null;}
@@ -2658,11 +2667,11 @@ function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();r
 function renderTrainingCard(){
   if(!$("#trainRing"))return;
   const date=diaDate||todayInput();const p=trainPattern();const len=p.length;
-  const idx=mod(diffDays(date,trainAnchor()),len);const planned=p[idx];
+  const idx=mod(diffDays(date,trainAnchor()),len);const planned=plannedFor(date);
   if($("#trainPlanLbl")){const eHdr=trainEntry(date);$("#trainPlanLbl").textContent=eHdr?("✓ "+(eHdr.type==="rest"?"descanso":(isRegen(eHdr.letter)?"regenerativo":eHdr.letter))):fmtD(date+"T12:00:00");}
   const ring=$("#trainRing");ring.innerHTML="";
   const cycleStart=new Date(date+"T12:00:00");cycleStart.setDate(cycleStart.getDate()-idx);
-  for(let i=0;i<len;i++){const d=addDays(cycleStart,+i);const k=dkey(d);const pl=p[i];
+  for(let i=0;i<len;i++){const d=addDays(cycleStart,+i);const k=dkey(d);const pl=plannedFor(k);
     const e=trainEntry(k);const done=e&&((isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train"));
     const isToday=k===date;const cls=isRest(pl)?"rest":isRegen(pl)?"regen":"train";
     const seg=document.createElement("div");seg.className="tseg "+cls+(isToday?" today":"")+(done?" done":"");
@@ -2894,8 +2903,7 @@ $("#saveSet").onclick=()=>{
   const cp=db.settings.coProtocol||{};
   cp.enabled=$("#cpEnabled").checked;
   cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,everyDays:+$("#cpAnaFreq").value||2};
-  const cabDays=[...$("#cpCabDays").querySelectorAll("button.on")].map(b=>+b.dataset.d);
-  cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,days:cabDays.length?cabDays:[2,5]};
+  cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,everyDays:+$("#cpCabFreq").value||3};
   db.settings.coProtocol=cp;
   save();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();renderGoals();renderWeightTrend();toast("Configurações salvas ✓");
 };

@@ -824,7 +824,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.40</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.50</div>
 </section>
 
 </main>
@@ -1027,7 +1027,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.40";
+const APP_VERSION="4.50";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1648,15 +1648,26 @@ function glpTimeline(forecast){
   return {t0,labels,days,stepDays:step};
 }
 function renderGlpLevel(){
-  const tl=glpTimeline(14);
-  if(!tl)return clearCanvas("chGlpLevel","registre aplicações");
   const g=phasedGlp();
+  if(!g.length)return clearCanvas("chGlpLevel","registre aplicações");
+  // próxima aplicação programada por droga: última dose + cadência (mesma regra do painel "Próxima")
+  const lastBy={};g.forEach(i=>{if(!lastBy[i.drug]||new Date(i.date)>new Date(lastBy[i.drug].date))lastBy[i.drug]=i;});
+  const nextBy={};let maxNext=0;
+  Object.keys(lastBy).forEach(k=>{const cad=(glpDrugByName(k)||{}).cadence||7;const nt=+new Date(lastBy[k].date)+cad*864e5;nextBy[k]=nt;if(nt>maxNext)maxNext=nt;});
+  // estende a projeção o suficiente para incluir a próxima aplicação mais distante (mín. 14d)
+  const fdays=Math.max(14,Math.ceil((maxNext-Date.now())/864e5)+1);
+  const tl=glpTimeline(fdays);
+  if(!tl)return clearCanvas("chGlpLevel","registre aplicações");
   const N=tl.days.length,drugs=[...new Set(g.map(i=>i.drug))],per={};drugs.forEach(d=>per[d]=new Array(N).fill(0));
   g.forEach(i=>{const hl=(glpDrugByName(i.drug)||{}).hl||6;const k=Math.LN2/hl;const ti=+new Date(i.date);for(let x=0;x<N;x++){const dt=(+tl.days[x]-ti)/864e5;if(dt>=0)per[i.drug][x]+=i.doseMg*Math.exp(-k*dt);}});
   const nowIdx=tl.days.reduce((a,d,x)=>+d<=Date.now()?x:a,0);
   const ds=[];drugs.forEach(d=>{const c=(glpDrugByName(d)||{}).color||PAL.muted;ds.push(...splitForecast(per[d],nowIdx,c,d));});
   const doseArr=new Array(N).fill(null);g.forEach(i=>{const x=Math.round((+new Date(i.date)-tl.t0)/864e5/tl.stepDays);if(x>=0&&x<N)doseArr[x]=(doseArr[x]||0)+i.doseMg;});
   ds.push({type:"line",label:"Dose (mg)",data:doseArr,borderColor:"#e8e9ec",backgroundColor:"#e8e9ec",pointRadius:5,pointStyle:"rectRot",showLine:false,yAxisID:"y1"});
+  // marcador do nível estimado na próxima aplicação programada (sobre a curva de projeção)
+  const markArr=new Array(N).fill(null),markCol=new Array(N).fill(PAL.muted);let hasMark=false;
+  Object.keys(nextBy).forEach(k=>{const xi=Math.min(N-1,Math.max(0,Math.round((nextBy[k]-tl.t0)/864e5/tl.stepDays)));if(per[k]==null)return;markArr[xi]=+per[k][xi].toFixed(2);markCol[xi]=(glpDrugByName(k)||{}).color||PAL.muted;hasMark=true;});
+  if(hasMark)ds.push({type:"line",label:"Próxima aplic. (est.)",data:markArr,showLine:false,pointStyle:"star",pointRadius:8,pointHoverRadius:11,borderColor:markCol,backgroundColor:markCol,pointBackgroundColor:markCol,pointBorderColor:markCol,yAxisID:"y"});
   mkChart("chGlpLevel",{type:"line",data:{labels:tl.labels,datasets:ds},
     options:{...baseOpts,interaction:{mode:"index",intersect:false},elements:{point:{radius:0}},
       plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:6,filter:it=>!it.text.endsWith("·proj")}}},

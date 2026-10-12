@@ -251,7 +251,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <div class="card" id="ptCard">
     <h2>Personal <span class="hint" id="ptHint"></span> <span class="help" data-note-id="helpPT" data-help-title="Aulas com o personal">?</span></h2>
     <div id="ptBox"></div>
-    <template class="help-src" id="helpPT">Cada semana (seg–dom) fechada com menos aulas que o plano gera <b>crédito a repor</b>; semanas com aulas acima do plano (reposição) abatem o crédito. A semana atual só conta quando há aula extra. Marque <b>Com personal</b> ao registrar o treino (Diário ou "Fechar o dia"). "Zerar saldo" registra um acerto, com desfazer. Plano e data de início em <b>Dados › Configurações › Personal</b>.</template>
+    <template class="help-src" id="helpPT">Cada semana (seg–dom) fechada com menos aulas que o plano gera <b>crédito a repor</b>; semanas com aulas acima do plano (reposição) abatem o crédito. A semana atual só conta quando há aula extra. Marque <b>Com personal</b> ao registrar o treino (Diário ou "Fechar o dia"). Plano, data de início e saldo inicial em <b>Dados › Configurações › Personal</b>.</template>
   </div>
   <div class="card">
     <h2>Adesão ao registro <span class="hint">manter o log vivo</span></h2>
@@ -847,7 +847,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.91</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.92</div>
 </section>
 
 </main>
@@ -1103,7 +1103,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.91";
+const APP_VERSION="4.92";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -2798,7 +2798,7 @@ function streakOf(has){let s=0;for(let i=0;i<400;i++){const d=new Date();d.setDa
 // ---------- PERSONAL (aulas do plano semanal) ----------
 // Aula = treino registrado com entry.personal=true. Semana seg–dom. Semana fechada com menos aulas que o plano
 // gera crédito a repor; aulas acima do plano (em qualquer semana, inclusive a atual) abatem o crédito.
-// "Zerar saldo" grava um acerto {id,date,amount} em settings.personal.settlements.
+// settings.personal.settlements (acertos legados {id,date,amount}) ainda são descontados do saldo, sem UI.
 let ptPending=false; // "Com personal" escolhido antes de registrar o treino do dia
 function ptCfg(){return db.settings.personal||{};}
 function ptWeekStart(k){const d=new Date(k+"T12:00:00");return dkey(addDays(d,-((d.getDay()+6)%7)));}
@@ -2825,11 +2825,6 @@ function ptToggleBtn(k){
   b.onclick=()=>{const e2=trainEntry(k);if(e2){e2.personal=!e2.personal;save();toast(e2.personal?"Aula com personal ✓":"Aula desmarcada");}else ptPending=!ptPending;refreshTD();};
   return b;
 }
-function ptSettle(){
-  const bal=ptBalance();if(!bal)return;const p=ptCfg();const rec={id:uid(),date:todayInput(),amount:bal};
-  p.settlements.push(rec);save();renderPersonal();
-  toast("Saldo zerado ("+bal+")",()=>{p.settlements=p.settlements.filter(s=>s.id!==rec.id);save();renderPersonal();});
-}
 function renderPersonal(){
   const card=$("#ptCard"),box=$("#ptBox");if(!box)return;const p=ptCfg();
   card.style.display=p.enabled?"":"none";if(!p.enabled)return;
@@ -2854,9 +2849,8 @@ function renderPersonal(){
     [closedW.length?(closedW.reduce((a,w)=>a+w.done,0)/closedW.length).toFixed(1):"—","média/sem"],
     [closedW.length?Math.round(full/closedW.length*100)+"%":"—","semanas completas"])+'</div>';
   h+='<div class="heat" id="ptHeat"></div><div class="legend"><span><i style="background:#34d399"></i>aula</span><span><i style="background:#60a5fa"></i>reposição</span><span><i style="background:#6b7280"></i>treino sem personal</span><span><i style="background:#33363c"></i>sem treino</span></div>';
-  h+='<div style="display:flex;gap:8px;align-items:center;margin-top:12px"><div class="muted" style="flex:1;font-size:11px">Marque <b>Com personal</b> ao registrar o treino, ou toque num dia do calendário.</div>'+(bal?'<button class="btn-ghost btn-sm" id="ptSettle" style="flex:none">Zerar saldo</button>':"")+'</div>';
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-top:12px"><div class="muted" style="flex:1;font-size:11px">Marque <b>Com personal</b> ao registrar o treino, ou toque num dia do calendário.</div></div>';
   box.innerHTML=h;
-  if($("#ptSettle"))$("#ptSettle").onclick=ptSettle;
   // posição da aula dentro da sua semana (para distinguir reposição)
   const rank={};weeks.forEach(w=>w.days.forEach((k,i)=>rank[k]=i));
   const beforeStart=k=>k<ptWeekStart(p.start||todayInput());

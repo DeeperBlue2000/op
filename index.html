@@ -822,7 +822,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div class="grid2">
           <div class="field"><label>Aulas por semana (plano)</label><input id="ptPerWeek" type="number" inputmode="numeric" class="num" placeholder="3"></div>
           <div class="field"><label>Início do plano (conta a partir da segunda)</label><input id="ptStart" type="date"></div>
+          <div class="field"><label>Saldo inicial (aulas a repor no início)</label><input id="ptInitial" type="number" inputmode="numeric" class="num" step="1" placeholder="0"></div>
         </div>
+        <div class="muted" style="font-size:11px">Saldo inicial = aulas já acumuladas antes da data de início (negativo = aulas adiantadas).</div>
       </div>
     </details>
     <details><summary>Faixas de referência (editáveis)</summary>
@@ -845,7 +847,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.90</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.91</div>
 </section>
 
 </main>
@@ -1101,7 +1103,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.90";
+const APP_VERSION="4.91";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1126,7 +1128,7 @@ function fresh(){
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
     settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
-      personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),settlements:[]},
+      personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0,settlements:[]},
       suppRev:SUPP_SCHEDULE_REV,meals:6,
       coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}}}};
 }
@@ -1146,8 +1148,8 @@ function migrate(r){
   if(s.goalWeight===undefined)s.goalWeight=null;
   if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
   if(s.albumin==null)s.albumin=4.3;
-  if(!s.personal)s.personal={enabled:true,perWeek:3,start:ptWeekStart(todayInput()),settlements:[]};
-  s.personal.settlements=s.personal.settlements||[];
+  if(!s.personal)s.personal={enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0,settlements:[]};
+  s.personal.settlements=s.personal.settlements||[];if(s.personal.initial==null)s.personal.initial=0;
   if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}};
   // Anastrozol agora é independente do EAA (frequência em dias). Converte config antiga (offsetH).
   if(s.coProtocol&&s.coProtocol.anastrozol&&s.coProtocol.anastrozol.everyDays==null){s.coProtocol.anastrozol.everyDays=2;delete s.coProtocol.anastrozol.offsetH;}
@@ -2810,7 +2812,7 @@ function ptWeeks(){
   return out;
 }
 function ptBalance(){
-  const n=ptCfg().perWeek||3;let b=0;
+  const n=ptCfg().perWeek||3;let b=+ptCfg().initial||0; // saldo inicial (aulas já acumuladas antes do início)
   ptWeeks().forEach(w=>{if(w.closed)b+=n-w.done;else if(w.done>n)b-=w.done-n;});
   (ptCfg().settlements||[]).forEach(s=>b-=s.amount);
   return b;
@@ -2835,7 +2837,7 @@ function renderPersonal(){
   setText("ptHint","plano "+n+"× por semana");
   const lbl=bal>0?(bal===1?"aula a repor":"aulas a repor"):bal<0?(bal===-1?"aula adiantada":"aulas adiantadas"):"saldo em dia";
   const col=bal>0?PAL.amber:bal<0?PAL.blue:PAL.green;
-  const since=lastSet?"desde o acerto em "+fmtD(lastSet.date+"T12:00:00"):"desde "+fmtD(p.start+"T12:00:00");
+  const since=lastSet?"desde o acerto em "+fmtD(lastSet.date+"T12:00:00"):"desde "+fmtD(p.start+"T12:00:00")+(+p.initial?" · saldo inicial "+p.initial:"");
   let h=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div class="num" style="font-size:38px;font-weight:600;line-height:1;color:${col}">${Math.abs(bal)}</div><div><div style="font-size:14px;font-weight:600">${lbl}</div><div class="muted" style="font-size:11.5px">${since}</div></div></div>`;
   // semana atual: uma vaga por aula do plano (+ extras)
   const cur=weeks[weeks.length-1],slots=Math.max(n,cur.done);
@@ -3136,6 +3138,7 @@ $("#saveSet").onclick=()=>{
   const pt=db.settings.personal;
   pt.enabled=$("#ptEnabled").checked;pt.perWeek=Math.max(1,+$("#ptPerWeek").value||3);
   if($("#ptStart").value)pt.start=ptWeekStart($("#ptStart").value);
+  pt.initial=Math.round(+$("#ptInitial").value)||0;$("#ptInitial").value=pt.initial;
   $("#ptStart").value=pt.start;
   save();refreshTD();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();renderGoals();renderWeightTrend();toast("Configurações salvas ✓");
 };
@@ -3199,7 +3202,7 @@ function initAll(){
    if($("#goalFat"))$("#goalFat").value=g.fat!=null?g.fat:"";
    if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";}
   $("#setMeals").value=mealsN();
-  {const pt=db.settings.personal;$("#ptEnabled").checked=!!pt.enabled;$("#ptPerWeek").value=pt.perWeek;$("#ptStart").value=pt.start||"";}
+  {const pt=db.settings.personal;$("#ptEnabled").checked=!!pt.enabled;$("#ptPerWeek").value=pt.perWeek;$("#ptStart").value=pt.start||"";$("#ptInitial").value=pt.initial||0;}
   fillTrendMarker();
   applyDrugContext();
   renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();renderGoals();renderPressure();renderCVDashboard();

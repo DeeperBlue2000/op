@@ -74,6 +74,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .btn:active{transform:scale(.985)}
 .btn-ghost{background:var(--panel-2);color:var(--txt);border:1px solid var(--line)}
 .btn-sm{padding:9px 12px;font-size:13px;width:auto}
+.btn-amber{background:var(--amber);color:#181818;font-weight:600;border-radius:var(--r-sm);padding:9px 12px}
 .site-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}
 .site-btn{background:var(--panel-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:11.5px;color:var(--txt);text-align:left;font-weight:500;transition:.12s;display:flex;align-items:center;justify-content:space-between;gap:6px}
 .site-btn.sel{border-color:var(--amber);background:rgba(245,158,11,.12);color:var(--amber-soft)}
@@ -115,7 +116,33 @@ button{font-family:inherit;cursor:pointer;border:none}
 .legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--muted);margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
-.log-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.log-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.row-actions{flex-basis:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:-2px}
+.row-actions button{min-height:36px;padding:7px 14px;font-size:12px}
+.pend-h{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0 0 2px}
+.log-item.pend .pend-act{flex:none}
+.log-item.pend .pend-act button{min-height:36px;padding:7px 14px;font-size:12px}
+.row-actions .pend-input{flex:1;max-width:140px;padding:8px 10px;font-size:15px}
+.daybar{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:6px;background:var(--bg);padding:8px 0 10px;margin:-6px 0 8px;transition:top .28s ease}
+header:not(.hide)~main .daybar{top:var(--hdrH,48px)}
+.daybar>button{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);min-width:44px;height:44px;font-size:14px}
+.daybar>button:disabled{opacity:.35}
+.daybar-mid{flex:1;position:relative;height:44px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.daybar-mid input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.daybar-today{font-size:12px!important;padding:0 10px}
+.water-custom{display:flex;gap:6px}
+.water-custom input{min-width:0;padding:9px 10px;font-size:14px}
+.water-custom button{flex:none;width:44px!important;font-size:18px;padding:0}
+.supp-blk.closed .supp-item,.supp-blk.closed .supp-note{display:none}
+.supp-blk .supp-head{cursor:pointer}
+.supp-blk.ok .supp-head b{color:var(--green)}
+.supp-blk.late .supp-head b{color:var(--amber)}
+.supp-now{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#181818;background:var(--amber);border-radius:20px;padding:1px 7px;margin-left:6px}
+.tribtn.next-meal{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.card.editing{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.edit-bar{clear:both;display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(245,158,11,.1);border:1px solid var(--amber);border-radius:var(--r-sm);padding:6px 6px 6px 10px;margin:-4px 0 12px;font-size:12.5px;color:var(--amber-soft)}
+.tap-edit{cursor:pointer}
+tr.tap-edit:active,.tap-edit:active{opacity:.7}
 .log-item:last-child{border-bottom:none}
 .log-swatch{width:9px;height:34px;border-radius:4px;flex-shrink:0}
 .log-main{flex:1;min-width:0}
@@ -150,7 +177,8 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(35,37,41,.
 nav button{flex:1;background:none;color:var(--muted);padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:500;border-radius:10px}
 nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--amber)}
-.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#0a2018;padding:11px 16px;border-radius:30px;font-weight:600;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px}
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#0a2018;padding:11px 16px;border-radius:30px;font-weight:600;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 24px)}
+.toast button{flex:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .toast button{background:#0a2018;color:var(--green);padding:5px 12px;border-radius:20px;font-weight:600;font-size:12.5px}
 .note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px;padding:10px;background:var(--panel-2);border-radius:var(--r-sm);border-left:2px solid var(--amber)}
@@ -217,6 +245,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .heat .cell:hover{outline:1.5px solid var(--amber)}
 .heat .cell.future{visibility:hidden}
 .heat .cell.today{box-shadow:inset 0 0 0 2px var(--amber)}
+.heat.heat-lg{grid-template-rows:repeat(7,19px);grid-auto-columns:19px;gap:3px} /* calendário tocável (Personal): alvo maior */
+.heat.heat-lg .cell{width:19px;height:19px;border-radius:4px}
 .card.collapsible>h2.chead{cursor:pointer;display:flex;align-items:center;gap:8px}
 .chead .chev{margin-left:auto;color:var(--muted);font-size:11px;transition:transform .15s;flex:0 0 auto}
 .card.collapsible.collap>h2.chead .chev{transform:rotate(-90deg)}
@@ -334,9 +364,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
 <!-- ============ DIÁRIO ============ -->
 <section class="view" id="v-diario">
-  <div class="card">
-    <h2>Dia <span class="hint" id="diaChip"></span></h2>
-    <div class="field"><label>Data do registro</label><input id="diaDate" type="date"></div>
+  <div class="daybar" id="dayBar">
+    <button type="button" id="dayPrev" aria-label="Dia anterior">◀</button>
+    <div class="daybar-mid"><span id="diaChip"></span><input id="diaDate" type="date" aria-label="Escolher o dia do registro"></div>
+    <button type="button" id="dayNext" aria-label="Próximo dia">▶</button>
+    <button type="button" id="dayToday" class="daybar-today">hoje</button>
   </div>
 
   <div class="card collapsible" id="cardSono">
@@ -346,6 +378,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Deitou</label><input id="slpBed" type="time" style="padding:12px 8px"></div>
       <div class="field"><label>Acordou</label><input id="slpWake" type="time" style="padding:12px 8px"></div>
     </div>
+    <div class="muted" id="slpSug" style="font-size:11px;margin:-6px 0 10px"></div>
     <label>Qualidade</label>
     <div class="scale" id="slpQ"></div>
     <div class="scale-row"><div class="cap"><span>1 · péssimo</span><span>restaurador · 5</span></div></div>
@@ -366,7 +399,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="btn btn-ghost btn-sm" data-add="750" style="width:100%">+750 ml</button>
     </div>
     <div class="grid2" style="margin-top:9px">
-      <button class="btn btn-ghost btn-sm" id="waterCustom" style="width:100%">+ Outra qtd.</button>
+      <div class="water-custom"><input id="waterMl" type="text" inputmode="numeric" class="num" placeholder="outra (ml)" aria-label="Outra quantidade de água em ml"><button class="btn btn-ghost btn-sm" id="waterAdd" aria-label="Adicionar quantidade">+</button></div>
       <button class="btn btn-ghost btn-sm" id="waterUndo" style="width:100%;color:var(--red)">↶ Desfazer último</button>
     </div>
   </div>
@@ -851,7 +884,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.96</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.99</div>
 </section>
 
 </main>
@@ -1186,7 +1219,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.96";
+const APP_VERSION="4.99";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1299,13 +1332,15 @@ function pushSnap(label){
 }
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 let toastTimer;
+// toast(msg) · toast(msg, fn, "Rótulo") · toast(msg, [["Desfazer",fn],["Ajustar",fn2]]) — com ação fica 6 s.
 function toast(m,actionFn,actionLabel){
   const t=$("#toast");$("#toastMsg").textContent=m;
-  const old=t.querySelector("button");if(old)old.remove();
-  if(actionFn){const b=document.createElement("button");b.textContent=actionLabel||"Desfazer";
-    b.onclick=()=>{actionFn();t.classList.remove("show");};t.appendChild(b);}
+  t.querySelectorAll("button").forEach(b=>b.remove());
+  const acts=Array.isArray(actionFn)?actionFn:(actionFn?[[actionLabel||"Desfazer",actionFn]]:[]);
+  acts.forEach(([lbl,fn])=>{const b=document.createElement("button");b.textContent=lbl;
+    b.onclick=()=>{t.classList.remove("show");fn();};t.appendChild(b);});
   t.classList.add("show");clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove("show"),actionFn?6000:1700);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),acts.length?6000:1700);
 }
 // Popup de ajuda "?" — substitui as notas explicativas estáticas
 function openHelp(html,title){
@@ -1472,20 +1507,22 @@ $("#btnSave").onclick=()=>{
   if(!oral&&!selectedSite)return toast("Escolha o local");
   let dt=$("#inDate").value?new Date($("#inDate").value):new Date();
   if(dt>new Date())dt=new Date(); // sem datas futuras
-  db.injections.push({id:uid(),drug,doseMg:dose,site:oral?null:selectedSite,date:dt.toISOString(),note:$("#inNote").value.trim(),phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType});
-  save();
+  if(editRec("eaa"))return commitEdit("eaa",{drug,doseMg:dose,site:oral?null:selectedSite,date:dt.toISOString(),note:$("#inNote").value.trim()},refreshDoseViews);
+  const rec=registerDose("eaa",drug,{doseMg:dose,site:oral?null:selectedSite,date:dt,note:$("#inNote").value.trim()});
   $("#inDose").value="";$("#inNote").value="";selectedSite=null;$("#inDate").value=nowLocalInput();
-  fillDrugSelect(drug);$("#inCustomDrug").value="";
-  applyDrugContext();renderLog();renderNextDose();renderWeekly();renderBodyMap();renderCoProtocol();
-  toast(oral?"Dose registrada ✓":"Aplicação registrada ✓");
+  fillDrugSelect(drug);$("#inCustomDrug").value="";applyDrugContext();
+  toast(oral?"Dose registrada ✓":"Aplicação registrada ✓",()=>removeDose("eaa",rec));
 };
 // Linha de histórico compartilhada por EAA e GLP-1 (markup idêntico; variam cor, rótulo de sítio e handler).
-function logRow(i,color,siteTxt,onDel){
+function logRow(i,color,siteTxt,onDel,onEdit){
   const row=document.createElement("div");row.className="log-item";
   row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${esc(i.drug)}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+esc(i.note):""}${i.phase?" · "+esc(i.phase):""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
   row.querySelector(".del").onclick=onDel;
+  if(onEdit)editable(row,onEdit);
   return row;
 }
+// Linha de histórico tocável → modo edição (o × continua excluindo).
+function editable(row,fn){const m=row.querySelector(".log-main");if(!m)return;m.classList.add("tap-edit");m.title="Tocar para editar";m.onclick=fn;}
 function renderLog(){
   const list=db.injections.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   $("#logCount").textContent=list.length+" registros";
@@ -1495,7 +1532,7 @@ function renderLog(){
   const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
   const isCur=i=>{const d=new Date(i.date);return d.getFullYear()===cy&&d.getMonth()===cm;};
   const cur=list.filter(isCur),older=list.filter(i=>!isCur(i));
-  const mkRow=i=>logRow(i,(drugByName(i.drug)||{}).color||PAL.muted,i.site||"Oral",()=>delInjection(i));
+  const mkRow=i=>logRow(i,(drugByName(i.drug)||{}).color||PAL.muted,i.site||"Oral",()=>delInjection(i),()=>editDose("eaa",i));
   if(!cur.length)el.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Nenhuma aplicação neste mês.</div>';
   cur.forEach(i=>el.appendChild(mkRow(i)));
   if(older.length){
@@ -1508,6 +1545,7 @@ function renderLog(){
   }
 }
 function delInjection(i){
+  if(editing&&editing.id===i.id){endEdit();clearForm("eaa");}
   db.injections=db.injections.filter(x=>x.id!==i.id);save();
   renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();
   toast("Aplicação excluída",()=>{db.injections.push(i);save();renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();});
@@ -1551,11 +1589,113 @@ function renderNextDose(){
       <div class="log-main"><div class="t">${esc(k)}</div>
       <div class="s">cad. ${cad}d · última: ${fmtDate(last.date)}${last.site?" · "+last.site:""}</div></div>
       <div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
-    row.appendChild(stopBtn(k,"eaa"));
+    row.appendChild(doseActions("eaa",k,dd<=0));
     box.appendChild(row);
   });
   box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
   renderDueBanner("#dueEaa",due);
+}
+// ---------- REGISTRO DE DOSE (compartilhado EAA + GLP-1) ----------
+// Usado pelos formulários (#btnSave/#gSave) e pelo "Registrar" de 1 toque (F2.1).
+function registerDose(kind,drug,o){
+  const rec={id:uid(),drug,doseMg:o.doseMg,site:o.site||null,date:(o.date||new Date()).toISOString(),note:o.note||"",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType};
+  (kind==="glp1"?db.glp1:db.injections).push(rec);save();refreshDoseViews();return rec;
+}
+function removeDose(kind,rec){
+  if(kind==="glp1")db.glp1=db.glp1.filter(x=>x.id!==rec.id);else db.injections=db.injections.filter(x=>x.id!==rec.id);
+  save();refreshDoseViews();
+}
+function refreshDoseViews(){
+  renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();
+  renderGlpLog();renderGlpNext();renderGlpWeekly();renderGlpMap();renderResumo();
+}
+// Padrões do 1 toque: última dose daquela droga (ou dose-alvo), sítio sugerido pela rotação compartilhada, agora.
+function quickDoseDefaults(kind,drug){
+  const last=(kind==="glp1"?db.glp1:db.injections).filter(i=>i.drug===drug).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  const d=drugDef(drug,kind)||{},oral=kind!=="glp1"&&isOral(drug);
+  return {doseMg:last?last.doseMg:d.doseTarget,site:oral?null:(kind==="glp1"?glpSuggestSite():suggestSite())};
+}
+function quickDose(kind,drug){
+  const q=quickDoseDefaults(kind,drug);
+  if(!q.doseMg)return openDoseForm(kind,drug,q); // sem dose conhecida → formulário
+  const rec=registerDose(kind,drug,q);
+  toast(`${drug.split(" (")[0]} ${q.doseMg} mg${q.site?" · "+q.site:""} ✓`,[["Desfazer",()=>removeDose(kind,rec)],["Ajustar",()=>{removeDose(kind,rec);openDoseForm(kind,drug,q);}]]);
+}
+// Abre o formulário da aba certa já preenchido (usado por "Ajustar").
+function openDoseForm(kind,drug,o={}){
+  if(kind==="glp1"){
+    goView("glp1");fillGlpSelect(drug);$("#gDrug").value=drug;$("#gDose").value="";glpDrugContext();
+    if(o.doseMg)$("#gDose").value=o.doseMg;if(o.site){gSelectedSite=o.site;buildGlpSiteGrid();}
+    $("#gDate").value=nowLocalInput();$("#gDose").focus();
+  }else{
+    goView("apply");fillDrugSelect(drug);$("#inDrug").value=drug;$("#inDose").value="";applyDrugContext();
+    if(o.doseMg)$("#inDose").value=o.doseMg;if(o.site){selectedSite=o.site;buildSiteGrid();}
+    $("#inDate").value=nowLocalInput();$("#inDose").focus();
+  }
+}
+// ---------- EDIÇÃO DE REGISTROS (F2.7) ----------
+// Tocar numa linha de histórico carrega o registro no formulário do card (modo edição). O save do formulário,
+// em modo edição, atualiza o registro no lugar (mesmo id, fase original) com desfazer.
+let editing=null; // {kind,id}
+const EDIT_CFG={
+  eaa:{btn:"#btnSave",label:"Registrar aplicação",list:()=>db.injections},
+  glp1:{btn:"#gSave",label:"Registrar aplicação",list:()=>db.glp1},
+  bio:{btn:"#bSave",label:"Salvar biometria",list:()=>db.biometrics},
+  lab:{btn:"#lSave",label:"Salvar exame",list:()=>db.labs},
+  bp:{btn:"#bpSave",label:"Salvar pressão",list:()=>db.pressures}
+};
+const toLocalInput=iso=>{const d=new Date(iso);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+const editRec=kind=>editing&&editing.kind===kind?EDIT_CFG[kind].list().find(x=>x.id===editing.id)||null:null;
+function startEdit(kind,rec,fill){
+  if(editing)endEdit();
+  editing={kind,id:rec.id};
+  const b=$(EDIT_CFG[kind].btn);b.textContent="Salvar alteração";
+  const card=b.closest(".card");card.classList.add("editing");
+  const bar=document.createElement("div");bar.className="edit-bar";
+  bar.innerHTML=`<span>Editando registro de ${fmtDate(rec.date)}</span>`;
+  const x=document.createElement("button");x.type="button";x.className="btn-ghost btn-sm";x.textContent="Cancelar";
+  x.onclick=()=>{endEdit();clearForm(kind);toast("Edição cancelada");};bar.appendChild(x);
+  card.querySelector("h2").after(bar);
+  fill(rec);
+  card.scrollIntoView({block:"start"});window.scrollBy(0,-60);
+}
+function endEdit(){
+  if(!editing)return;const c=EDIT_CFG[editing.kind],b=$(c.btn);b.textContent=c.label;
+  const card=b.closest(".card");card.classList.remove("editing");const bar=card.querySelector(".edit-bar");if(bar)bar.remove();
+  editing=null;
+}
+// Atualiza o registro em edição com os novos campos (desfazer restaura a cópia anterior).
+function commitEdit(kind,fields,after){
+  const rec=editRec(kind);if(!rec){endEdit();return false;}
+  const old=JSON.parse(JSON.stringify(rec));
+  Object.keys(fields).forEach(k=>{if(fields[k]===undefined)delete rec[k];else rec[k]=fields[k];});
+  save();endEdit();clearForm(kind);after();
+  toast("Registro atualizado ✓",()=>{Object.keys(rec).forEach(k=>delete rec[k]);Object.assign(rec,old);save();after();});
+  return true;
+}
+function clearForm(kind){
+  if(kind==="eaa"){$("#inDose").value="";$("#inNote").value="";selectedSite=null;$("#inDate").value=nowLocalInput();applyDrugContext();}
+  else if(kind==="glp1"){$("#gDose").value="";$("#gNote").value="";gSelectedSite=null;$("#gDate").value=nowLocalInput();glpDrugContext();}
+  else if(kind==="bio"){["bWeight","bBf","bSmm","bVisc"].forEach(id=>$("#"+id).value="");$("#bDate").value=todayInput();fillBioHints();}
+  else if(kind==="lab"){LABF.forEach(([,id])=>$("#"+id).value="");$("#lDate").value=todayInput();}
+  else if(kind==="bp"){["bpSys","bpDia","bpHr","bpNote"].forEach(id=>$("#"+id).value="");$("#bpDate").value=nowLocalInput();}
+}
+function editDose(kind,rec){
+  if(kind==="glp1"){goView("glp1");startEdit("glp1",rec,r=>{fillGlpSelect(r.drug);$("#gDrug").value=r.drug;$("#gDose").value="";glpDrugContext();
+    $("#gDose").value=r.doseMg;gSelectedSite=r.site;buildGlpSiteGrid();$("#gDate").value=toLocalInput(r.date);$("#gNote").value=r.note||"";});}
+  else{goView("apply");startEdit("eaa",rec,r=>{fillDrugSelect(r.drug);$("#inDrug").value=r.drug;$("#inDose").value="";applyDrugContext();
+    $("#inDose").value=r.doseMg;selectedSite=r.site;if(r.site){$("#siteField").style.display="block";buildSiteGrid();}$("#inDate").value=toLocalInput(r.date);$("#inNote").value=r.note||"";});}
+}
+function editBio(rec){goCard("bio","#bWeight");startEdit("bio",rec,r=>{$("#bWeight").value=r.weight??"";$("#bBf").value=r.bf??"";$("#bSmm").value=r.smm??"";$("#bVisc").value=r.visceral??"";if(r.method)$("#bMethod").value=r.method;$("#bDate").value=dkey(r.date);});}
+function editLab(rec){goCard("bio","#lE2");startEdit("lab",rec,r=>{LABF.forEach(([k,id])=>$("#"+id).value=r[k]??"");$("#lDate").value=dkey(r.date);
+  const exp=LABF.some(([k,id])=>r[k]!=null&&$("#"+id).closest("details"));if(exp)$("#lFreeT").closest("details").open=true;});}
+function editBp(rec){goCard("bio","#bpSys");startEdit("bp",rec,r=>{$("#bpSys").value=r.sys;$("#bpDia").value=r.dia;$("#bpHr").value=r.hr??"";$("#bpNote").value=r.note||"";$("#bpDate").value=String(r.date).slice(0,16);});}
+// Botões da linha de próxima dose: Registrar (âmbar se vencida) + Encerrar, numa linha abaixo do texto.
+function doseActions(kind,drug,due){
+  const box=document.createElement("div");box.className="row-actions";
+  const b=document.createElement("button");b.className=due?"btn-amber btn-sm":"btn-ghost btn-sm";b.textContent="Registrar";
+  b.title="Registra agora com a última dose e o sítio sugerido";b.onclick=()=>quickDose(kind,drug);
+  box.appendChild(b);box.appendChild(stopBtn(drug,kind));return box;
 }
 function renderDueBanner(sel,due){
   const el=$(sel);if(!el)return;
@@ -1593,7 +1733,9 @@ function curDay(create){
 }
 function renderDiaryAll(){
   $("#diaDate").value=diaDate;
-  $("#diaChip").innerHTML=`<span class="chip">${fmtD(diaDate+'T12:00:00')}</span>`;
+  const isToday=diaDate===todayInput(),dd=new Date(diaDate+"T12:00:00");
+  $("#diaChip").textContent=dd.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+(isToday?" · hoje":"");
+  $("#dayNext").disabled=isToday;$("#dayToday").style.display=isToday?"none":"";
   renderWater();renderSleep();renderSupps();renderSuppEditor();renderAdherence();renderDiaryChart();
   renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();
   applyDiaryCollapse();
@@ -1603,10 +1745,17 @@ function applyDiaryCollapse(){
   const dd=db.daily[diaDate]||{};
   setCollap("#cardSono",dd.sleepH!=null||dd.sleepQ!=null); // colapsa se preenchido
   setCollap("#cardTreino",!!trainEntry(diaDate));          // colapsa se registrado
-  setCollap("#cardDieta",true);                            // sempre colapsado
-  setCollap("#cardSupp",true);                             // sempre colapsado
+  // Dieta: fecha só com o dia completo (status + todas as N refeições). Suplementos: fecha com todos os obrigatórios.
+  const de=dietEntry(diaDate)||{};
+  setCollap("#cardDieta",!!de.status&&mealKeys(diaDate).slice(0,mealsN()).every(R=>de.meals&&de.meals[R]));
+  const tot=scheduleTotal();setCollap("#cardSupp",tot>0&&takenCount(diaDate)>=tot);
 }
 $("#diaDate").onchange=e=>{diaDate=e.target.value||todayInput();renderDiaryAll();};
+// Barra de dia (F2.8): ◀ ▶ trocam o dia; "hoje" volta; tocar na data abre o seletor nativo.
+function shiftDiaDate(n){const d=addDays(new Date(diaDate+"T12:00:00"),n);const k=dkey(d);if(k>todayInput())return;diaDate=k;renderDiaryAll();}
+$("#dayPrev").onclick=()=>shiftDiaDate(-1);
+$("#dayNext").onclick=()=>shiftDiaDate(1);
+$("#dayToday").onclick=()=>{diaDate=todayInput();renderDiaryAll();};
 
 // água
 function renderWater(){
@@ -1619,7 +1768,10 @@ function renderWater(){
 }
 function addWater(ml){const d=curDay(true);d.water=(d.water||0)+ml;d.waterEvents=d.waterEvents||[];d.waterEvents.push(ml);save();renderWater();renderDiaryChart();}
 $$("#v-diario [data-add]").forEach(b=>b.onclick=()=>addWater(+b.dataset.add));
-$("#waterCustom").onclick=()=>{const v=prompt("Quantidade em ml:");const n=parseInt(v,10);if(n>0)addWater(n);};
+// Quantidade livre sem prompt() (F2.9): campo + botão; Enter também adiciona.
+function addWaterCustom(){const n=parseInt($("#waterMl").value,10);if(!(n>0&&n<=5000))return toast("Informe a quantidade em ml");addWater(n);$("#waterMl").value="";toast("+"+n+" ml");}
+$("#waterAdd").onclick=addWaterCustom;
+$("#waterMl").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();addWaterCustom();}};
 $("#waterUndo").onclick=()=>{const d=curDay(false);if(!d.waterEvents||!d.waterEvents.length)return toast("Nada para desfazer");const last=d.waterEvents.pop();d.water=Math.max(0,(d.water||0)-last);save();renderWater();renderDiaryChart();toast("−"+last+" ml");};
 
 // sono
@@ -1627,11 +1779,26 @@ function buildSleepScale(){
   const el=$("#slpQ");el.innerHTML=[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}">${n}</button>`).join("");
   bindScale(el);
 }
+// Sono (F2.6): horas calculadas de deitou → acordou (atravessa a meia-noite, arredonda a 15 min).
+function sleepHours(bed,wake){
+  if(!bed||!wake)return null;const [bh,bm]=bed.split(":").map(Number),[wh,wm]=wake.split(":").map(Number);
+  let min=(wh*60+wm)-(bh*60+bm);if(min<=0)min+=1440;return Math.round(min/15)/4;
+}
+function lastSleepTimes(before){
+  const k=Object.keys(db.daily||{}).filter(x=>x<before&&db.daily[x].sleepBed&&db.daily[x].sleepWake).sort().pop();
+  return k?{bed:db.daily[k].sleepBed,wake:db.daily[k].sleepWake}:null;
+}
+function syncSleepHours(){const h=sleepHours($("#slpBed").value,$("#slpWake").value);if(h!=null)$("#slpH").value=h;}
+$("#slpBed").onchange=syncSleepHours;$("#slpWake").onchange=syncSleepHours;
 function renderSleep(){
   const d=curDay(false);
   setText("slpHint",(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"noite anterior"));
   $("#slpH").value=d.sleepH!=null?d.sleepH:"";
   $("#slpBed").value=d.sleepBed||"";$("#slpWake").value=d.sleepWake||"";
+  // Dia sem registro: sugere os horários da última noite registrada (só grava se você salvar)
+  const sug=(d.sleepH==null&&!d.sleepBed&&!d.sleepWake)?lastSleepTimes(diaDate):null;
+  if(sug){$("#slpBed").value=sug.bed;$("#slpWake").value=sug.wake;syncSleepHours();}
+  setText("slpSug",sug?"Horários sugeridos da última noite — ajuste se mudou.":"");
   $$("#slpQ button").forEach(b=>b.classList.toggle("on",+b.dataset.v===d.sleepQ));
   const ks=Object.keys(db.daily||{}).filter(k=>db.daily[k].sleepH!=null).sort().slice(-7);
   const box=$("#slpAvg");
@@ -1641,30 +1808,61 @@ function renderSleep(){
   }else box.style.display="none";
 }
 $("#slpSave").onclick=()=>{
-  const h=parseFloat($("#slpH").value);const on=$("#slpQ button.on");const q=on?+on.dataset.v:null;
+  let h=parseFloat($("#slpH").value);if(isNaN(h)){const c=sleepHours($("#slpBed").value,$("#slpWake").value);if(c!=null)h=c;}
+  const on=$("#slpQ button.on");const q=on?+on.dataset.v:null;
   if(isNaN(h)&&q==null)return toast("Informe horas ou qualidade");
   const d=curDay(true);d.sleepH=isNaN(h)?null:h;d.sleepBed=$("#slpBed").value||null;d.sleepWake=$("#slpWake").value||null;d.sleepQ=q;
   save();renderSleep();renderDiaryChart();setCollap("#cardSono",true);toast("Sono salvo ✓");
 };
 
 // suplementos
+// Suplementos pelo horário (F2.4): bloco atual aberto ("agora"), atrasados incompletos abertos em âmbar,
+// concluídos e futuros recolhidos. Tocar no cabeçalho abre/fecha (escolha manual vale até trocar de dia).
+let suppManual={},suppManualDay=null;
+const blkMin=b=>{const [h,m]=String(b.time||"0:0").split(":").map(Number);return (h||0)*60+(m||0);};
+function currentBlockIdx(sched){const now=new Date(),hm=now.getHours()*60+now.getMinutes();let idx=0;sched.forEach((b,i)=>{if(blkMin(b)<=hm)idx=i;});return idx;}
+function blockState(blk,supps){
+  const req=blk.items.filter(it=>!it.optional),done=req.filter(it=>supps[it.id]).length;
+  return {req:req.length,done,complete:req.length?done>=req.length:blk.items.every(it=>supps[it.id])};
+}
 function renderSupps(){
   const el=$("#suppList"),sched=db.suppSchedule||[],d=curDay(false),supps=d.supps||{};
+  if(suppManualDay!==diaDate){suppManual={};suppManualDay=diaDate;}
+  const isToday=diaDate===todayInput(),cur=isToday?currentBlockIdx(sched):-1;
   let total=0,done=0;el.innerHTML="";
-  sched.forEach(blk=>{
-    let bDone=0;const req=blk.items.filter(it=>!it.optional).length;
-    const items=blk.items.map(it=>{const ck=!!supps[it.id];if(!it.optional){total++;if(ck){done++;bDone++;}}
+  sched.forEach((blk,i)=>{
+    const st=blockState(blk,supps);total+=st.req;done+=st.done;
+    const future=isToday&&i>cur,late=isToday&&i<cur&&!st.complete,now=i===cur;
+    const autoOpen=!st.complete&&!future;
+    const open=suppManual[blk.id]!=null?suppManual[blk.id]:autoOpen;
+    const items=blk.items.map(it=>{const ck=!!supps[it.id];
       return `<label class="supp-item${ck?' done':''}" data-id="${it.id}"><span class="box">${ck?'✓':''}</span>${esc(it.name)}${it.optional?' <span class="tag" style="margin-left:6px">opcional</span>':''}</label>`;}).join("");
-    const c=document.createElement("div");c.className="supp-blk";
-    c.innerHTML=`<div class="supp-head"><b>${esc(blk.time)} · ${esc(blk.name)}</b><span class="muted">${req?bDone+"/"+req:"opcional"}</span><button class="supp-all" data-blk="${blk.id}">marcar tudo</button></div>${blk.note?`<div class="supp-note">${esc(blk.note)}</div>`:''}${items}`;
+    const c=document.createElement("div");c.className="supp-blk"+(open?"":" closed")+(st.complete?" ok":"")+(late?" late":"");
+    c.innerHTML=`<div class="supp-head" data-blk="${blk.id}"><b>${st.complete?"✓ ":""}${esc(blk.time)} · ${esc(blk.name)}</b>${now&&!st.complete?'<span class="supp-now">agora</span>':""}<span class="muted">${st.req?st.done+"/"+st.req:"opcional"}</span><button class="supp-all" data-blk="${blk.id}">marcar tudo</button></div>${blk.note?`<div class="supp-note">${esc(blk.note)}</div>`:''}${items}`;
     el.appendChild(c);
   });
   el.querySelectorAll(".supp-item").forEach(l=>l.onclick=()=>toggleSupp(l.dataset.id));
   el.querySelectorAll(".supp-all").forEach(b=>b.onclick=e=>{e.stopPropagation();markBlock(b.dataset.blk);});
+  el.querySelectorAll(".supp-head").forEach(h=>h.onclick=()=>{const blk=h.parentElement;const open=blk.classList.contains("closed");suppManual[h.dataset.blk]=open;blk.classList.toggle("closed",!open);});
   $("#suppPct").textContent=total?Math.round(done/total*100)+"% · "+done+"/"+total:"";
 }
-function toggleSupp(id){const d=curDay(true);d.supps=d.supps||{};if(d.supps[id])delete d.supps[id];else d.supps[id]=true;save();renderSupps();}
-function markBlock(bid){const blk=(db.suppSchedule||[]).find(b=>b.id===bid);if(!blk)return;const d=curDay(true);d.supps=d.supps||{};const req=blk.items.filter(it=>!it.optional),tgt=req.length?req:blk.items;const all=tgt.every(it=>d.supps[it.id]);tgt.forEach(it=>{if(all)delete d.supps[it.id];else d.supps[it.id]=true;});save();renderSupps();}
+function toggleSupp(id){const d=curDay(true);d.supps=d.supps||{};if(d.supps[id])delete d.supps[id];else d.supps[id]=true;save();renderSupps();renderPending();}
+// Marca/desmarca o bloco num dia (padrão: dia aberto no Diário). Opcionais ficam de fora.
+function markBlock(bid,k=diaDate){
+  const blk=(db.suppSchedule||[]).find(b=>b.id===bid);if(!blk)return;
+  db.daily[k]=db.daily[k]||{water:0,waterEvents:[],supps:{}};const d=db.daily[k];d.supps=d.supps||{};
+  const req=blk.items.filter(it=>!it.optional),tgt=req.length?req:blk.items;const all=tgt.every(it=>d.supps[it.id]);
+  tgt.forEach(it=>{if(all)delete d.supps[it.id];else d.supps[it.id]=true;});
+  save();renderSupps();renderPending();
+}
+// Pendência do Resumo: bloco do momento (ou o atrasado mais recente) ainda incompleto hoje.
+function suppPending(){
+  const k=todayInput(),sched=db.suppSchedule||[],supps=((db.daily||{})[k]||{}).supps||{};
+  if(!sched.length)return null;const cur=currentBlockIdx(sched),hm=new Date().getHours()*60+new Date().getMinutes();
+  const open=sched.map((b,i)=>({b,i,st:blockState(b,supps)})).filter(x=>x.i<=cur&&blkMin(x.b)<=hm&&!x.st.complete&&x.st.req);
+  if(!open.length)return null;const pick=open[open.length-1];
+  return {blk:pick.b,st:pick.st,others:open.length-1};
+}
 function renderSuppEditor(){
   const el=$("#suppEditor");if(!el)return;el.innerHTML="";
   (db.suppSchedule||[]).forEach((blk,bi)=>{
@@ -1785,10 +1983,11 @@ $("#gSave").onclick=()=>{
   const dose=parseFloat($("#gDose").value);if(!dose||dose<=0)return toast("Informe a dose");
   if(!gSelectedSite)return toast("Escolha o local");
   let dt=$("#gDate").value?new Date($("#gDate").value):new Date();if(dt>new Date())dt=new Date();
-  db.glp1.push({id:uid(),drug,doseMg:dose,site:gSelectedSite,date:dt.toISOString(),note:$("#gNote").value.trim(),phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType});
-  save();$("#gDose").value="";$("#gNote").value="";gSelectedSite=null;$("#gDate").value=nowLocalInput();
-  fillGlpSelect(drug);$("#gCustom").value="";glpDrugContext();
-  renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();toast("Aplicação registrada ✓");
+  if(editRec("glp1"))return commitEdit("glp1",{drug,doseMg:dose,site:gSelectedSite,date:dt.toISOString(),note:$("#gNote").value.trim()},refreshDoseViews);
+  const rec=registerDose("glp1",drug,{doseMg:dose,site:gSelectedSite,date:dt,note:$("#gNote").value.trim()});
+  $("#gDose").value="";$("#gNote").value="";gSelectedSite=null;$("#gDate").value=nowLocalInput();
+  fillGlpSelect(drug);$("#gCustom").value="";glpDrugContext();renderGlpLevel();
+  toast("Aplicação registrada ✓",()=>removeDose("glp1",rec));
 };
 $("#gRepeat").onclick=()=>{const last=db.glp1.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];if(!last)return toast("Nenhuma anterior");fillGlpSelect(last.drug);$("#gDrug").value=last.drug;$("#gDose").value=last.doseMg;$("#gDate").value=nowLocalInput();glpDrugContext();gSelectedSite=glpSuggestSite();buildGlpSiteGrid();toast("Pré-preenchido — confira o sítio");};
 $("#gIcs").onclick=()=>{
@@ -1806,7 +2005,7 @@ function renderGlpLog(){
   el.innerHTML="";
   const reGlp=()=>{renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();};
   list.slice(0,50).forEach(i=>el.appendChild(logRow(i,(glpDrugByName(i.drug)||{}).color||PAL.muted,i.site||"SC",
-    ()=>{db.glp1=db.glp1.filter(x=>x.id!==i.id);save();reGlp();toast("Excluído",()=>{db.glp1.push(i);save();reGlp();});})));
+    ()=>{if(editing&&editing.id===i.id){endEdit();clearForm("glp1");}db.glp1=db.glp1.filter(x=>x.id!==i.id);save();reGlp();toast("Excluído",()=>{db.glp1.push(i);save();reGlp();});},()=>editDose("glp1",i))));
 }
 function renderGlpNext(){
   const box=$("#gNextBox");const byDrug=lastByDrug(db.glp1);
@@ -1823,7 +2022,7 @@ function renderGlpNext(){
     const hist=db.glp1.filter(i=>i.drug===k).sort((a,b)=>new Date(b.date)-new Date(a.date));let n=0;for(const h of hist){if(h.doseMg===last.doseMg)n++;else break;}
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${esc(k)}</div><div class="s">${last.doseMg}mg · ${n}ª nesta dose · cad ${cad}d</div></div><div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
-    row.appendChild(stopBtn(k,"glp1"));
+    row.appendChild(doseActions("glp1",k,dd<=0));
     box.appendChild(row);});
   box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
   renderDueBanner("#dueGlp",due);
@@ -2194,8 +2393,9 @@ function renderBioList(){
   // Alerta de biometria — dias desde a última vs. intervalo configurado
   const due=$("#bioDue");
   if(due){
-    if(b.length){const bd=db.settings.bioDays||30;
-      const dd=Math.ceil((+new Date(b[0].date)+bd*864e5-Date.now())/864e5);
+    const fb=lastFullBio();
+    if(fb){const bd=db.settings.bioDays||30;
+      const dd=Math.ceil((+new Date(fb.date)+bd*864e5-Date.now())/864e5);
       if(dd<=0){due.textContent="medição atrasada "+(-dd)+"d";due.style.color=PAL.red;}
       else if(dd<=3){due.textContent="próxima em "+dd+"d";due.style.color=PAL.amber;}
       else{due.textContent="próxima em "+dd+"d";due.style.color="";}
@@ -2214,7 +2414,7 @@ function renderBioList(){
       (x.method?' <span class="muted" style="font-size:11px">'+esc(x.method)+'</span>':'')+'</div>'+
       '<div class="s">'+(parts.join(" · ")||"—")+'</div></div>'+
       '<button class="del" aria-label="Apagar">×</button>';
-    row.querySelector(".del").onclick=()=>delBio(x);
+    row.querySelector(".del").onclick=()=>delBio(x);editable(row,()=>editBio(x));
     return row;
   };
   const cur=b.slice(0,12),older=b.slice(12);
@@ -2229,10 +2429,11 @@ function renderBioList(){
   }
 }
 function delBio(x){
+  if(editing&&editing.id===x.id){endEdit();clearForm("bio");}
   const removed=x;
   db.biometrics=db.biometrics.filter(y=>y.id!==x.id);save();
-  renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();
-  toast("Registro apagado",()=>{db.biometrics.push(removed);save();renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();});
+  refreshBioViews();
+  toast("Registro apagado",()=>{db.biometrics.push(removed);save();refreshBioViews();});
 }
 function renderMoodChart(){
   const c=db.checkins.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -2247,8 +2448,10 @@ function renderMoodChart(){
 $("#bSave").onclick=()=>{
   const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value),smm=parseFloat($("#bSmm").value),visc=parseFloat($("#bVisc").value);
   if(!w&&!bf&&!smm&&!visc)return toast("Informe ao menos um valor");
-  db.biometrics.push({id:uid(),date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,smm:isNaN(smm)?null:smm,visceral:isNaN(visc)?null:visc,method:$("#bMethod").value});
-  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();toast("Biometria salva ✓");
+  const f={date:($("#bDate").value||todayInput())+"T12:00:00",weight:w||null,bf:bf||null,smm:isNaN(smm)?null:smm,visceral:isNaN(visc)?null:visc,method:$("#bMethod").value};
+  if(editRec("bio"))return commitEdit("bio",f,refreshBioViews);
+  db.biometrics.push({id:uid(),...f});
+  save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";refreshBioViews();toast("Biometria salva ✓");
 };
 $("#goalSave").onclick=()=>{
   const num=id=>{const v=$(id).value;return v!==""?parseFloat(v):null;};
@@ -2271,6 +2474,8 @@ $("#lSave").onclick=()=>{
   const rec={id:uid(),date:($("#lDate").value||todayInput())+"T12:00:00",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType};let any=false;
   LABF.forEach(([k,id])=>{const v=$("#"+id).value;if(v!==""){rec[k]=parseFloat(v);any=true;}});
   if(!any)return toast("Preencha ao menos um marcador");
+  if(editRec("lab")){const f={date:rec.date};LABF.forEach(([k])=>f[k]=rec[k]);   // marcador apagado → undefined → removido
+    return commitEdit("lab",f,()=>{renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderCVDashboard();});}
   db.labs.push(rec);save();LABF.forEach(([,id])=>$("#"+id).value="");
   renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();toast("Exame salvo ✓");
 };
@@ -2291,7 +2496,10 @@ function renderLabTable(){
   labs.forEach(l=>{h+=`<tr><td class="num">${fmtD(l.date)}${l.phase?`<br><span style="font-size:11px;color:var(--muted)">${esc(l.phase)}</span>`:""}</td>`;
     cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v)}">${v!=null?v:"·"}</td>`;});
     h+=`<td><button class="del" data-id="${l.id}">×</button></td></tr>`;});
+  /* linhas tocáveis → edição (ligadas abaixo) */
   h+="</tbody></table>";el.innerHTML=h;
+  el.querySelectorAll("tbody tr").forEach(tr=>{const id=tr.querySelector(".del").dataset.id;tr.classList.add("tap-edit");tr.title="Tocar para editar";
+    tr.onclick=e=>{if(e.target.closest(".del"))return;const l=db.labs.find(x=>x.id===id);if(l)editLab(l);};});
   el.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     const item=db.labs.find(x=>x.id===b.dataset.id);
     db.labs=db.labs.filter(x=>x.id!==b.dataset.id);save();renderLabTable();renderLabStatus();
@@ -2363,7 +2571,7 @@ function stopDrug(name,kind){
 }
 function stopBtn(name,kind){
   const b=document.createElement("button");b.className="btn-ghost btn-sm";b.textContent="Encerrar";
-  b.title="Tirar do ciclo atual — uma nova aplicação reativa";b.style.cssText="font-size:11px;padding:5px 8px;margin-left:8px;flex:none";
+  b.title="Tirar do ciclo atual — uma nova aplicação reativa";b.style.flex="none";
   b.onclick=()=>stopDrug(name,kind);return b;
 }
 function offCycleHTML(off,byDrug){
@@ -2449,16 +2657,7 @@ function renderCoProtoEditor(){
 }
 function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
-  const due=dueList();const dueEl=$("#resumoDue");
-  let dueHtml="";
-  if(due.length)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>esc(x.name)+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
-  else dueHtml+='<div class="note ok" style="margin:0 0 10px">✓ Nenhuma aplicação pendente hoje.</div>';
-  // Alerta de biometria atrasada
-  {const lb=db.biometrics.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];const bd=db.settings.bioDays||30;
-   if(lb){const dd=Math.ceil((+new Date(lb.date)+bd*864e5-Date.now())/864e5);
-     if(dd<=0)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Biometria atrasada <b>'+(-dd)+'d</b> — última medição em '+fmtD(lb.date)+'.</div>';}
-   else dueHtml+='<div class="note" style="margin:0 0 10px">Sem biometria registrada — faça a primeira medição na aba Saúde.</div>';}
-  dueEl.innerHTML=dueHtml;
+  renderPending();
   const cd=cycleDay();const lw=lastBioWeight();const series=weightSeries();
   let trendTxt="—",trendCol=PAL.muted;
   if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
@@ -2473,6 +2672,67 @@ function renderResumo(){
     if(dd<=0){examTxt=(-dd)+"d";examLbl="exame atrasado";examSty+=";color:"+PAL.red;}else examTxt=dd+"d";}
   $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?lw.weight.toFixed(1):"—","peso (kg)"],[trendTxt,"tendência 7d (kg)","color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
   renderResumoNext();renderAppAdherence();renderCoProtocol();renderRitual();renderPersonal();
+}
+// ---------- PENDÊNCIAS DE HOJE (F2.2) ----------
+// Uma lista única no topo do Resumo; cada item com a sua ação. Peso = 4+ dias sem pesar (cut perde precisão);
+// "Biometria completa" conta só registros com %GC/MME (peso avulso não zera o atraso da composição).
+const lastFullBio=()=>db.biometrics.filter(b=>b.bf!=null||b.smm!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null;
+function pendItems(){
+  const out=[];
+  dueList().forEach(x=>out.push({col:x.dd<0?PAL.red:PAL.amber,t:x.name,s:x.kind+" · "+(x.dd<0?(-x.dd)+"d atrasada":"hoje"),act:"dose",kind:x.kind==="GLP-1"?"glp1":"eaa",drug:x.name}));
+  coProtocolDue().filter(c=>c.status==="due"||c.status==="overdue").forEach(c=>out.push({col:c.status==="overdue"?PAL.red:PAL.amber,t:c.drug+" "+c.dose+" mg",s:"co-protocolo · "+(c.status==="overdue"?"atrasado":"hoje"),act:"cop",drug:c.drug,dose:c.dose}));
+  const sp=suppPending();
+  if(sp)out.push({col:sp.others?PAL.amber:PAL.blue,t:"Suplementos",s:sp.blk.time+" · "+sp.blk.name+" · "+sp.st.done+"/"+sp.st.req+(sp.others?" · +"+sp.others+" bloco"+(sp.others>1?"s":"")+" atrasado"+(sp.others>1?"s":""):""),act:"supp",blk:sp.blk.id,blkName:sp.blk.name});
+  const lw=lastBioWeight(),dW=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
+  if(dW==null||dW>=4)out.push({col:PAL.amber,t:"Peso",s:dW==null?"nenhum registro ainda":"último "+lw.weight.toFixed(1)+" kg · há "+dW+"d",act:"peso"});
+  const fb=lastFullBio(),bd=db.settings.bioDays||30;
+  if(fb){const dd=Math.ceil((+new Date(fb.date)+bd*864e5-Date.now())/864e5);if(dd<=0)out.push({col:PAL.amber,t:"Biometria completa",s:"%GC e medidas · atrasada "+(-dd)+"d",act:"bio"});}
+  const le=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(le){const dd=Math.ceil((+new Date(le.date)+(db.settings.examDays||120)*864e5-Date.now())/864e5);if(dd<=0)out.push({col:PAL.red,t:"Exames",s:"coleta atrasada "+(-dd)+"d",act:"labs"});}
+  return out;
+}
+function goCard(view,sel){goView(view);const el=$(sel);if(!el)return;const c=el.closest(".card")||el;c.classList.remove("collap");c.scrollIntoView({block:"start"});window.scrollBy(0,-56);}
+function renderPending(){
+  const el=$("#resumoDue");if(!el)return;const items=pendItems();
+  if(!items.length){el.innerHTML='<div class="note ok" style="margin:0 0 10px">✓ Nada pendente hoje.</div>';return;}
+  el.innerHTML='<div class="pend-h">Pendências de hoje</div>';
+  items.forEach(it=>{
+    const row=document.createElement("div");row.className="log-item pend";
+    row.innerHTML=`<div class="log-swatch" style="background:${it.col}"></div><div class="log-main"><div class="t">${esc(it.t)}</div><div class="s">${esc(it.s)}</div></div>`;
+    const btn=(lbl,cls,fn)=>{const b=document.createElement("button");b.className=cls+" btn-sm";b.textContent=lbl;b.onclick=fn;return b;};
+    if(it.act==="peso"){
+      const box=document.createElement("div");box.className="row-actions";
+      const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";inp.className="num pend-input";inp.placeholder=lastBioWeight()?"último "+lastBioWeight().weight.toFixed(1):"kg";
+      inp.setAttribute("aria-label","Peso de hoje (kg)");
+      const go=()=>quickWeight(inp.value);inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();go();}};
+      box.appendChild(inp);box.appendChild(btn("Salvar","btn-amber",go));row.appendChild(box);
+    }else{
+      const box=document.createElement("div");box.className="pend-act";
+      if(it.act==="dose")box.appendChild(btn("Registrar","btn-amber",()=>quickDose(it.kind,it.drug)));
+      else if(it.act==="cop")box.appendChild(btn("Registrar","btn-amber",()=>logCoProtocol(it.drug,it.dose)));
+      else if(it.act==="supp")box.appendChild(btn("Marcar","btn-amber",()=>{const k=todayInput(),prev={...(((db.daily||{})[k]||{}).supps||{})};markBlock(it.blk,k);
+        toast(it.blkName+" ✓",()=>{db.daily[k].supps=prev;save();renderSupps();renderPending();});}));
+      else if(it.act==="bio")box.appendChild(btn("Abrir","btn-ghost",()=>goCard("bio","#bWeight")));
+      else if(it.act==="labs")box.appendChild(btn("Abrir","btn-ghost",()=>goCard("bio","#lE2")));
+      row.appendChild(box);
+    }
+    el.appendChild(row);
+  });
+}
+// ---------- PESO RÁPIDO (F2.3) ----------
+function quickWeight(v){
+  const w=parseFloat(String(v).replace(",","."));
+  if(!(w>=20&&w<=400))return toast("Informe o peso em kg");
+  const rec={id:uid(),date:todayInput()+"T12:00:00",weight:w,bf:null,smm:null,visceral:null,method:null};
+  db.biometrics.push(rec);save();refreshBioViews();
+  toast("Peso "+w.toFixed(1)+" kg ✓",()=>{db.biometrics=db.biometrics.filter(x=>x.id!==rec.id);save();refreshBioViews();});
+}
+function refreshBioViews(){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();fillBioHints();renderResumo();}
+// Formulário de biometria: dicas = últimos valores reais (antes eram exemplos fictícios) e último método usado.
+function fillBioHints(){
+  const last=k=>db.biometrics.filter(b=>b[k]!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  [["bWeight","weight"],["bBf","bf"],["bSmm","smm"],["bVisc","visceral"]].forEach(([id,k])=>{const r=last(k),el=$("#"+id);if(el)el.placeholder=r?"último: "+r[k]:"—";});
+  const m=last("method");if(m&&$("#bMethod"))$("#bMethod").value=m.method;
 }
 function renderResumoNext(){
   const el=$("#resumoNext");const rows=[];
@@ -2498,7 +2758,6 @@ function renderAppAdherence(){
   const lw=lastBioWeight();const noWeight=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
   $("#appAdhKpi").innerHTML=kpi3([streak,"dias seguidos"],[days7+"/7","últimos 7 dias"],[noWeight==null?"—":noWeight+"d","sem pesar"]);
   const n=[];
-  if(noWeight!=null&&noWeight>=4)n.push("Peso não registrado há "+noWeight+" dias — num cut a tendência 7d perde precisão sem dados regulares.");
   if(days7<=3)n.push("Poucos registros nesta semana. Registros diários mantêm gráficos e adesão fiéis.");
   $("#appAdhNudge").innerHTML=n.length?n.map(x=>'<div class="note warn" style="margin:6px 0 0">'+x+'</div>').join(""):'<div class="note ok" style="margin:6px 0 0">✓ Registro em dia.</div>';
 }
@@ -2685,6 +2944,7 @@ function renderPressure(){
     const c=bpClass(p.sys,p.dia);
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${fmtDate(p.date)}${p.note?" · "+esc(p.note):""}</div></div><button class="del">×</button>`;
+    editable(row,()=>editBp(p));
     row.querySelector(".del").onclick=()=>{db.pressures=db.pressures.filter(x=>x.id!==p.id);save();renderPressure();renderCVDashboard();toast("Registro removido",()=>{db.pressures.push(p);save();renderPressure();renderCVDashboard();});};
     el.appendChild(row);
   });
@@ -2692,7 +2952,9 @@ function renderPressure(){
 $("#bpSave").onclick=()=>{
   const s=parseInt($("#bpSys").value,10),d=parseInt($("#bpDia").value,10),h=parseInt($("#bpHr").value,10);
   if(isNaN(s)||isNaN(d))return toast("Informe sistólica e diastólica");
-  db.pressures.push({id:uid(),date:$("#bpDate").value||nowLocalInput(),sys:s,dia:d,hr:isNaN(h)?null:h,note:$("#bpNote").value||""});
+  const f={date:$("#bpDate").value||nowLocalInput(),sys:s,dia:d,hr:isNaN(h)?null:h,note:$("#bpNote").value||""};
+  if(editRec("bp"))return commitEdit("bp",f,()=>{renderPressure();renderCVDashboard();});
+  db.pressures.push({id:uid(),...f});
   save();$("#bpSys").value="";$("#bpDia").value="";$("#bpHr").value="";$("#bpNote").value="";
   renderPressure();renderCVDashboard();toast("Pressão salva ✓");
 };
@@ -2987,7 +3249,7 @@ function renderPersonal(){
   h+='<div class="kpi" style="margin-bottom:10px">'+kpi3([weeks.slice(-4).reduce((a,w)=>a+w.done,0),"aulas · 4 sem"],
     [closedW.length?(closedW.reduce((a,w)=>a+w.done,0)/closedW.length).toFixed(1):"—","média/sem"],
     [closedW.length?Math.round(full/closedW.length*100)+"%":"—","semanas completas"])+'</div>';
-  h+='<div class="heat" id="ptHeat"></div><div class="legend"><span><i style="background:#34d399"></i>aula</span><span><i style="background:#60a5fa"></i>reposição</span><span><i style="background:#6b7280"></i>treino sem personal</span><span><i style="background:#33363c"></i>sem treino</span></div>';
+  h+='<div class="heat heat-lg" id="ptHeat"></div><div class="legend"><span><i style="background:#34d399"></i>aula</span><span><i style="background:#60a5fa"></i>reposição</span><span><i style="background:#6b7280"></i>treino sem personal</span><span><i style="background:#33363c"></i>sem treino</span></div>';
   h+='<div style="display:flex;gap:8px;align-items:center;margin-top:12px"><div class="muted" style="flex:1;font-size:11px">Marque <b>Com personal</b> ao registrar o treino, ou toque num dia do calendário.</div></div>';
   box.innerHTML=h;
   // posição da aula dentro da sua semana (para distinguir reposição)
@@ -3000,15 +3262,16 @@ function renderPersonal(){
     k=>{const e=trainEntry(k);
       if(!e||e.type!=="train")return toast("Sem treino neste dia — registre no Diário");
       e.personal=!e.personal;save();refreshTD();
-      toast(!e.personal?"Aula desmarcada":beforeStart(k)?"Aula marcada — antes do início do plano, não entra no saldo":"Aula marcada ✓");});
+      const undo=()=>{const e2=trainEntry(k);if(e2){e2.personal=!e2.personal;save();refreshTD();}};
+      toast((!e.personal?"Aula desmarcada":beforeStart(k)?"Aula marcada (antes do início — fora do saldo)":"Aula marcada ✓")+" · "+fmtD(k+"T12:00:00").slice(0,5),undo);});
 }
 
 function logTrain(letter,dateK){const k=dateK||diaDate||todayInput();const prev=db.training.log[k];db.training.log[k]={type:"train",letter,ts:Date.now(),personal:ptPending||!!(prev&&prev.personal)};ptPending=false;save();refreshTD();if(k===diaDate)setCollap("#cardTreino",true);toast("Treino "+letter+" registrado ✓");}
 function logRest(dateK){const k=dateK||diaDate||todayInput();db.training.log[k]={type:"rest",letter:null,ts:Date.now()};save();refreshTD();if(k===diaDate)setCollap("#cardTreino",true);toast("Descanso registrado ✓");}
-function setDietStatus(v,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.status=v;db.diet.log[k]=e;save();refreshTD();toast("Dieta: "+v);}
+function setDietStatus(v,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.status=v;db.diet.log[k]=e;save();refreshTD();toast("Dieta: "+({on:"no plano",partial:"parcial",off:"fora",refeed:"refeed"}[v]||v));}
 function toggleProtein(dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.protein=!e.protein;db.diet.log[k]=e;save();refreshTD();}
 function toggleMeal(R,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.meals=e.meals||{};e.meals[R]=!e.meals[R];db.diet.log[k]=e;save();refreshTD();}
-function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();renderRitual();renderPersonal();}
+function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();renderRitual();renderPersonal();if($("#v-diario").classList.contains("active")&&$("#cardDieta")){const de=dietEntry(diaDate)||{};if(de.status&&mealKeys(diaDate).slice(0,mealsN()).every(R=>de.meals&&de.meals[R]))setCollap("#cardDieta",true);}}
 
 function renderTrainingCard(){
   if(!$("#trainRing"))return;
@@ -3092,7 +3355,7 @@ function renderDietCard(){
   const ind=document.createElement("div");ind.className="muted";ind.style.cssText="font-size:11px;margin-top:7px";
   ind.innerHTML='Proteína (total): 🔥 <b style="color:var(--green)">'+pstreak+'d</b> seguidos · <b>'+(pc?Math.round(ps/pc*100):0)+'%</b> dos dias registrados (30d)';
   tg.appendChild(ind);
-  const m=$("#dietMeals");if(m){m.innerHTML="";mealKeys(date).forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=(on?"✓ ":"")+R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});}
+  const m=$("#dietMeals");if(m){m.innerHTML="";const nextR=mealKeys(date).slice(0,mealsN()).find(R=>!(e.meals&&e.meals[R]));mealKeys(date).forEach(R=>{const on=e.meals&&e.meals[R];const b=document.createElement("button");b.className="tribtn"+(on?" on-good":"")+(R===nextR?" next-meal":"");b.style.cssText="margin:3px;flex:0 0 auto;min-width:48px";b.textContent=(on?"✓ ":"")+R;b.onclick=()=>toggleMeal(R,date);m.appendChild(b);});}
   const done=pulseCount(date);setText("pulseDayCount",done+"/"+mealsN()+" pulsos");
 }
 function renderPulse(){
@@ -3335,6 +3598,7 @@ function initAll(){
    if($("#goalFat"))$("#goalFat").value=g.fat!=null?g.fat:"";
    if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";}
   $("#setMeals").value=mealsN();
+  fillBioHints();
   {const pt=db.settings.personal;$("#ptEnabled").checked=!!pt.enabled;$("#ptPerWeek").value=pt.perWeek;$("#ptStart").value=pt.start||"";$("#ptInitial").value=pt.initial||0;}
   fillTrendMarker();
   applyDrugContext();
@@ -3377,8 +3641,8 @@ setTimeout(()=>{
   };
 },0);
 
-// Header auto-hide
-(function(){const h=document.querySelector("header");let last=0;
+// Header auto-hide (a barra de dia do Diário gruda logo abaixo dele: --hdrH)
+(function(){const h=document.querySelector("header");document.documentElement.style.setProperty("--hdrH",h.offsetHeight+"px");let last=0;
   window.addEventListener("scroll",()=>{const y=window.scrollY;if(y>last&&y>56)h.classList.add("hide");else h.classList.remove("hide");last=y;},{passive:true});})();
 
 // PWA: manifest + ícone gerado em runtime (sem arquivo externo)

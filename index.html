@@ -40,6 +40,7 @@ body{
   padding-bottom:64px;
   background-image:radial-gradient(circle at 18% -10%,rgba(245,158,11,.07),transparent 42%),radial-gradient(circle at 100% 0%,rgba(96,165,250,.05),transparent 40%);
 }
+.num::placeholder{font-size:13px}
 .num,.mono{font-family:'IBM Plex Mono',monospace}
 header{
   position:sticky;top:0;z-index:20;background:rgba(26,28,31,.9);backdrop-filter:blur(10px);
@@ -58,7 +59,7 @@ main{padding:16px;max-width:760px;margin:0 auto}
 .view.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;position:relative}
-.card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin:0 0 13px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--txt);margin:0 0 13px;font-weight:600;font-family:'IBM Plex Mono',monospace}
 .card h2 .hint{float:right;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
 label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:500}
 input,select,textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);padding:12px;font-size:15px;font-family:inherit;outline:none}
@@ -123,6 +124,13 @@ button{font-family:inherit;cursor:pointer;border:none}
 .log-item.pend .pend-act{flex:none}
 .log-item.pend .pend-act button{min-height:36px;padding:7px 14px;font-size:12px}
 .row-actions .pend-input{flex:1;max-width:140px;padding:8px 10px;font-size:15px}
+.subnav{display:flex;gap:4px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.subnav::-webkit-scrollbar{display:none}
+.subnav button{flex:1;min-width:max-content;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;padding:8px 12px;border-radius:20px;min-height:36px}
+.subnav button.on{background:var(--amber);border-color:var(--amber);color:#181818}
+#v-bio[data-sec] .card[data-sec]{display:none}
+#v-bio[data-sec="corpo"] .card[data-sec="corpo"],#v-bio[data-sec="exames"] .card[data-sec="exames"],#v-bio[data-sec="cardio"] .card[data-sec="cardio"],#v-bio[data-sec="subjetivo"] .card[data-sec="subjetivo"]{display:block}
+.phase-tag{float:right;clear:right;font-size:11px;text-transform:none;letter-spacing:0;color:var(--amber-soft);background:rgba(245,158,11,.13);border-radius:20px;padding:1px 8px;margin-top:4px;font-weight:500}
 .daybar{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:6px;background:var(--bg);padding:8px 0 10px;margin:-6px 0 8px;transition:top .28s ease}
 header:not(.hide)~main .daybar{top:var(--hdrH,48px)}
 .daybar>button{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);min-width:44px;height:44px;font-size:14px}
@@ -264,6 +272,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <header>
   <h1><span class="dot"></span>Control</h1>
   <div class="sub" id="hdrSub">monitor de aplicações · local</div>
+  <div class="subnav" id="subnav" role="tablist"></div>
 </header>
 
 <main>
@@ -276,10 +285,6 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi" id="resumoKpi" style="margin-top:6px"></div>
   </div>
   <div class="card">
-    <h2>Co-protocolo <span class="hint">ancilares vinculados</span></h2>
-    <div id="coProtoBox"></div>
-  </div>
-  <div class="card">
     <h2>Fechar o dia <span class="hint" id="ritualStreak"></span></h2>
     <div id="ritualBox"></div>
   </div>
@@ -287,11 +292,6 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <h2>Personal <span class="hint" id="ptHint"></span> <span class="help" data-note-id="helpPT" data-help-title="Aulas com o personal">?</span></h2>
     <div id="ptBox"></div>
     <template class="help-src" id="helpPT">Cada semana (seg–dom) fechada com menos aulas que o plano gera <b>crédito a repor</b>; semanas com aulas acima do plano (reposição) abatem o crédito. A semana atual só conta quando há aula extra. Marque <b>Com personal</b> ao registrar o treino (Diário ou "Fechar o dia"). Plano, data de início e saldo inicial em <b>Dados › Configurações › Personal</b>.</template>
-  </div>
-  <div class="card">
-    <h2>Adesão ao registro <span class="hint">manter o log vivo</span></h2>
-    <div class="kpi" id="appAdhKpi"></div>
-    <div id="appAdhNudge" style="margin-top:8px"></div>
   </div>
   <div class="card">
     <h2>Próximas doses <span class="hint">EAA + GLP-1</span></h2>
@@ -333,14 +333,15 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="btn" id="btnSave">Registrar aplicação</button>
   </div>
 
-  <div class="card">
-    <h2>Rotação de sítios <span class="hint">dias desde a última · EAA+GLP-1</span> <span class="help" data-note-id="help1" data-help-title="Rotação de sítios">?</span></h2>
+  <div class="card collapsible collap">
+    <h2 class="chead">Rotação de sítios <span class="hint">detalhe por sítio</span><span class="chev">▾</span></h2>
     <div class="bodymap" id="bodyMap"></div>
     <div class="legend">
       <span><i style="background:var(--green)"></i>livre</span>
       <span><i style="background:var(--amber)"></i>recente</span>
       <span><i style="background:var(--red)"></i>reuso (&lt; <b id="warnDisp">5</b>d)</span>
     </div>
+    <span class="help" data-note-id="help1" data-help-title="Rotação de sítios">?</span>
     <template class="help-src" id="help1">Alerta visual ao reutilizar um sítio dentro da janela — profilaxia de fibrose / lipo-hipertrofia. Monitoração <b>compartilhada entre EAA e GLP-1</b> (o mesmo ponto físico conta nos dois). Janela editável em <b>Dados</b>.</template>
   </div>
 
@@ -349,6 +350,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="dueEaa"></div>
     <div id="nextDoseBox"><div class="empty">Sem aplicações registradas.</div></div>
     <button class="btn btn-ghost btn-sm" id="btnIcs" style="width:100%;margin-top:11px;display:none">📅 Exportar próximas doses (.ics)</button>
+  </div>
+  <div class="card">
+    <h2>Co-protocolo <span class="hint">ancilares vinculados</span></h2>
+    <div id="coProtoBox"></div>
   </div>
 
   <div class="card">
@@ -435,51 +440,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </details>
   </div>
 
-  <div class="card">
-    <h2>Consistência — treino <span class="hint" id="trainStreak"></span></h2>
-    <div class="kpi k3" id="trainScoreKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
-    <div class="heat" id="trainHeat"></div>
-    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
-  </div>
 
-  <div class="card">
-    <h2>Adesão — dieta <span class="hint" id="dietStreak"></span></h2>
-    <div class="kpi k3" id="dietScoreKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
-    <div class="heat" id="dietHeat"></div>
-    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
-  </div>
 
-  <div class="card">
-    <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
-    <div class="kpi k3" id="pulseKpi"></div>
-    <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
-    <div class="heat" id="pulseHeat"></div>
-    <div class="legend" id="pulseLegend"></div>
-  </div>
 
-  <div class="card">
-    <h2>Adesão × resultado <span class="hint">semana a semana</span> <span class="help" data-note-id="help2" data-help-title="Adesão × resultado">?</span></h2>
-    <div class="chart-wrap tall"><canvas id="chAdhResult"></canvas></div>
-    <template class="help-src" id="help2">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</template>
-  </div>
 
-  <div class="card">
-    <h2>Adesão — suplementos <span class="hint" id="adhStreak"></span></h2>
-    <div class="kpi k3" id="adhKpi"></div>
-    <div class="muted" style="font-size:11px;margin:2px 0 6px">Últimas ~12 semanas (toque num dia para abri-lo)</div>
-    <div class="heat" id="heat"></div>
-    <div class="legend"><span><i style="background:#33363c"></i>sem registro</span><span><i style="background:#7f1d1d"></i>baixa</span><span><i style="background:#F59E0B"></i>média</span><span><i style="background:#34d399"></i>alta</span></div>
-    <details style="margin-top:12px"><summary>Aderência por item (30 dias)</summary>
-      <div id="adhItems" style="margin-top:9px"></div>
-    </details>
-  </div>
 
-  <div class="card">
-    <h2>Tendência — sono & água <span class="hint">14 dias</span></h2>
-    <div class="chart-wrap"><canvas id="chDiary"></canvas></div>
-  </div>
 </section>
 
 <!-- ============ GLP-1 ============ -->
@@ -510,9 +475,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="gWeeklyBox"><div class="empty">Sem aplicações nos últimos 7 dias.</div></div>
   </div>
 
-  <div class="card">
-    <h2>Rotação SC <span class="hint">dias desde a última</span> <span class="help" data-note-id="help3" data-help-title="Rotação SC">?</span></h2>
+  <div class="card collapsible collap">
+    <h2 class="chead">Rotação SC <span class="hint">detalhe por sítio</span><span class="chev">▾</span></h2>
     <div class="bodymap" id="gBodyMap"></div>
+    <span class="help" data-note-id="help3" data-help-title="Rotação SC">?</span>
     <template class="help-src" id="help3">Rotacione os sítios para reduzir nódulos e variabilidade de absorção. Abdômen: ≥5 cm do umbigo.</template>
   </div>
 
@@ -533,23 +499,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="note warn" style="margin-top:13px">Procure o médico se: dor abdominal intensa/persistente (irradiando para as costas), vômitos incoercíveis, sinais de desidratação ou icterícia. Mantenha o piso proteico e a hidratação mesmo com apetite suprimido.</div>
   </div>
 
-  <div class="card">
-    <h2>Dose & nível estimado <span class="hint">índice mg-eq</span></h2>
-    <div class="field"><label>Fase / ciclo</label><select id="gPhaseFilter"></select></div>
-    <div class="chart-wrap tall"><canvas id="chGlpLevel"></canvas></div>
-  </div>
-  <div class="card">
-    <h2>Resultado & tolerância <span class="help" data-note-id="help4" data-help-title="Resultado & tolerância">?</span></h2>
-    <div class="chart-wrap tall"><canvas id="chGlpResult"></canvas></div>
-    <template class="help-src" id="help4">Peso (da aba Saúde) sobre apetite e náusea, na mesma linha do tempo — relaciona resposta e tolerância à titulação.</template>
-  </div>
 
-  <div class="card">
-    <h2>Tendência de peso <span class="hint">média móvel 7d · taxa</span></h2>
-    <div class="kpi" id="wtTrendKpi"></div>
-    <div class="chart-wrap tall"><canvas id="chWtTrend"></canvas></div>
-    <div id="wtTrendNote"></div>
-  </div>
 
   <div class="card">
     <h2>Histórico <span class="hint" id="gLogCount"></span></h2>
@@ -564,7 +514,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <label>Fase / ciclo</label>
     <select id="phaseFilter"></select>
   </div>
-  <div class="card">
+  <div class="card" data-phase-aware>
     <h2>Frequência por droga</h2>
     <div class="seg" id="freqSeg">
       <button data-win="30" class="on">30d</button>
@@ -573,10 +523,14 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
     <div class="chart-wrap"><canvas id="chFreq"></canvas></div>
   </div>
-  <div class="card">
+  <div class="card" data-phase-aware>
     <h2>Concentração estimada <span class="hint">índice mg-eq</span> <span class="help" data-note-id="help5" data-help-title="Concentração estimada">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chConc"></canvas></div>
     <template class="help-src" id="help5">Superposição de decaimento exponencial (½-vida editável). Índice relativo, não ng/dL. Totais separados por via (injetável × oral) — não somados entre si. Tracejado = projeção 14d sem novas doses.</template>
+  </div>
+  <div class="card" data-phase-aware>
+    <h2>Dose & nível estimado <span class="hint">índice mg-eq</span></h2>
+    <div class="chart-wrap tall"><canvas id="chGlpLevel"></canvas></div>
   </div>
   <div class="card">
     <h2>Estado de equilíbrio <span class="hint">teórico, do protocolo</span> <span class="help" data-note-id="help6" data-help-title="Estado de equilíbrio">?</span></h2>
@@ -601,23 +555,77 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="adProtGaps" style="margin-top:10px"></div>
     <template class="help-src" id="help8">Índice = aplicações ÷ esperadas (janela ÷ cadência) por droga. Calendário reancorado a cada aplicação real (não um grid fixo desde a 1ª dose), com tolerância de ±1 dia. Verde = dose no prazo; vermelho = dia esperado sem aplicação próxima. Edite a cadência em <b>Dados</b>.</template>
   </div>
-  <div class="card">
+  <div class="card" data-phase-aware>
     <h2>Correlação labs × carga <span class="help" data-note-id="help9" data-help-title="Correlação labs × carga">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chCorr"></canvas></div>
     <template class="help-src" id="help9">E2 (pg/mL) e Prolactina (ng/mL) sobre a carga androgênica total. Triângulos = timing de doses de inibidor de aromatase (AI). Inspeção visual — não infere causalidade.</template>
+  </div>
+  <div class="card" data-phase-aware>
+    <h2>Resultado & tolerância <span class="help" data-note-id="help4" data-help-title="Resultado & tolerância">?</span></h2>
+    <div class="chart-wrap tall"><canvas id="chGlpResult"></canvas></div>
+    <template class="help-src" id="help4">Peso (da aba Saúde) sobre apetite e náusea, na mesma linha do tempo — relaciona resposta e tolerância à titulação.</template>
+  </div>
+</section>
+
+<!-- ============ ANÁLISE · HÁBITOS ============ -->
+<section class="view" id="v-habitos">
+  <div class="card">
+    <h2>Adesão ao registro <span class="hint">manter o log vivo</span></h2>
+    <div class="kpi" id="appAdhKpi"></div>
+    <div id="appAdhNudge" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h2>Consistência — treino <span class="hint" id="trainStreak"></span></h2>
+    <div class="kpi k3" id="trainScoreKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Plano × realizado — últimas ~12 semanas (descanso no plano conta como acerto)</div>
+    <div class="heat" id="trainHeat"></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#34d399"></i>treino no plano</span><span><i style="background:#60a5fa"></i>descanso no plano</span><span><i style="background:#F59E0B"></i>fora do plano</span></div>
+  </div>
+  <div class="card">
+    <h2>Adesão — dieta <span class="hint" id="dietStreak"></span></h2>
+    <div class="kpi k3" id="dietScoreKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Últimas ~12 semanas</div>
+    <div class="heat" id="dietHeat"></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem reg.</span><span><i style="background:#7f1d1d"></i>fora</span><span><i style="background:#F59E0B"></i>parcial</span><span><i style="background:#34d399"></i>no plano</span></div>
+  </div>
+  <div class="card">
+    <h2>Pulsos de leucina <span class="hint" id="pulseStreak"></span></h2>
+    <div class="kpi k3" id="pulseKpi"></div>
+    <div class="muted" style="font-size:11px;margin:8px 0 6px">Pulsos/dia — últimas ~12 semanas (frequência de gatilhos de mTOR)</div>
+    <div class="heat" id="pulseHeat"></div>
+    <div class="legend" id="pulseLegend"></div>
+  </div>
+  <div class="card">
+    <h2>Adesão — suplementos <span class="hint" id="adhStreak"></span></h2>
+    <div class="kpi k3" id="adhKpi"></div>
+    <div class="muted" style="font-size:11px;margin:2px 0 6px">Últimas ~12 semanas (toque num dia para abri-lo)</div>
+    <div class="heat" id="heat"></div>
+    <div class="legend"><span><i style="background:#33363c"></i>sem registro</span><span><i style="background:#7f1d1d"></i>baixa</span><span><i style="background:#F59E0B"></i>média</span><span><i style="background:#34d399"></i>alta</span></div>
+    <details style="margin-top:12px"><summary>Aderência por item (30 dias)</summary>
+      <div id="adhItems" style="margin-top:9px"></div>
+    </details>
+  </div>
+  <div class="card">
+    <h2>Adesão × resultado <span class="hint">semana a semana</span> <span class="help" data-note-id="help2" data-help-title="Adesão × resultado">?</span></h2>
+    <div class="chart-wrap tall"><canvas id="chAdhResult"></canvas></div>
+    <template class="help-src" id="help2">Barras = adesão média (treino + dieta) por semana; linha = peso médio da semana. Liga disciplina a resultado — leitura, não cobrança.</template>
+  </div>
+  <div class="card">
+    <h2>Tendência — sono & água <span class="hint">14 dias</span></h2>
+    <div class="chart-wrap"><canvas id="chDiary"></canvas></div>
   </div>
 </section>
 
 <!-- ============ SAÚDE ============ -->
 <section class="view" id="v-bio">
-  <div class="card">
+  <div class="card" data-sec="cardio">
     <h2>Risco cardiovascular <span class="hint">visão consolidada</span> <span class="help" data-note-id="helpCV" data-help-title="Risco cardiovascular">?</span></h2>
     <div id="cvVerdict"></div>
     <div id="cvSignals" style="margin-top:10px"></div>
     <template class="help-src" id="helpCV">Reúne num só lugar os sinais de risco que o app já coleta — pressão arterial, FC de repouso, HDL, LDL, não-HDL, TG:HDL e hematócrito — cada um com farol verde/âmbar/vermelho. O veredito destaca o sinal mais crítico do momento. EAA (sobretudo orais) e estimulantes pioram vários desses ao mesmo tempo. Ferramenta de leitura — decisões com seu médico.</template>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="corpo">
     <h2>Biometria <span class="hint" id="bioDue"></span></h2>
     <div class="grid3">
       <div class="field"><label>Peso (kg)</label><input id="bWeight" type="text" inputmode="decimal" class="num" placeholder="79.6"></div>
@@ -632,7 +640,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="bioList" style="margin-top:12px"></div>
   </div>
 
-  <div class="card collapsible" id="cardGoals">
+  <div class="card collapsible" id="cardGoals" data-sec="corpo">
     <h2 class="chead">Metas / objetivos <span class="hint">acompanhamento</span><span class="chev">▾</span></h2>
     <div id="goalProgress" style="margin-top:6px"></div>
     <div class="goal-form">
@@ -647,14 +655,20 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="corpo">
     <h2>Composição corporal <span class="hint">massa magra × gordura</span></h2>
     <div class="kpi" id="compKpi"></div>
     <div class="chart-wrap tall"><canvas id="chComp"></canvas></div>
     <div id="compNote"></div>
   </div>
+  <div class="card" data-sec="corpo">
+    <h2>Tendência de peso <span class="hint">média móvel 7d · taxa</span></h2>
+    <div class="kpi" id="wtTrendKpi"></div>
+    <div class="chart-wrap tall"><canvas id="chWtTrend"></canvas></div>
+    <div id="wtTrendNote"></div>
+  </div>
 
-  <div class="card">
+  <div class="card" data-sec="exames">
     <h2>Painel laboratorial</h2>
     <div class="grid2">
       <div class="field"><label>Estradiol (pg/mL)</label><input id="lE2" type="text" inputmode="decimal" class="num"></div>
@@ -688,13 +702,13 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="labTable" style="margin-top:14px"></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="exames">
     <h2>Marcadores derivados <span class="hint">do último exame</span> <span class="help" data-note-id="help10" data-help-title="Marcadores derivados">?</span></h2>
     <div id="derivedBox"></div>
     <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e eGFR (CKD-EPI 2021). Ferramenta de leitura — decisões com o médico.</template>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="exames">
     <h2>Ferro & hematócrito <span class="hint">eritrocitose × depleção</span></h2>
     <div id="ironStatus"></div>
     <div class="chart-wrap" style="margin-top:6px"><canvas id="chIron"></canvas></div>
@@ -705,7 +719,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="donList" style="margin-top:8px"></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="cardio">
     <h2>Pressão arterial <span class="hint" id="bpHint"></span> <span class="help" data-note-id="helpBP" data-help-title="Pressão arterial">?</span></h2>
     <div class="kpi" id="bpKpi"></div>
     <div id="bpStatus"></div>
@@ -722,7 +736,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <template class="help-src" id="helpBP">Classificação por <b>ACC/AHA 2017</b> (Whelton et al., Hypertension 2018), cortes de consultório: normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. Diretrizes europeia (ESC) e brasileira (SBC) só rotulam hipertensão a partir de ≥140/90. Medições em casa tendem a ser mais baixas que no consultório. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="exames">
     <h2>Tendência dos exames <span class="hint" id="examDue"></span> <span class="help" data-note-id="help11" data-help-title="Tendência dos exames">?</span></h2>
     <div class="field"><label>Marcador</label><select id="trendMarker"></select></div>
     <div id="trendDelta" style="text-align:center;margin-bottom:10px"></div>
@@ -730,7 +744,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <template class="help-src" id="help11">Trajetória ao longo dos exames com a faixa de referência sombreada. Pontos vermelhos = fora da faixa (respeita o modo ciclo). Intervalo de exame configurável em Dados.</template>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="subjetivo">
     <h2>Check-in subjetivo <span class="hint">escala 1–5</span></h2>
     <div id="checkScales"></div>
     <div class="field"><label>Data</label><input id="cDate" type="date"></div>
@@ -738,7 +752,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chMood"></canvas></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="subjetivo">
     <h2>Sintomas × hormônios <span class="hint">subjetivo vs E2/PRL</span> <span class="help" data-note-id="help12" data-help-title="Sintomas × hormônios">?</span></h2>
     <div class="chart-wrap tall"><canvas id="chSymHorm"></canvas></div>
     <template class="help-src" id="help12">Libido, energia e humor (escala 1–5, eixo esq.) sobre E2 (pg/mL) e prolactina (ng/mL) dos exames (eixo dir.), na mesma linha do tempo. Inspeção visual — não infere causalidade.</template>
@@ -884,20 +898,17 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.99</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.10</div>
 </section>
 
 </main>
 
 <nav id="nav">
-  <button data-v="resumo" class="on"><svg viewBox="0 0 24 24"><path d="M3 12l2-2 4 4 6-6 4 4 2-2"/><path d="M3 20h18"/></svg>Resumo</button>
-  <button data-v="diario"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>Diário</button>
-  <button data-v="apply"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>EAA</button>
-  <button data-v="glp1"><svg viewBox="0 0 24 24"><path d="M12 2s5 5.5 5 10a5 5 0 01-10 0c0-4.5 5-10 5-10z"/></svg>GLP-1</button>
-  <button data-v="charts"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>Gráficos</button>
-  <button data-v="bio"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-12 2 6h6"/></svg>Saúde</button>
-  <button data-v="fotos"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg>Fotos</button>
-  <button data-v="data"><svg viewBox="0 0 24 24"><path d="M4 7V5a2 2 0 012-2h12a2 2 0 012 2v2M4 7h16M4 7v12a2 2 0 002 2h12a2 2 0 002-2V7M9 11h6"/></svg>Dados</button>
+  <button data-g="hoje" class="on"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>Hoje</button>
+  <button data-g="protocolo"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Protocolo</button>
+  <button data-g="saude"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-12 2 6h6"/></svg>Saúde</button>
+  <button data-g="analise"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>Análise</button>
+  <button data-g="mais"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</button>
 </nav>
 
 <div class="toast" id="toast"><span id="toastMsg">Salvo</span></div>
@@ -911,6 +922,8 @@ const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 const KEY="control_v2", OLD_KEY="ciclolog_v1";
 const SITES=["Deltóide D","Deltóide E","Vasto Lateral D","Vasto Lateral E","Ventroglúteo D","Ventroglúteo E","Abdômen D","Abdômen E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
 const PAL={amber:"#F59E0B",amber2:"#fbbf24",blue:"#60a5fa",violet:"#a78bfa",green:"#34d399",pink:"#f472b6",red:"#f87171",muted:"#9aa0a8"};
+// Escala única dos heatmaps (vazio · baixo · médio · alto · descanso/reposição · treino sem personal) — F3.5
+const HEAT={none:"#33363c",low:"#7f1d1d",mid:"#F59E0B",high:"#34d399",alt:"#60a5fa",soft:"#6b7280"};
 // Estados de fase/ciclo (estruturados). [id, rótulo, cor]
 const PHASE_TYPES=[["blast","Blast",PAL.red],["cruise","Cruise",PAL.amber],["trt","TRT",PAL.green],["pct","PCT",PAL.violet],["off","Ponte / Off",PAL.muted]];
 const phaseInfo=t=>PHASE_TYPES.find(p=>p[0]===t)||["",t||"",PAL.muted];
@@ -922,6 +935,9 @@ function today12(){const d=new Date();d.setHours(12,0,0,0);return d;}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
 // DOM: set-text seguro (no-op se o elemento não existe na view atual).
 function setText(id,v){const el=$("#"+id);if(el)el.textContent=v;}
+// Números exibidos em pt-BR (vírgula decimal): fmtN = casas fixas · fmtV = até d casas, sem zeros à direita.
+const fmtN=(v,d=1)=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtV=(v,d=2)=>v==null||v===""||isNaN(v)?"—":Number(v).toLocaleString("pt-BR",{maximumFractionDigits:d});
 // HTML: escapa dado do usuário antes de interpolar em innerHTML (observações, nomes, notas).
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 // KPI: gera o markup padrão de box (valor + label).
@@ -935,12 +951,13 @@ const leftY=(text,extra={})=>({...baseOpts.scales.y,position:"left",...(text?{ti
 // janela mais recente e ganha pan horizontal (arrastar no gráfico, roda/trackpad lateral ou trilho abaixo).
 // Eixos e legenda ficam fixos — só a janela do eixo X (min/max por índice) se move.
 const charts={};
+if(window.Chart)Chart.defaults.locale="pt-BR"; // ticks e tooltips com vírgula decimal
 const CHART_WIN_DAYS=150; // ~5 meses visíveis
 const chartPan={};        // id → {ch, ts, t0, span, S (dias desde t0 do início da janela), nav}
 function mkChart(id,cfg){
   const dates=cfg.panDates;delete cfg.panDates;
   if(dates){const o=cfg.options=cfg.options||{};o.scales={...(o.scales||{})};o.scales.x={...(o.scales.x||{})};} // não vaza min/max no baseOpts compartilhado
-  if(charts[id])charts[id].destroy();
+  if(charts[id]){charts[id].destroy();cfg.options={...(cfg.options||{}),animation:false};} // re-render sem animação
   const ch=charts[id]=new Chart($("#"+id),cfg);
   setupPan(id,ch,dates);
   return ch;
@@ -1037,10 +1054,59 @@ async function sbRemoteTs(c,user){
   if(error)throw error;
   return data?String(data.ts??0):null; // null = ainda não existe linha remota
 }
+// ---- MESCLAGEM DE 3 VIAS (F3.9) ----
+// SB_BASE_KEY guarda o documento da última sincronização bem-sucedida (base comum entre os aparelhos).
+// Mescla registro a registro (arrays com id/name) e campo a campo (objetos): o que só um lado mudou prevalece;
+// presente na base e ausente num lado = excluído; ausente na base = criado; conflito real = documento mais novo.
+const SB_BASE_KEY="control_sb_base";
+const getBase=()=>{try{return JSON.parse(localStorage.getItem(SB_BASE_KEY)||"null");}catch(e){return null;}};
+const setBase=obj=>{try{localStorage.setItem(SB_BASE_KEY,JSON.stringify(obj));}catch(e){}};
+function stableStr(v){
+  if(v===undefined)return "~u";if(v===null||typeof v!=="object")return JSON.stringify(v);
+  if(Array.isArray(v))return "["+v.map(stableStr).join(",")+"]";
+  return "{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+stableStr(v[k])).join(",")+"}";
+}
+const same=(a,b)=>stableStr(a)===stableStr(b);
+const keyOfRec=o=>o&&typeof o==="object"?(o.id!=null?"id:"+o.id:(o.name!=null?"nm:"+o.name:null)):null;
+const isKeyedArr=a=>Array.isArray(a)&&a.length>0&&a.every(o=>keyOfRec(o)!=null);
+const isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+const cloneV=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
+function merge3(b,l,r,pref){
+  if(same(l,r))return cloneV(l);
+  if(same(l,b))return cloneV(r);                     // só o remoto mudou
+  if(same(r,b))return cloneV(l);                     // só o local mudou
+  const lk=Array.isArray(l)&&(l.length===0||isKeyedArr(l)),rk=Array.isArray(r)&&(r.length===0||isKeyedArr(r));
+  if(lk&&rk&&(isKeyedArr(l)||isKeyedArr(r))){        // coleção de registros: mescla por id/name
+    const map=a=>{const m=new Map();(Array.isArray(a)?a:[]).forEach(o=>{const k=keyOfRec(o);if(k)m.set(k,o);});return m;};
+    const B=map(b),L=map(l),R=map(r),out=[],seen=new Set();
+    [...L.keys(),...R.keys()].forEach(k=>{if(seen.has(k))return;seen.add(k);
+      const v=merge3(B.get(k),L.get(k),R.get(k),pref);if(v!==undefined)out.push(v);});
+    return out;
+  }
+  if(isObj(l)&&isObj(r)){                            // objeto: mescla campo a campo
+    const out={},bb=isObj(b)?b:{};
+    new Set([...Object.keys(l),...Object.keys(r)]).forEach(k=>{const v=merge3(bb[k],l[k],r[k],pref);if(v!==undefined)out[k]=v;});
+    return out;
+  }
+  if(l===undefined)return cloneV(r);                 // apagado aqui, editado lá → mantém a edição
+  if(r===undefined)return cloneV(l);                 // apagado lá, editado aqui → mantém a edição
+  return cloneV(pref==="l"?l:r);                     // conflito real no mesmo campo → documento mais novo
+}
+// Remoto e local mudaram desde a última sincronização → mescla, salva e envia.
+function mergeRemote(rp){
+  pushSnap("antes de mesclar com outro aparelho");
+  const local=JSON.parse(JSON.stringify(db));
+  const pref=(local._syncTs||0)>=(rp._syncTs||0)?"l":"r";
+  // Exclusão de um lado + edição do outro: merge3 devolve a edição (não perde dado editado).
+  const merged=merge3(getBase(),local,rp,pref);
+  db=migrate(merged);setRemoteSeen(rp._syncTs||0);
+  save();initAll();
+  toast("Alterações de outro aparelho mescladas com as deste ✓");
+}
 function adoptRemote(payload){
   try{localStorage.setItem(KEY,JSON.stringify(payload));}catch(e){}
   localStorage.removeItem(SB_PENDING_KEY);_syncDirty=false;clearTimeout(_pushTimer);_pushTimer=null;
-  setRemoteSeen(payload._syncTs||0);
+  setRemoteSeen(payload._syncTs||0);setBase(payload);
   db=migrate(JSON.parse(JSON.stringify(payload)));initAll();
 }
 // Remoto mudou desde a última sincronização deste aparelho.
@@ -1048,9 +1114,7 @@ async function reconcileRemote(){
   const remote=await sbPull();if(!remote)throw new Error("pull falhou");
   if(!remote.payload)return false;                     // linha sumiu: segue com o envio
   if(!localPending()){adoptRemote(remote.payload);toast("Atualizado com dados de outro aparelho");return true;}
-  pushSnap("versão deste aparelho antes de um conflito de sync");
-  adoptRemote(remote.payload);
-  toast("Havia dados mais novos em outro aparelho. A versão deste aparelho foi guardada em Snapshots.",()=>{goView("data");const d=$("#snapList");if(d){d.closest("details").open=true;d.scrollIntoView({block:"center"});}},"Ver");
+  mergeRemote(remote.payload);   // os dois lados mudaram → mescla registro a registro (F3.9)
   return true;
 }
 async function sbPush(silent=false){
@@ -1066,7 +1130,7 @@ async function sbPush(silent=false){
     const data=JSON.parse(JSON.stringify(db));         // retrato do estado enviado
     const {error}=await c.from("control_data").upsert({user_id:user.id,data,updated_by_device:navigator.userAgent.slice(0,80)},{onConflict:"user_id"});
     if(error)throw error;
-    setRemoteSeen(data._syncTs||0);
+    setRemoteSeen(data._syncTs||0);setBase(data);
     if((db._syncTs||0)===(data._syncTs||0))localStorage.removeItem(SB_PENDING_KEY); // nada mudou durante o envio
     markSynced();
     if(!silent)toast("Sincronizado ✓");
@@ -1125,16 +1189,14 @@ async function sbInit(){
       if(!dirty){
         if((rp._syncTs||0)>lts||!localHasData)adoptRemote(rp);   // nuvem mais nova → adota
         else if(lts>(rp._syncTs||0))localStorage.setItem(SB_PENDING_KEY,"1"); // local mais novo sem marca → envia
-        else setRemoteSeen(rts);
+        else{setRemoteSeen(rts);if(!getBase())setBase(rp);}
       }else if(seen===null){
-        // Aparelho sem histórico de sync (versões < 4.93): regra antiga de last-write-wins
-        if(lts>=(rp._syncTs||0))setRemoteSeen(rts); // deixa o envio abaixo subir o local
-        else adoptRemote(rp);
+        // Aparelho sem histórico de sync (versões < 4.93): mescla sem base (união de registros — nada se perde)
+        if((rp._syncTs||0)===lts)setRemoteSeen(rts);
+        else mergeRemote(rp);
       }else if(rts!==seen){
-        // Os dois lados mudaram desde a última sincronização → conflito
-        pushSnap("versão deste aparelho antes de um conflito de sync");
-        adoptRemote(rp);
-        toast("Havia dados mais novos em outro aparelho. A versão deste aparelho foi guardada em Snapshots.",()=>goView("data"),"Ver");
+        // Os dois lados mudaram desde a última sincronização → mescla registro a registro (F3.9)
+        mergeRemote(rp);
       }
     }
     if(!localPending())markSynced();else _syncErr=false;
@@ -1219,7 +1281,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.99";
+const APP_VERSION="5.10";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1409,8 +1471,11 @@ function linkLabels(root=document){
   });
 }
 {let _lk=0;new MutationObserver(()=>{if(_lk)return;_lk=requestAnimationFrame(()=>{_lk=0;linkLabels();});}).observe(document.querySelector("main"),{childList:true,subtree:true});}
-function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
-function fmtD(iso){return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
+// Formatadores criados uma vez (toLocale*String cria um Intl novo a cada chamada — caro em heatmaps/listas).
+const DF_DM=new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}),DF_HM=new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+      DF_DMY=new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});
+function fmtDate(iso){const d=new Date(iso);return DF_DM.format(d)+" "+DF_HM.format(d);}
+function fmtD(iso){return DF_DMY.format(new Date(iso));}
 function nowLocalInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
 function todayInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
 function drugByName(n){return db.drugs.find(d=>d.name===n);}
@@ -1418,20 +1483,58 @@ function isOral(n){const d=drugByName(n);return d&&d.type==="oral";}
 
 // ---------- nav ----------
 let selectedSite=null, phaseFilter="__all__";
-$$("#nav button").forEach(b=>b.onclick=()=>{
-  $$("#nav button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
-  $$(".view").forEach(v=>v.classList.remove("active"));
-  $("#v-"+b.dataset.v).classList.add("active");
-  window.scrollTo(0,0);
-  if(b.dataset.v==="resumo")renderResumo();
-  if(b.dataset.v==="apply"){buildSiteGrid();renderBodyMap();}
-  if(b.dataset.v==="charts"){fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();}
-  if(b.dataset.v==="diario")renderDiaryAll();
-  if(b.dataset.v==="glp1"){renderGlp();renderWeightTrend();}
-  if(b.dataset.v==="bio"){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderCVDashboard();}
-  if(b.dataset.v==="fotos")renderFotos();
-  if(b.dataset.v==="data"){renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
-});
+// ---------- NAVEGAÇÃO: 5 grupos × sub-abas (F3.1) ----------
+// As 8 telas (.view) continuam existindo; cada grupo do menu mostra uma barra de sub-abas no cabeçalho.
+// goView(v) aceita o id da tela (ex.: "apply") ou "bio:exames" (seção da Saúde).
+const NAV_GROUPS={
+  hoje:[["resumo","Resumo"],["diario","Diário"]],
+  protocolo:[["apply","EAA"],["glp1","GLP-1"]],
+  saude:[["bio:corpo","Corpo"],["bio:exames","Exames"],["bio:cardio","Cardio"],["bio:subjetivo","Subjetivo"]],
+  analise:[["charts","Protocolo"],["habitos","Hábitos"]],
+  mais:[["fotos","Fotos"],["data","Dados"]]
+};
+const VIEW_RENDER={
+  resumo:()=>renderResumo(),
+  diario:()=>renderDiaryAll(),
+  apply:()=>{renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();renderCoProtocol();},
+  glp1:()=>renderGlp(),
+  charts:()=>{fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();renderGlpLevel();renderGlpResult();updatePhaseTags();},
+  habitos:()=>{renderAppAdherence();renderTrainHeat();renderTrainScore();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdherence();renderAdhResult();renderDiaryChart();},
+  bio:()=>{renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderCVDashboard();},
+  fotos:()=>renderFotos(),
+  data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
+};
+// Render sob demanda (F3.6): só a tela visível é desenhada; as outras ficam "sujas" e renderizam ao abrir.
+const dirtyViews=new Set();
+const activeView=()=>{const a=document.querySelector(".view.active");return a?a.id.slice(2):null;};
+function refreshViews(list){const a=activeView();list.forEach(v=>{if(v===a){dirtyViews.delete(v);VIEW_RENDER[v]();}else dirtyViews.add(v);});}
+const navLast={};let curGroup="hoje",curSub="resumo";
+const groupOf=sub=>Object.keys(NAV_GROUPS).find(g=>NAV_GROUPS[g].some(([id])=>id===sub||id.split(":")[0]===sub));
+function renderSubnav(){
+  const el=$("#subnav");if(!el)return;
+  el.innerHTML=NAV_GROUPS[curGroup].map(([id,lbl])=>`<button type="button" role="tab" data-sub="${id}" class="${id===curSub?"on":""}" aria-selected="${id===curSub}">${lbl}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>b.onclick=()=>goView(b.dataset.sub));
+  document.documentElement.style.setProperty("--hdrH",$("header").offsetHeight+"px");
+}
+function goView(target){
+  let [v,sec]=String(target).split(":");
+  if(v==="bio"&&!sec)sec=(navLast.saude||"bio:corpo").split(":")[1];
+  const sub=v==="bio"?"bio:"+sec:v,g=groupOf(sub)||"hoje";
+  const changedView=!$("#v-"+v).classList.contains("active");
+  curGroup=g;curSub=sub;navLast[g]=sub;
+  $$("#nav button").forEach(x=>x.classList.toggle("on",x.dataset.g===g));
+  $$(".view").forEach(x=>x.classList.toggle("active",x.id==="v-"+v));
+  if(v==="bio")setBioSection(sec);
+  renderSubnav();
+  window.scrollTo(0,0);$("header").classList.remove("hide");
+  if((changedView||dirtyViews.has(v))&&VIEW_RENDER[v]){dirtyViews.delete(v);VIEW_RENDER[v]();}
+}
+// Saúde: a seção filtra os cards (data-sec); gráficos da seção recém-exibida são redimensionados.
+function setBioSection(sec){
+  const v=$("#v-bio");v.dataset.sec=sec;
+  requestAnimationFrame(()=>v.querySelectorAll(`.card[data-sec="${sec}"] canvas`).forEach(cv=>{const ch=charts[cv.id];if(ch)ch.resize();}));
+}
+$$("#nav button").forEach(b=>b.onclick=()=>{const g=b.dataset.g;goView(navLast[g]||NAV_GROUPS[g][0][0]);});
 
 // ---------- APPLY ----------
 function fillDrugSelect(keep){
@@ -1441,11 +1544,79 @@ function fillDrugSelect(keep){
   s.add(new Option("+ Outra (livre)","__custom__"));
   if(cur)s.value=cur;
 }
-function suggestSite(){ // sítio mais "fresco" (maior nº de dias / nunca usado)
-  let best=null,bestDays=-1;
-  SITES.forEach(s=>{const d=daysSinceSite(s);const v=d==null?1e9:d;if(v>bestDays){bestDays=v;best=s;}});
-  return best;
+// ---------- EAA × GLP-1: configuração única (F3.7) ----------
+// Sugestão de sítio, grade de sítios, próxima dose e .ics usam a mesma implementação por "kind".
+const DOSE_KIND={
+  eaa:{list:()=>db.injections,def:n=>drugByName(n),filter:i=>!(drugByName(i.drug)||{}).anc,cad:2,sites:SITES,grid:"#siteGrid",
+    getSel:()=>selectedSite,setSel:v=>{selectedSite=v;},box:"#nextDoseBox",due:"#dueEaa",ics:"#btnIcs",empty:"Nenhuma droga ativa no ciclo.",
+    icsFile:"control_doses.ics",icsCount:14,icsPrefix:"Dose: ",
+    sub:(k,last,cad)=>`cad. ${fmtV(cad,1)}d · última: ${fmtDate(last.date)}${last.site?" · "+last.site:""}`},
+  glp1:{list:()=>db.glp1,def:n=>glpDrugByName(n),filter:null,cad:7,sites:GLP1_SITES,grid:"#gSiteGrid",
+    getSel:()=>gSelectedSite,setSel:v=>{gSelectedSite=v;},box:"#gNextBox",due:"#dueGlp",ics:"#gIcs",empty:"Nenhum análogo ativo no ciclo.",
+    icsFile:"control_glp1.ics",icsCount:8,icsPrefix:"GLP-1: ",
+    sub:(k,last,cad)=>{const hist=db.glp1.filter(i=>i.drug===k).sort((a,b)=>new Date(b.date)-new Date(a.date));let n=0;for(const h of hist){if(h.doseMg===last.doseMg)n++;else break;}
+      return `${fmtV(last.doseMg)} mg · ${n}ª nesta dose · cad ${fmtV(cad,1)}d`;}}
+};
+// Sítio mais "fresco" da lista do tipo (maior nº de dias / nunca usado) — rotação compartilhada EAA+GLP-1.
+function suggestSiteFor(kind){let best=null,bd=-1;DOSE_KIND[kind].sites.forEach(s=>{const d=daysSinceSiteAll(s);const v=d==null?1e9:d;if(v>bd){bd=v;best=s;}});return best;}
+function buildSiteGridFor(kind){
+  const K=DOSE_KIND[kind],g=$(K.grid);if(!g)return;g.innerHTML="";
+  const sug=suggestSiteFor(kind),sel=K.getSel();
+  K.sites.forEach(s=>{
+    const days=daysSinceSiteAll(s);
+    const b=document.createElement("button");b.type="button";b.className="site-btn"+(s===sel?" sel":"");
+    b.title=s===sug?"sugerido — mais tempo sem uso (EAA+GLP-1)":"";
+    b.innerHTML=`<span class="snm">${s===sug?'<i class="star">★</i>':''}${s}</span><small>${days==null?"nunca":days+"d"}</small>`;
+    b.onclick=()=>{K.setSel(s);g.querySelectorAll(".site-btn").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");};
+    g.appendChild(b);
+  });
 }
+function renderNextFor(kind){
+  const K=DOSE_KIND[kind],box=$(K.box);
+  const byDrug=lastByDrug(K.list(),K.filter?(i=>K.filter(i)):null);
+  const keys=Object.keys(byDrug).filter(k=>drugActive(k,kind,byDrug[k].date));
+  const off=Object.keys(byDrug).filter(k=>!keys.includes(k));
+  $(K.ics).style.display=keys.length?"block":"none";
+  if(!keys.length){box.innerHTML='<div class="empty">'+(off.length?K.empty:"Sem aplicações registradas.")+'</div>'+offCycleHTML(off,byDrug);renderDueBanner(K.due,[]);return;}
+  box.innerHTML="";const due=[];
+  keys.forEach(k=>{
+    const last=byDrug[k],d=K.def(k)||{},c=d.color||PAL.muted,cad=d.cadence||K.cad;
+    const dd=dueDays(last.date,cad),next=today12();next.setDate(next.getDate()+dd); // dia de calendário (mesma regra do Resumo)
+    if(dd<=0)due.push({k,dd});
+    const txt=dd<0?`atrasada ${-dd}d`:dd===0?"hoje":`em ${dd}d`,col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
+    const row=document.createElement("div");row.className="log-item";
+    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${esc(k)}</div><div class="s">${K.sub(k,last,cad)}</div></div><div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
+    row.appendChild(doseActions(kind,k,dd<=0));
+    box.appendChild(row);
+  });
+  box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
+  renderDueBanner(K.due,due);
+}
+function exportICS(kind){
+  const K=DOSE_KIND[kind];
+  const byDrug=lastByDrug(K.list(),K.filter?(i=>K.filter(i)):null);
+  Object.keys(byDrug).forEach(k=>{if(!drugActive(k,kind,byDrug[k].date))delete byDrug[k];});
+  const pad=n=>String(n).padStart(2,"0");
+  const f=d=>d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z";
+  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Control//PT-BR//\r\nCALSCALE:GREGORIAN\r\n";
+  Object.keys(byDrug).forEach(k=>{
+    const d=K.def(k)||{},cad=Math.max(1,Math.round(d.cadence||K.cad));
+    const next=new Date(new Date(byDrug[k].date).getTime()+(d.cadence||K.cad)*864e5);next.setHours(8,0,0,0);
+    ics+="BEGIN:VEVENT\r\nUID:"+uid()+"@control\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(next)+
+      "\r\nRRULE:FREQ=DAILY;INTERVAL="+cad+";COUNT="+K.icsCount+"\r\nSUMMARY:"+K.icsPrefix+k+(d.doseTarget?" "+d.doseTarget+"mg":"")+
+      "\r\nDESCRIPTION:Aplicacao agendada (Control)\r\nEND:VEVENT\r\n";
+  });
+  ics+="END:VCALENDAR";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download=K.icsFile;a.click();
+  toast("Calendário .ics gerado ✓");
+}
+// Atalhos com os nomes antigos (chamadores não mudam)
+function suggestSite(){return suggestSiteFor("eaa");}
+function glpSuggestSite(){return suggestSiteFor("glp1");}
+function buildSiteGrid(){buildSiteGridFor("eaa");}
+function buildGlpSiteGrid(){buildSiteGridFor("glp1");}
+function renderNextDose(){renderNextFor("eaa");}
+function renderGlpNext(){renderNextFor("glp1");}
 function applyDrugContext(){
   const v=$("#inDrug").value;
   const oral=v!=="__custom__"&&isOral(v);
@@ -1461,18 +1632,6 @@ function applyDrugContext(){
   buildSiteGrid();
 }
 $("#inDrug").onchange=()=>{$("#inDose").value="";applyDrugContext();};
-function buildSiteGrid(){
-  const g=$("#siteGrid");g.innerHTML="";
-  const sug=suggestSite();
-  SITES.forEach(s=>{
-    const days=daysSinceSite(s);
-    const b=document.createElement("button");b.type="button";b.className="site-btn"+(s===selectedSite?" sel":"");
-    b.title=s===sug?"sugerido — mais tempo sem uso (EAA+GLP-1)":"";
-    b.innerHTML=`<span class="snm">${s===sug?'<i class="star">★</i>':''}${s}</span><small>${days==null?"nunca":days+"d"}</small>`;
-    b.onclick=()=>{selectedSite=s;$$("#siteGrid .site-btn").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");};
-    g.appendChild(b);
-  });
-}
 function daysSinceSiteAll(site){
   const dates=[...db.injections,...db.glp1].filter(i=>i.site===site).map(i=>+new Date(i.date));
   if(!dates.length)return null;
@@ -1516,7 +1675,7 @@ $("#btnSave").onclick=()=>{
 // Linha de histórico compartilhada por EAA e GLP-1 (markup idêntico; variam cor, rótulo de sítio e handler).
 function logRow(i,color,siteTxt,onDel,onEdit){
   const row=document.createElement("div");row.className="log-item";
-  row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${esc(i.drug)}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+esc(i.note):""}${i.phase?" · "+esc(i.phase):""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
+  row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${esc(i.drug)}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+esc(i.note):""}${i.phase?" · "+esc(i.phase):""}</div></div><div class="log-dose">${fmtV(i.doseMg)} mg</div><button class="del">×</button>`;
   row.querySelector(".del").onclick=onDel;
   if(onEdit)editable(row,onEdit);
   return row;
@@ -1528,11 +1687,14 @@ function renderLog(){
   $("#logCount").textContent=list.length+" registros";
   const el=$("#logList");
   if(!list.length){el.innerHTML='<div class="empty">Nenhuma aplicação ainda.</div>';return;}
+  renderMonthList(el,list,i=>logRow(i,(drugByName(i.drug)||{}).color||PAL.muted,i.site||"Oral",()=>delInjection(i),()=>editDose("eaa",i)));
+}
+// Histórico enxuto: mês atual visível + "Ver anteriores (N)" (EAA e GLP-1).
+function renderMonthList(el,list,mkRow){
   el.innerHTML="";
   const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
   const isCur=i=>{const d=new Date(i.date);return d.getFullYear()===cy&&d.getMonth()===cm;};
   const cur=list.filter(isCur),older=list.filter(i=>!isCur(i));
-  const mkRow=i=>logRow(i,(drugByName(i.drug)||{}).color||PAL.muted,i.site||"Oral",()=>delInjection(i),()=>editDose("eaa",i));
   if(!cur.length)el.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:8px">Nenhuma aplicação neste mês.</div>';
   cur.forEach(i=>el.appendChild(mkRow(i)));
   if(older.length){
@@ -1563,37 +1725,11 @@ function renderWeekly(){
     const w=tgt?Math.min(100,pct):100;
     const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${+sums[k].toFixed(1)} mg${tgt?" / "+tgt:""}</span></div>
+    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${fmtV(sums[k],1)} mg${tgt?" / "+fmtV(tgt):""}</span></div>
       <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
       <div class="pct">${tgt?pct+"% do alvo semanal":"sem alvo definido"}</div>`;
     box.appendChild(row);
   });
-}
-function renderNextDose(){
-  const box=$("#nextDoseBox");
-  const byDrug=lastByDrug(db.injections,i=>!(drugByName(i.drug)||{}).anc);
-  const keys=Object.keys(byDrug).filter(k=>drugActive(k,"eaa",byDrug[k].date));
-  const off=Object.keys(byDrug).filter(k=>!keys.includes(k));
-  $("#btnIcs").style.display=keys.length?"block":"none";
-  if(!keys.length){box.innerHTML='<div class="empty">'+(off.length?"Nenhuma droga ativa no ciclo.":"Sem aplicações registradas.")+'</div>'+offCycleHTML(off,byDrug);renderDueBanner("#dueEaa",[]);return;}
-  box.innerHTML="";
-  const due=[];
-  keys.forEach(k=>{
-    const last=byDrug[k];const d=drugByName(k)||{};const c=d.color||PAL.muted;const cad=d.cadence||2;
-    const dd=dueDays(last.date,cad);const next=new Date();next.setHours(0,0,0,0);next.setDate(next.getDate()+dd);
-    if(dd<=0)due.push({k,dd});
-    const txt=dd<0?`atrasada ${-dd}d`:dd===0?"hoje":`em ${dd}d`;
-    const col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
-    const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div>
-      <div class="log-main"><div class="t">${esc(k)}</div>
-      <div class="s">cad. ${cad}d · última: ${fmtDate(last.date)}${last.site?" · "+last.site:""}</div></div>
-      <div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
-    row.appendChild(doseActions("eaa",k,dd<=0));
-    box.appendChild(row);
-  });
-  box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
-  renderDueBanner("#dueEaa",due);
 }
 // ---------- REGISTRO DE DOSE (compartilhado EAA + GLP-1) ----------
 // Usado pelos formulários (#btnSave/#gSave) e pelo "Registrar" de 1 toque (F2.1).
@@ -1605,10 +1741,7 @@ function removeDose(kind,rec){
   if(kind==="glp1")db.glp1=db.glp1.filter(x=>x.id!==rec.id);else db.injections=db.injections.filter(x=>x.id!==rec.id);
   save();refreshDoseViews();
 }
-function refreshDoseViews(){
-  renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();
-  renderGlpLog();renderGlpNext();renderGlpWeekly();renderGlpMap();renderResumo();
-}
+function refreshDoseViews(){refreshViews(["apply","glp1","resumo","charts","habitos"]);}
 // Padrões do 1 toque: última dose daquela droga (ou dose-alvo), sítio sugerido pela rotação compartilhada, agora.
 function quickDoseDefaults(kind,drug){
   const last=(kind==="glp1"?db.glp1:db.injections).filter(i=>i.drug===drug).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
@@ -1619,7 +1752,7 @@ function quickDose(kind,drug){
   const q=quickDoseDefaults(kind,drug);
   if(!q.doseMg)return openDoseForm(kind,drug,q); // sem dose conhecida → formulário
   const rec=registerDose(kind,drug,q);
-  toast(`${drug.split(" (")[0]} ${q.doseMg} mg${q.site?" · "+q.site:""} ✓`,[["Desfazer",()=>removeDose(kind,rec)],["Ajustar",()=>{removeDose(kind,rec);openDoseForm(kind,drug,q);}]]);
+  toast(`${drug.split(" (")[0]} ${fmtV(q.doseMg)} mg${q.site?" · "+q.site:""} ✓`,[["Desfazer",()=>removeDose(kind,rec)],["Ajustar",()=>{removeDose(kind,rec);openDoseForm(kind,drug,q);}]]);
 }
 // Abre o formulário da aba certa já preenchido (usado por "Ajustar").
 function openDoseForm(kind,drug,o={}){
@@ -1704,25 +1837,8 @@ function renderDueBanner(sel,due){
   el.innerHTML=`<div class="note warn" style="margin-top:0;margin-bottom:12px">⚠ Dose esperada ainda não registrada: <b>${txt}</b></div>`;
 }
 // ICS export
-$("#btnIcs").onclick=()=>{
-  const byDrug=lastByDrug(db.injections,i=>!(drugByName(i.drug)||{}).anc);
-  Object.keys(byDrug).forEach(k=>{if(!drugActive(k,"eaa",byDrug[k].date))delete byDrug[k];});
-  const pad=n=>String(n).padStart(2,"0");
-  const fmtICS=d=>d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z";
-  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Control//PT-BR//\r\nCALSCALE:GREGORIAN\r\n";
-  Object.keys(byDrug).forEach(k=>{
-    const d=drugByName(k)||{};const cad=Math.max(1,Math.round(d.cadence||2));
-    const next=new Date(new Date(byDrug[k].date).getTime()+(d.cadence||2)*864e5);
-    next.setHours(8,0,0,0);
-    ics+="BEGIN:VEVENT\r\nUID:"+uid()+"@control\r\nDTSTAMP:"+fmtICS(new Date())+"\r\nDTSTART:"+fmtICS(next)+
-      "\r\nRRULE:FREQ=DAILY;INTERVAL="+cad+";COUNT=14\r\nSUMMARY:Dose: "+k+(d.doseTarget?" "+d.doseTarget+"mg":"")+
-      "\r\nDESCRIPTION:Aplicacao agendada (Control)\r\nEND:VEVENT\r\n";
-  });
-  ics+="END:VCALENDAR";
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
-  a.download="control_doses.ics";a.click();
-  toast("Calendário .ics gerado ✓");
-};
+$("#btnIcs").onclick=()=>exportICS("eaa");
+$("#gIcs").onclick=()=>exportICS("glp1");
 
 // ---------- DIÁRIO ----------
 let diaDate=todayInput();
@@ -1736,8 +1852,7 @@ function renderDiaryAll(){
   const isToday=diaDate===todayInput(),dd=new Date(diaDate+"T12:00:00");
   $("#diaChip").textContent=dd.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+(isToday?" · hoje":"");
   $("#dayNext").disabled=isToday;$("#dayToday").style.display=isToday?"none":"";
-  renderWater();renderSleep();renderSupps();renderSuppEditor();renderAdherence();renderDiaryChart();
-  renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();
+  renderWater();renderSleep();renderSupps();renderSuppEditor();renderTrainingCard();renderDietCard();
   applyDiaryCollapse();
 }
 function setCollap(sel,on){const c=$(sel);if(c)c.classList.toggle("collap",!!on);}
@@ -1804,7 +1919,7 @@ function renderSleep(){
   const box=$("#slpAvg");
   if(ks.length){const avg=ks.reduce((s,k)=>s+db.daily[k].sleepH,0)/ks.length;
     box.style.display="block";box.className="note"+(avg<7?" warn":" ok");
-    box.textContent=`Média ${ks.length} noite(s): ${avg.toFixed(1)}h`+(avg<7?" — abaixo de 7h impacta eixo GH/IGF-1 e recuperação.":" — bom para recuperação.");
+    box.textContent=`Média ${ks.length} noite(s): ${fmtN(avg,1)}h`+(avg<7?" — abaixo de 7h impacta eixo GH/IGF-1 e recuperação.":" — bom para recuperação.");
   }else box.style.display="none";
 }
 $("#slpSave").onclick=()=>{
@@ -1917,7 +2032,7 @@ function renderAdherence(){
   $("#adhKpi").innerHTML=kpi3([Math.round(today*100)+"%","hoje"],[Math.round(avgAdh(7)*100)+"%","7 dias"],[Math.round(avgAdh(30)*100)+"%","30 dias"]);
   const st=computeStreak();$("#adhStreak").textContent=`sequência ${st.cur}d · recorde ${st.best}d`;
   // heatmap (grade 13 semanas compartilhada via buildHeat)
-  buildHeat("#heat",k=>{const tot=scheduleTotal();if(!hasRecord(k)||!tot)return null;const p=takenCount(k)/tot;return p>=.85?"#34d399":p>=.6?"#a3e635":p>=.35?"#F59E0B":"#7f1d1d";},
+  buildHeat("#heat",k=>{const tot=scheduleTotal();if(!hasRecord(k)||!tot)return null;const p=takenCount(k)/tot;return p>=.85?HEAT.high:p>=.35?HEAT.mid:HEAT.low;},
     k=>{const tot=scheduleTotal();return fmtD(k+"T12:00:00")+" — "+(hasRecord(k)?Math.round((tot?takenCount(k)/tot:0)*100)+"%":"sem registro");});
   // por item (30d)
   const z=today12();
@@ -1972,9 +2087,7 @@ function renderLabTrend(){
 let gSelectedSite=null;
 function glpDrugByName(n){return db.glp1Drugs.find(d=>d.name===n);}
 function glpDaysSinceSite(site){return daysSinceSiteAll(site);}
-function glpSuggestSite(){let best=null,bd=-1;GLP1_SITES.forEach(s=>{const d=glpDaysSinceSite(s);const v=d==null?1e9:d;if(v>bd){bd=v;best=s;}});return best;}
 function fillGlpSelect(keep){const s=$("#gDrug");const cur=keep||s.value;s.innerHTML="";db.glp1Drugs.forEach(d=>s.add(new Option(d.name,d.name)));s.add(new Option("+ Outro (livre)","__custom__"));if(cur)s.value=cur;else{const ret=db.glp1Drugs.find(d=>/retatrutida/i.test(d.name));if(ret)s.value=ret.name;}}
-function buildGlpSiteGrid(){const g=$("#gSiteGrid");g.innerHTML="";const sug=glpSuggestSite();GLP1_SITES.forEach(s=>{const days=glpDaysSinceSite(s);const b=document.createElement("button");b.type="button";b.className="site-btn"+(s===gSelectedSite?" sel":"");b.title=s===sug?"sugerido — mais tempo sem uso (EAA+GLP-1)":"";b.innerHTML=`<span class="snm">${s===sug?'<i class="star">★</i>':''}${s}</span><small>${days==null?"nunca":days+"d"}</small>`;b.onclick=()=>{gSelectedSite=s;$$("#gSiteGrid .site-btn").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");};g.appendChild(b);});}
 function glpDrugContext(){const v=$("#gDrug").value;$("#gCustomBox").style.display=v==="__custom__"?"block":"none";const d=glpDrugByName(v);if(d&&d.doseTarget&&!$("#gDose").value)$("#gDose").value=d.doseTarget;gSelectedSite=glpSuggestSite();$("#gSugHint").textContent=gSelectedSite?"· sugerido: "+gSelectedSite:"";buildGlpSiteGrid();}
 $("#gDrug").onchange=()=>{$("#gDose").value="";glpDrugContext();};
 $("#gSave").onclick=()=>{
@@ -1990,42 +2103,13 @@ $("#gSave").onclick=()=>{
   toast("Aplicação registrada ✓",()=>removeDose("glp1",rec));
 };
 $("#gRepeat").onclick=()=>{const last=db.glp1.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];if(!last)return toast("Nenhuma anterior");fillGlpSelect(last.drug);$("#gDrug").value=last.drug;$("#gDose").value=last.doseMg;$("#gDate").value=nowLocalInput();glpDrugContext();gSelectedSite=glpSuggestSite();buildGlpSiteGrid();toast("Pré-preenchido — confira o sítio");};
-$("#gIcs").onclick=()=>{
-  const byDrug=lastByDrug(db.glp1);Object.keys(byDrug).forEach(k=>{if(!drugActive(k,"glp1",byDrug[k].date))delete byDrug[k];});
-  const pad=n=>String(n).padStart(2,"0");const f=d=>d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z";
-  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Control//PT-BR//\r\n";
-  Object.keys(byDrug).forEach(k=>{const d=glpDrugByName(k)||{};const cad=Math.max(1,Math.round(d.cadence||7));const next=new Date(new Date(byDrug[k].date).getTime()+(d.cadence||7)*864e5);next.setHours(8,0,0,0);
-    ics+="BEGIN:VEVENT\r\nUID:"+uid()+"@control\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(next)+"\r\nRRULE:FREQ=DAILY;INTERVAL="+cad+";COUNT=8\r\nSUMMARY:GLP-1: "+k+(d.doseTarget?" "+d.doseTarget+"mg":"")+"\r\nEND:VEVENT\r\n";});
-  ics+="END:VCALENDAR";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download="control_glp1.ics";a.click();toast("Calendário .ics gerado ✓");
-};
 function renderGlpLog(){
   const list=db.glp1.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   $("#gLogCount").textContent=list.length+" registros";
   const el=$("#gLog");if(!list.length){el.innerHTML='<div class="empty">Nenhuma aplicação ainda.</div>';return;}
-  el.innerHTML="";
   const reGlp=()=>{renderGlpLog();renderGlpNext();renderGlpMap();renderGlpLevel();};
-  list.slice(0,50).forEach(i=>el.appendChild(logRow(i,(glpDrugByName(i.drug)||{}).color||PAL.muted,i.site||"SC",
-    ()=>{if(editing&&editing.id===i.id){endEdit();clearForm("glp1");}db.glp1=db.glp1.filter(x=>x.id!==i.id);save();reGlp();toast("Excluído",()=>{db.glp1.push(i);save();reGlp();});},()=>editDose("glp1",i))));
-}
-function renderGlpNext(){
-  const box=$("#gNextBox");const byDrug=lastByDrug(db.glp1);
-  const keys=Object.keys(byDrug).filter(k=>drugActive(k,"glp1",byDrug[k].date));
-  const off=Object.keys(byDrug).filter(k=>!keys.includes(k));
-  $("#gIcs").style.display=keys.length?"block":"none";
-  if(!keys.length){box.innerHTML='<div class="empty">'+(off.length?"Nenhum análogo ativo no ciclo.":"Sem aplicações registradas.")+'</div>'+offCycleHTML(off,byDrug);renderDueBanner("#dueGlp",[]);return;}
-  box.innerHTML="";
-  const due=[];
-  keys.forEach(k=>{const last=byDrug[k];const d=glpDrugByName(k)||{};const c=d.color||PAL.muted;const cad=d.cadence||7;
-    const dd=dueDays(last.date,cad);const next=today12();next.setDate(next.getDate()+dd); // mesma regra do Resumo (dia de calendário)
-    if(dd<=0)due.push({k,dd});
-    const txt=dd<0?`atrasada ${-dd}d`:dd===0?"hoje":`em ${dd}d`;const col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
-    const hist=db.glp1.filter(i=>i.drug===k).sort((a,b)=>new Date(b.date)-new Date(a.date));let n=0;for(const h of hist){if(h.doseMg===last.doseMg)n++;else break;}
-    const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${esc(k)}</div><div class="s">${last.doseMg}mg · ${n}ª nesta dose · cad ${cad}d</div></div><div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
-    row.appendChild(doseActions("glp1",k,dd<=0));
-    box.appendChild(row);});
-  box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
-  renderDueBanner("#dueGlp",due);
+  renderMonthList(el,list,i=>logRow(i,(glpDrugByName(i.drug)||{}).color||PAL.muted,i.site||"SC",
+    ()=>{if(editing&&editing.id===i.id){endEdit();clearForm("glp1");}db.glp1=db.glp1.filter(x=>x.id!==i.id);save();reGlp();toast("Excluído",()=>{db.glp1.push(i);save();reGlp();});},()=>editDose("glp1",i)));
 }
 // Zona do body map compartilhada (EAA e GLP-1); cor por frescor: vermelho <lo, âmbar <hi, senão verde.
 function bmZone(s,d,lo,hi){
@@ -2117,7 +2201,7 @@ function renderGlpResult(){
 function renderGlpWeekly(){
   const box=$("#gWeeklyBox");if(!box)return;
   const cut=Date.now()-7*864e5,sums={};
-  phasedGlp().filter(i=>+new Date(i.date)>=cut).forEach(i=>sums[i.drug]=(sums[i.drug]||0)+i.doseMg);
+  db.glp1.filter(i=>+new Date(i.date)>=cut).forEach(i=>sums[i.drug]=(sums[i.drug]||0)+i.doseMg);
   const keys=Object.keys(sums);
   if(!keys.length){box.innerHTML='<div class="empty">Sem aplicações nos últimos 7 dias.</div>';return;}
   box.innerHTML="";
@@ -2128,14 +2212,13 @@ function renderGlpWeekly(){
     const pct=tgt?Math.round(sums[k]/tgt*100):0,w=tgt?Math.min(100,pct):100;
     const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${+sums[k].toFixed(2)} mg${tgt?" / "+tgt+" mg/sem":""}</span></div>
+    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${fmtV(sums[k],2)} mg${tgt?" / "+fmtV(tgt)+" mg/sem":""}</span></div>
       <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
       <div class="pct">${tgt?pct+"% do alvo semanal (cad "+(d.cadence||"—")+"d)":"defina o alvo em Dados › Análogos GLP-1"}</div>`;
     box.appendChild(row);
   });
 }
-$("#gPhaseFilter").onchange=e=>{glpPhaseFilter=e.target.value;renderGlpLevel();renderGlpResult();renderGlpWeekly();};
-function renderGlp(){fillGlpSelect();glpDrugContext();fillGlpPhaseFilter();renderGlpLog();renderGlpNext();renderGlpWeekly();renderGlpMap();renderGlpLevel();renderGlpResult();}
+function renderGlp(){fillGlpSelect();glpDrugContext();fillGlpPhaseFilter();renderGlpLog();renderGlpNext();renderGlpWeekly();renderGlpMap();}
 
 // ---------- PERÍODOS DE USO ----------
 function usagePeriods(){
@@ -2236,7 +2319,7 @@ function renderProtCalendar(){
   const ints=[];for(let i=1;i<days.length;i++)ints.push((days[i]-days[i-1])/DAY);
   const meanInt=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length:null;
   const dev=ints.length?ints.reduce((a,b)=>a+Math.abs(b-cad),0)/ints.length:null;
-  kpi.innerHTML=kpi3([onTime+"%","no prazo"],[meanInt!=null?meanInt.toFixed(1):"—","interv. (alvo "+cad+"d)"],[dev!=null?"±"+dev.toFixed(1):"—","desvio"]);
+  kpi.innerHTML=kpi3([onTime+"%","no prazo"],[meanInt!=null?fmtN(meanInt,1):"—","interv. (alvo "+cad+"d)"],[dev!=null?"±"+fmtN(dev,1):"—","desvio"]);
   // calendário read-only — verde: aplicada · vermelho: atraso (passou da cadência sem dosar) · cinza: ok
   const overdueDays=k=>{const ld=lastDoseBefore(+new Date(k+"T12:00:00"));return ld==null?null:Math.round((+new Date(k+"T12:00:00")-ld)/DAY);};
   buildHeat("#adProtHeat",
@@ -2302,9 +2385,16 @@ function fillPhaseFilter(){
   const phases=[...new Set([...db.injections,...db.glp1,...db.labs].map(i=>i.phase).filter(Boolean))];
   sel.innerHTML="";sel.add(new Option("Todas as fases","__all__"));
   phases.forEach(p=>sel.add(new Option(p,p)));
-  sel.value=phases.includes(cur)||cur==="__all__"?cur:"__all__";phaseFilter=sel.value;
+  sel.value=phases.includes(cur)||cur==="__all__"?cur:"__all__";phaseFilter=sel.value;glpPhaseFilter=phaseFilter;
 }
-$("#phaseFilter").onchange=e=>{phaseFilter=e.target.value;renderFreq();renderConc();renderCorr();};
+$("#phaseFilter").onchange=e=>{phaseFilter=e.target.value;glpPhaseFilter=phaseFilter;renderFreq();renderConc();renderCorr();renderGlpLevel();renderGlpResult();updatePhaseTags();};
+// Cards que respondem ao filtro de fase ganham o selo "fase: X" (os demais usam todas as fases).
+function updatePhaseTags(){
+  $$(".card[data-phase-aware]").forEach(c=>{let t=c.querySelector(".phase-tag");
+    if(phaseFilter==="__all__"){if(t)t.remove();return;}
+    if(!t){t=document.createElement("span");t.className="phase-tag";c.querySelector("h2").appendChild(t);}
+    t.textContent="fase: "+phaseFilter;});
+}
 
 function renderFreq(){
   const win=+($("#freqSeg .on").dataset.win);const cut=win?Date.now()-win*864e5:0;
@@ -2347,12 +2437,12 @@ function renderSS(){
     const k=Math.LN2/d.hl, tau=d.cadence, e=Math.exp(-k*tau);
     const cmax=d.doseTarget/(1-e), cmin=cmax*e;
     const flu=((cmax/cmin)-1)*100; // pico-vale relativo ao vale
-    const ss90=(d.hl*Math.log2(10)).toFixed(0); // ~3.32 t½
+    const ss90=fmtN((d.hl*Math.log2(10)),0); // ~3.32 t½
     const col=(drugByName(d.name)||{}).color||PAL.muted;
     const fcol=flu>120?PAL.red:flu>60?PAL.amber:PAL.green;
     h+=`<tr class="ss-row"><td><span class="tag" style="border-color:${col};color:${col}">●</span> ${esc(d.name)}<br><span class="muted">${d.doseTarget}mg / ${tau}d</span></td>
-      <td class="num">${cmax.toFixed(0)}</td><td class="num">${cmin.toFixed(0)}</td>
-      <td class="num ss-flu" style="color:${fcol}">${flu.toFixed(0)}%</td><td class="num">${ss90}d</td></tr>`;
+      <td class="num">${fmtN(cmax,0)}</td><td class="num">${fmtN(cmin,0)}</td>
+      <td class="num ss-flu" style="color:${fcol}">${fmtN(flu,0)}%</td><td class="num">${ss90}d</td></tr>`;
   });
   h+="</tbody></table>";el.innerHTML=h;
 }
@@ -2494,7 +2584,7 @@ function renderLabTable(){
   const cols=[["e2","E2"],["prol","PRL"],["tt","T.total"],["shbg","SHBG"],["freeT","T.livre"],["dht","DHT"],["hct","Hct"],["fer","Ferr"]];
   let h='<table><thead><tr><th>Data</th>'+cols.map(c=>`<th>${c[1]}</th>`).join("")+'<th></th></tr></thead><tbody>';
   labs.forEach(l=>{h+=`<tr><td class="num">${fmtD(l.date)}${l.phase?`<br><span style="font-size:11px;color:var(--muted)">${esc(l.phase)}</span>`:""}</td>`;
-    cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v)}">${v!=null?v:"·"}</td>`;});
+    cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v)}">${v!=null?fmtV(v):"·"}</td>`;});
     h+=`<td><button class="del" data-id="${l.id}">×</button></td></tr>`;});
   /* linhas tocáveis → edição (ligadas abaixo) */
   h+="</tbody></table>";el.innerHTML=h;
@@ -2563,7 +2653,7 @@ function drugActive(name,kind,lastISO){
   if(d.stoppedAt&&+new Date(d.stoppedAt)>=t)return false;
   return Date.now()-t<=stopGapDays(d.cadence||(kind==="glp1"?7:2))*864e5;
 }
-function refreshCycleViews(){renderNextDose();renderGlpNext();renderResumo();}
+function refreshCycleViews(){refreshViews(["apply","glp1","resumo","charts"]);}
 function stopDrug(name,kind){
   const d=drugDef(name,kind);if(!d)return toast("Droga não cadastrada");
   const prev=d.stoppedAt||null;d.stoppedAt=new Date().toISOString();save();refreshCycleViews();
@@ -2583,46 +2673,25 @@ function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(dru
 function coProtocolDue(){
   const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
   const out=[];const now=Date.now();
-  if(cp.anastrozol){const a=cp.anastrozol;const every=a.everyDays||2;
-    // Independente do EAA: cadência própria em dias, ancorada na última aplicação de Anastrozol.
-    const anas=db.injections.filter(i=>i.drug===a.drug).sort((x,y)=>new Date(y.date)-new Date(x.date));
-    const last=anas[0];
-    if(!last){
-      out.push({drug:a.drug,dose:a.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});
-    }else{
-      const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
-      const loggedToday=dkey(last.date)===dkey(new Date(now));
-      let status;
-      if(loggedToday)status="done";
-      else if(now>=dueT)status="overdue";
-      else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
-      else status="upcoming";
-      out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
-    }
-  }
-  if(cp.cabergolina){const c=cp.cabergolina;const every=c.everyDays||3;
-    // Independente do EAA: cadência própria em dias, ancorada na última aplicação de Cabergolina.
-    const cabs=db.injections.filter(i=>i.drug===c.drug).sort((x,y)=>new Date(y.date)-new Date(x.date));
-    const last=cabs[0];
-    if(!last){
-      out.push({drug:c.drug,dose:c.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});
-    }else{
-      const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
-      const loggedToday=dkey(last.date)===dkey(new Date(now));
-      let status;
-      if(loggedToday)status="done";
-      else if(now>=dueT)status="overdue";
-      else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
-      else status="upcoming";
-      out.push({drug:c.drug,dose:c.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
-    }
-  }
+  // Anastrozol e Cabergolina: cadência própria em dias, ancorada na última aplicação daquela droga (independe do EAA).
+  [[cp.anastrozol,2],[cp.cabergolina,3]].forEach(([a,defEvery])=>{
+    if(!a)return;const every=a.everyDays||defEvery;
+    const last=db.injections.filter(i=>i.drug===a.drug).sort((x,y)=>new Date(y.date)-new Date(x.date))[0];
+    if(!last){out.push({drug:a.drug,dose:a.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});return;}
+    const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
+    let status;
+    if(dkey(last.date)===dkey(new Date(now)))status="done";
+    else if(now>=dueT)status="overdue";
+    else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
+    else status="upcoming";
+    out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
+  });
   return out;
 }
 function etaText(t){if(t==null)return "—";const h=(t-Date.now())/3600e3;if(h<0)return "agora";if(h<24)return "em ~"+Math.max(1,Math.round(h))+"h";return "em "+Math.round(h/24)+"d";}
 function logCoProtocol(drug,dose){
   db.injections.push({id:uid(),drug,doseMg:dose,site:null,date:new Date().toISOString(),note:"co-protocolo",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType});
-  save();renderResumo();if($("#logList"))renderLog();renderNextDose();toast(drug+" "+dose+"mg registrado ✓");
+  save();refreshViews(["resumo","apply","charts"]);toast(drug+" "+fmtV(dose)+" mg registrado ✓");
 }
 function renderCoProtocol(){
   const el=$("#coProtoBox");if(!el)return;
@@ -2638,7 +2707,7 @@ function renderCoProtocol(){
     else {col=PAL.muted;label=etaText(it.dueTime);}
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML='<div class="log-swatch" style="background:'+col+'"></div>'+
-      '<div class="log-main"><div class="t">'+esc(it.drug)+' <span class="muted" style="font-size:11px">'+it.dose+'mg</span></div>'+
+      '<div class="log-main"><div class="t">'+esc(it.drug)+' <span class="muted" style="font-size:11px">'+fmtV(it.dose)+' mg</span></div>'+
       '<div class="s">'+esc(it.reason)+'</div></div>';
     const right=document.createElement("div");right.style.cssText="display:flex;align-items:center;gap:6px";
     if(btn){const b=document.createElement("button");b.className="btn-amber btn-sm";b.textContent="Registrar";b.style.cssText="font-size:11px;padding:5px 9px";b.onclick=()=>logCoProtocol(it.drug,it.dose);right.appendChild(b);}
@@ -2663,15 +2732,15 @@ function renderResumo(){
   if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
     const avgR=recent.reduce((a,b)=>a+b.w,0)/recent.length;
     const avgO=older.length?older.reduce((a,b)=>a+b.w,0)/older.length:avgR;
-    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+diff.toFixed(1);
+    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+fmtN(diff,1);
     trendCol=diff<-.05?PAL.green:diff>.05?PAL.red:PAL.muted;}
   const lastExam=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   // Exame: valor curto em dias (cabe a 360 px); atrasado em vermelho com rótulo próprio
   let examTxt="—",examLbl="próx. exame",examSty="font-size:15px";
   if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);
     if(dd<=0){examTxt=(-dd)+"d";examLbl="exame atrasado";examSty+=";color:"+PAL.red;}else examTxt=dd+"d";}
-  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?lw.weight.toFixed(1):"—","peso (kg)"],[trendTxt,"tendência 7d (kg)","color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
-  renderResumoNext();renderAppAdherence();renderCoProtocol();renderRitual();renderPersonal();
+  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?fmtN(lw.weight,1):"—","peso (kg)"],[trendTxt,"tendência 7d (kg)","color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
+  renderResumoNext();renderRitual();renderPersonal();
 }
 // ---------- PENDÊNCIAS DE HOJE (F2.2) ----------
 // Uma lista única no topo do Resumo; cada item com a sua ação. Peso = 4+ dias sem pesar (cut perde precisão);
@@ -2680,18 +2749,18 @@ const lastFullBio=()=>db.biometrics.filter(b=>b.bf!=null||b.smm!=null).sort((a,b
 function pendItems(){
   const out=[];
   dueList().forEach(x=>out.push({col:x.dd<0?PAL.red:PAL.amber,t:x.name,s:x.kind+" · "+(x.dd<0?(-x.dd)+"d atrasada":"hoje"),act:"dose",kind:x.kind==="GLP-1"?"glp1":"eaa",drug:x.name}));
-  coProtocolDue().filter(c=>c.status==="due"||c.status==="overdue").forEach(c=>out.push({col:c.status==="overdue"?PAL.red:PAL.amber,t:c.drug+" "+c.dose+" mg",s:"co-protocolo · "+(c.status==="overdue"?"atrasado":"hoje"),act:"cop",drug:c.drug,dose:c.dose}));
+  coProtocolDue().filter(c=>c.status==="due"||c.status==="overdue").forEach(c=>out.push({col:c.status==="overdue"?PAL.red:PAL.amber,t:c.drug+" "+fmtV(c.dose)+" mg",s:"co-protocolo · "+(c.status==="overdue"?"atrasado":"hoje"),act:"cop",drug:c.drug,dose:c.dose}));
   const sp=suppPending();
   if(sp)out.push({col:sp.others?PAL.amber:PAL.blue,t:"Suplementos",s:sp.blk.time+" · "+sp.blk.name+" · "+sp.st.done+"/"+sp.st.req+(sp.others?" · +"+sp.others+" bloco"+(sp.others>1?"s":"")+" atrasado"+(sp.others>1?"s":""):""),act:"supp",blk:sp.blk.id,blkName:sp.blk.name});
   const lw=lastBioWeight(),dW=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
-  if(dW==null||dW>=4)out.push({col:PAL.amber,t:"Peso",s:dW==null?"nenhum registro ainda":"último "+lw.weight.toFixed(1)+" kg · há "+dW+"d",act:"peso"});
+  if(dW==null||dW>=4)out.push({col:PAL.amber,t:"Peso",s:dW==null?"nenhum registro ainda":"último "+fmtN(lw.weight,1)+" kg · há "+dW+"d",act:"peso"});
   const fb=lastFullBio(),bd=db.settings.bioDays||30;
   if(fb){const dd=Math.ceil((+new Date(fb.date)+bd*864e5-Date.now())/864e5);if(dd<=0)out.push({col:PAL.amber,t:"Biometria completa",s:"%GC e medidas · atrasada "+(-dd)+"d",act:"bio"});}
   const le=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   if(le){const dd=Math.ceil((+new Date(le.date)+(db.settings.examDays||120)*864e5-Date.now())/864e5);if(dd<=0)out.push({col:PAL.red,t:"Exames",s:"coleta atrasada "+(-dd)+"d",act:"labs"});}
   return out;
 }
-function goCard(view,sel){goView(view);const el=$(sel);if(!el)return;const c=el.closest(".card")||el;c.classList.remove("collap");c.scrollIntoView({block:"start"});window.scrollBy(0,-56);}
+function goCard(view,sel){const el0=$(sel),sc=el0&&el0.closest(".card[data-sec]");goView(sc&&view==="bio"?"bio:"+sc.dataset.sec:view);const el=$(sel);if(!el)return;const c=el.closest(".card")||el;c.classList.remove("collap");c.scrollIntoView({block:"start"});window.scrollBy(0,-56);}
 function renderPending(){
   const el=$("#resumoDue");if(!el)return;const items=pendItems();
   if(!items.length){el.innerHTML='<div class="note ok" style="margin:0 0 10px">✓ Nada pendente hoje.</div>';return;}
@@ -2702,7 +2771,7 @@ function renderPending(){
     const btn=(lbl,cls,fn)=>{const b=document.createElement("button");b.className=cls+" btn-sm";b.textContent=lbl;b.onclick=fn;return b;};
     if(it.act==="peso"){
       const box=document.createElement("div");box.className="row-actions";
-      const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";inp.className="num pend-input";inp.placeholder=lastBioWeight()?"último "+lastBioWeight().weight.toFixed(1):"kg";
+      const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";inp.className="num pend-input";inp.placeholder=lastBioWeight()?"últ. "+fmtN(lastBioWeight().weight,1):"kg";
       inp.setAttribute("aria-label","Peso de hoje (kg)");
       const go=()=>quickWeight(inp.value);inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();go();}};
       box.appendChild(inp);box.appendChild(btn("Salvar","btn-amber",go));row.appendChild(box);
@@ -2725,13 +2794,13 @@ function quickWeight(v){
   if(!(w>=20&&w<=400))return toast("Informe o peso em kg");
   const rec={id:uid(),date:todayInput()+"T12:00:00",weight:w,bf:null,smm:null,visceral:null,method:null};
   db.biometrics.push(rec);save();refreshBioViews();
-  toast("Peso "+w.toFixed(1)+" kg ✓",()=>{db.biometrics=db.biometrics.filter(x=>x.id!==rec.id);save();refreshBioViews();});
+  toast("Peso "+fmtN(w,1)+" kg ✓",()=>{db.biometrics=db.biometrics.filter(x=>x.id!==rec.id);save();refreshBioViews();});
 }
-function refreshBioViews(){renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();fillBioHints();renderResumo();}
+function refreshBioViews(){fillBioHints();refreshViews(["bio","resumo","habitos","charts"]);}
 // Formulário de biometria: dicas = últimos valores reais (antes eram exemplos fictícios) e último método usado.
 function fillBioHints(){
   const last=k=>db.biometrics.filter(b=>b[k]!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-  [["bWeight","weight"],["bBf","bf"],["bSmm","smm"],["bVisc","visceral"]].forEach(([id,k])=>{const r=last(k),el=$("#"+id);if(el)el.placeholder=r?"último: "+r[k]:"—";});
+  [["bWeight","weight"],["bBf","bf"],["bSmm","smm"],["bVisc","visceral"]].forEach(([id,k])=>{const r=last(k),el=$("#"+id);if(el)el.placeholder=r?"últ. "+fmtV(r[k],1):"—";});
   const m=last("method");if(m&&$("#bMethod"))$("#bMethod").value=m.method;
 }
 function renderResumoNext(){
@@ -2745,16 +2814,17 @@ function renderResumoNext(){
     row.innerHTML='<div class="log-swatch" style="background:'+r.col+'"></div><div class="log-main"><div class="t">'+esc(r.k)+' <span class="muted" style="font-size:11px">'+r.kind+'</span></div><div class="s">'+r.next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+'</div></div><div class="log-dose" style="color:'+col+';font-size:12px">'+(r.dd<0?-r.dd+"d atras.":r.dd===0?"hoje":"em "+r.dd+"d")+'</div>';
     el.appendChild(row);});
 }
-function dayHasRecord(k){
-  if(db.daily&&db.daily[k]&&(Object.keys(db.daily[k].supps||{}).length||db.daily[k].water))return true;
-  if(db.injections.some(i=>dkey(i.date)===k))return true;
-  if(db.glp1.some(i=>dkey(i.date)===k))return true;
-  if(db.biometrics.some(b=>dkey(b.date)===k))return true;
-  return false;
+function recordDaySet(){
+  const set=new Set();
+  Object.keys(db.daily||{}).forEach(k=>{const d=db.daily[k];if(d&&(Object.keys(d.supps||{}).length||d.water))set.add(k);});
+  [db.injections,db.glp1,db.biometrics].forEach(a=>a.forEach(i=>set.add(dkey(i.date))));
+  return set;
 }
+function dayHasRecord(k,set){return (set||recordDaySet()).has(k);}
 function renderAppAdherence(){
-  let streak=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(dayHasRecord(k))streak++;else if(i===0)continue;else break;}
-  let days7=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(dayHasRecord(dkey(d)))days7++;}
+  const rs=recordDaySet();
+  let streak=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(rs.has(k))streak++;else if(i===0)continue;else break;}
+  let days7=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(rs.has(dkey(d)))days7++;}
   const lw=lastBioWeight();const noWeight=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
   $("#appAdhKpi").innerHTML=kpi3([streak,"dias seguidos"],[days7+"/7","últimos 7 dias"],[noWeight==null?"—":noWeight+"d","sem pesar"]);
   const n=[];
@@ -2772,11 +2842,11 @@ function renderBodyComp(){
   const smmPts=s.filter(x=>x.smm!=null),viscPts=s.filter(x=>x.visceral!=null);
   const lastSmm=smmPts[smmPts.length-1],firstSmm=smmPts[0];
   const lastVisc=viscPts[viscPts.length-1],firstVisc=viscPts[0];
-  let kpiH=kpi3([last.lean.toFixed(1),"massa magra (kg)"],[last.fat.toFixed(1),"gordura (kg)"],[ffmi.toFixed(1),"FFMI"]);
+  let kpiH=kpi3([fmtN(last.lean,1),"massa magra (kg)"],[fmtN(last.fat,1),"gordura (kg)"],[fmtN(ffmi,1),"FFMI"]);
   if(lastSmm){const dS=firstSmm&&smmPts.length>1?lastSmm.smm-firstSmm.smm:null;
-    kpiH+=kpiBox(lastSmm.smm.toFixed(1),"MME (kg)"+(dS!=null?' · '+(dS>=0?"+":"")+dS.toFixed(1):""));}
+    kpiH+=kpiBox(fmtN(lastSmm.smm,1),"MME (kg)"+(dS!=null?' · '+(dS>=0?"+":"")+fmtN(dS,1):""));}
   if(lastVisc){const dV=firstVisc&&viscPts.length>1?lastVisc.visceral-firstVisc.visceral:null;
-    kpiH+=kpiBox(+lastVisc.visceral.toFixed(1),"g. visceral"+(dV!=null?' · '+(dV>=0?"+":"")+(+dV.toFixed(1)):""));}
+    kpiH+=kpiBox(fmtV(lastVisc.visceral,1),"g. visceral"+(dV!=null?' · '+(dV>=0?"+":"")+(fmtV(dV,1)):""));}
   kpi.innerHTML=kpiH;
   const labels=s.map(x=>fmtD(x.date));
   const datasets=[
@@ -2789,10 +2859,10 @@ function renderBodyComp(){
   if(viscPts.length)opts.scales.y1={position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("visceral")};
   mkChart("chComp",{panDates:s.map(x=>x.date),data:{labels,datasets},options:opts});
   if(s.length>=2){const dLean=last.lean-first.lean,dFat=last.fat-first.fat,dW=last.weight-first.weight;let msg,cls="";
-    if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+dLean.toFixed(1)+"kg vs "+dFat.toFixed(1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
-    else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+dFat.toFixed(1)+"kg, magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg no período.";}
-    else msg="Variação no período: magra "+(dLean>=0?"+":"")+dLean.toFixed(1)+"kg · gordura "+(dFat>=0?"+":"")+dFat.toFixed(1)+"kg.";
-    if(lastSmm&&firstSmm&&smmPts.length>1){const dS=lastSmm.smm-firstSmm.smm;msg+=" MME medida "+(dS>=0?"+":"")+dS.toFixed(1)+"kg.";}
+    if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+fmtN(dLean,1)+"kg vs "+fmtN(dFat,1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
+    else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+fmtN(dFat,1)+"kg, magra "+(dLean>=0?"+":"")+fmtN(dLean,1)+"kg no período.";}
+    else msg="Variação no período: magra "+(dLean>=0?"+":"")+fmtN(dLean,1)+"kg · gordura "+(dFat>=0?"+":"")+fmtN(dFat,1)+"kg.";
+    if(lastSmm&&firstSmm&&smmPts.length>1){const dS=lastSmm.smm-firstSmm.smm;msg+=" MME medida "+(dS>=0?"+":"")+fmtN(dS,1)+"kg.";}
     note.innerHTML='<div class="note '+cls+'" style="margin-top:10px">'+msg+'</div>';
   } else note.innerHTML="";
 }
@@ -2828,7 +2898,7 @@ function renderGoals(){
   defs.forEach(([k,lbl,unit,dec])=>{
     const target=g[k];if(target==null)return;
     const c=cur[k], s=start[k];
-    if(c==null){rows.push('<div class="wk"><div style="display:flex;justify-content:space-between"><span style="font-size:13px">'+lbl+'</span><span class="mg">alvo '+(+target).toFixed(dec)+unit+'</span></div><div class="pct">sem registro de biometria</div></div>');return;}
+    if(c==null){rows.push('<div class="wk"><div style="display:flex;justify-content:space-between"><span style="font-size:13px">'+lbl+'</span><span class="mg">alvo '+fmtN(target,dec)+unit+'</span></div><div class="pct">sem registro de biometria</div></div>');return;}
     // Progresso = quanto do caminho entre início e alvo já foi percorrido
     const totalGap=(s!=null)?(target-s):null;          // distância total planejada
     const remaining=target-c;                          // o que falta
@@ -2839,15 +2909,15 @@ function renderGoals(){
     const reached=Math.abs(remaining)<(k==="bf"?0.2:0.3)|| (totalGap!=null&&((totalGap<0&&c<=target)||(totalGap>0&&c>=target)));
     const barCol=reached?PAL.green:PAL.amber;
     const remTxt=reached?'<span style="color:'+PAL.green+'">✓ atingida</span>':
-      ('falta '+(remaining>0?"+":"")+remaining.toFixed(dec)+unit);
+      ('falta '+(remaining>0?"+":"")+fmtN(remaining,dec)+unit);
     rows.push(
       '<div class="wk">'+
         '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
-          '<span style="font-size:13px">'+lbl+' <span class="muted" style="font-size:11px">atual '+(+c).toFixed(dec)+unit+'</span></span>'+
-          '<span class="mg">alvo '+(+target).toFixed(dec)+unit+'</span>'+
+          '<span style="font-size:13px">'+lbl+' <span class="muted" style="font-size:11px">atual '+fmtN(c,dec)+unit+'</span></span>'+
+          '<span class="mg">alvo '+fmtN(target,dec)+unit+'</span>'+
         '</div>'+
         '<div class="bar"><i style="width:'+pct+'%;background:'+barCol+'"></i></div>'+
-        '<div class="pct">'+pct+'% · '+remTxt+(start[k]!=null?' · partiu de '+(+s).toFixed(dec)+unit:'')+'</div>'+
+        '<div class="pct">'+pct+'% · '+remTxt+(start[k]!=null?' · partiu de '+fmtN(s,dec)+unit:'')+'</div>'+
       '</div>');
   });
   // Prazo
@@ -2875,7 +2945,7 @@ function renderWeightTrend(){
   if(goal&&rate&&rate<-.02&&curMA>goal){const eta=new Date(Date.now()+(curMA-goal)/-rate*7*864e5);etaTxt=eta.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
   else if(goal&&curMA<=goal)etaTxt="atingida ✓";
   const plateau=rate!=null&&Math.abs(rate)<0.1&&(ma[ma.length-1].t-ma[0].t)>=21*864e5;
-  kpi.innerHTML=kpi3([curMA.toFixed(1),"média 7d (kg)"],[rate==null?"—":(rate>0?"+":"")+rate.toFixed(2),"kg/semana","color:"+(rate<-.02?PAL.green:rate>.02?PAL.red:PAL.muted)+";font-size:15px"],[goal?etaTxt:"defina alvo","ETA alvo","font-size:13px"]);
+  kpi.innerHTML=kpi3([fmtN(curMA,1),"média 7d (kg)"],[rate==null?"—":(rate>0?"+":"")+fmtN(rate,2),"kg/semana","color:"+(rate<-.02?PAL.green:rate>.02?PAL.red:PAL.muted)+";font-size:15px"],[goal?etaTxt:"defina alvo","ETA alvo","font-size:13px"]);
   const labels=ma.map(p=>fmtD(p.date));
   const ds=[
     {type:"line",label:"Peso",data:ma.map(p=>+p.raw.toFixed(2)),borderColor:PAL.muted,backgroundColor:PAL.muted,borderWidth:1,tension:.2,pointRadius:2,spanGaps:true},
@@ -2972,7 +3042,7 @@ function renderCVDashboard(){
   if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
   const nh=(ldl!=null||vldl!=null)?((ldl||0)+(vldl||0)):null;
   if(nh){let lvl=nh>=160?3:nh>=130?1:0;add("Não-HDL",nh+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
-  if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",r.toFixed(1),lvl,lvl?"resistência insulínica / aterogênico":"ok");}
+  if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",fmtN(r,1),lvl,lvl?"resistência insulínica / aterogênico":"ok");}
   if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",hct+" %",lvl,lvl>=3?"eritrocitose — considere doar":lvl?"próximo do teto":"ok");}
   const v=$("#cvVerdict"),box=$("#cvSignals");
   if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial e um exame para ver o painel.</div>';box.innerHTML="";return;}
@@ -2992,11 +3062,11 @@ function renderDerived(){
   if(!last){el.innerHTML='<div class="empty">Nenhum exame registrado.</div>';return;}
   const alb=last.alb!=null?last.alb:(db.settings.albumin||4.3);const rows=[];
   const ft=calcFreeT(last.tt,last.shbg,alb);
-  if(ft!=null)rows.push(["T livre (calc.)",ft.toFixed(1)+" pg/mL",last.alb!=null?"alb medida "+alb:"alb padrão "+alb]);
-  if(last.tt!=null&&last.e2!=null&&last.e2>0)rows.push(["Razão T:E2",(last.tt/last.e2).toFixed(0),"ng/dL ÷ pg/mL"]);
-  if(last.tgo!=null&&last.tgp!=null&&last.tgp>0)rows.push(["Razão TGO:TGP",(last.tgo/last.tgp).toFixed(2),">1,5 = atenção hepática"]);
-  if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",(last.ldl+(last.vldl||0)).toFixed(0)+" mg/dL","LDL + VLDL"]);
-  if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",(last.tg/last.hdl).toFixed(1),"<2 ideal · resistência insulínica"]);
+  if(ft!=null)rows.push(["T livre (calc.)",fmtN(ft,1)+" pg/mL",last.alb!=null?"alb medida "+alb:"alb padrão "+alb]);
+  if(last.tt!=null&&last.e2!=null&&last.e2>0)rows.push(["Razão T:E2",fmtN((last.tt/last.e2),0),"ng/dL ÷ pg/mL"]);
+  if(last.tgo!=null&&last.tgp!=null&&last.tgp>0)rows.push(["Razão TGO:TGP",fmtN((last.tgo/last.tgp),2),">1,5 = atenção hepática"]);
+  if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",fmtN((last.ldl+(last.vldl||0)),0)+" mg/dL","LDL + VLDL"]);
+  if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",fmtN((last.tg/last.hdl),1),"<2 ideal · resistência insulínica"]);
   if(last.cr!=null&&last.cr>0){const cr=last.cr,k=0.9,a=-0.302;const egfr=142*Math.pow(Math.min(cr/k,1),a)*Math.pow(Math.max(cr/k,1),-1.2);rows.push(["eGFR (CKD-EPI, s/ idade)",Math.round(egfr)+" mL/min","creatinina sofre viés por massa muscular"]);}
   if(!rows.length){el.innerHTML='<div class="empty">Faltam marcadores-base no último exame.</div>';return;}
   el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:11px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
@@ -3030,9 +3100,9 @@ function renderIron(){
   const fc=hctForecast(ulnHct);
   if(fc){
     if(fc.curHct>=ulnHct)out.push(["warn","Projeção: Hct já no/acima do teto ("+ulnHct+"%)."]);
-    else if(fc.slopeWk<=0.02)out.push(["ok","Projeção: Hct estável/declinando ("+(fc.slopeWk>=0?"+":"")+fc.slopeWk.toFixed(2)+"%/sem) — sem cruzamento previsto no ritmo atual."]);
+    else if(fc.slopeWk<=0.02)out.push(["ok","Projeção: Hct estável/declinando ("+(fc.slopeWk>=0?"+":"")+fmtN(fc.slopeWk,2)+"%/sem) — sem cruzamento previsto no ritmo atual."]);
     else if(fc.crossWeeks!=null){const dt=new Date(Date.now()+fc.crossWeeks*7*864e5);
-      out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fc.slopeWk.toFixed(2)+"%/sem (≈"+(fc.slopeWk*4.3).toFixed(1)+"%/mês) → cruza "+ulnHct+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
+      out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fmtN(fc.slopeWk,2)+"%/sem (≈"+fmtN((fc.slopeWk*4.3),1)+"%/mês) → cruza "+ulnHct+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
   }
   el.innerHTML=out.length?out.map(x=>'<div class="note '+x[0]+'" style="margin:6px 0 0">'+x[1]+'</div>').join(""):'<div class="muted" style="font-size:12px">Registre Hct e ferritina nos exames.</div>';
   const all=[...new Set(db.labs.filter(l=>l.hct!=null||l.fer!=null).map(l=>l.date))].sort((a,b)=>new Date(a)-new Date(b));
@@ -3122,12 +3192,12 @@ function drawCompare(){
   const a=$("#cmpA").value,b=$("#cmpB").value;const pa=photoFor(a,compareAngle),pb=photoFor(b,compareAngle);
   if(!pa||!pb){el.innerHTML='<div class="empty">Registre ao menos duas datas neste ângulo para comparar.</div>';return;}
   const ba=bioNear(a),bb=bioNear(b);
-  const cell=(p,d,bio,tag,hl)=>'<div><div class="ftile" style="height:210px;cursor:default"><img src="'+p.dataUrl+'"><span class="fdchip"'+(hl?' style="background:rgba(245,158,11,.9);color:#1a1200"':'')+'>'+fmtD(d)+' · '+tag+'</span></div><div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;margin-top:6px"><span>'+(bio&&bio.weight!=null?bio.weight.toFixed(1)+" kg":"—")+'</span><span style="color:var(--muted)">'+(bio&&bio.bf!=null?bio.bf.toFixed(1)+"%":"—")+'</span></div></div>';
+  const cell=(p,d,bio,tag,hl)=>'<div><div class="ftile" style="height:210px;cursor:default"><img src="'+p.dataUrl+'"><span class="fdchip"'+(hl?' style="background:rgba(245,158,11,.9);color:#1a1200"':'')+'>'+fmtD(d)+' · '+tag+'</span></div><div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;margin-top:6px"><span>'+(bio&&bio.weight!=null?fmtN(bio.weight,1)+" kg":"—")+'</span><span style="color:var(--muted)">'+(bio&&bio.bf!=null?fmtN(bio.bf,1)+"%":"—")+'</span></div></div>';
   let html='<div class="grid2">'+cell(pa,a,ba,"antes",false)+cell(pb,b,bb,"depois",true)+'</div>';
   if(ba&&bb){const pills=[];
-    if(ba.weight!=null&&bb.weight!=null){const dw=bb.weight-ba.weight;pills.push([(dw>0?"+":"")+dw.toFixed(1)+" kg",dw<0]);}
-    if(ba.bf!=null&&bb.bf!=null){const dbf=bb.bf-ba.bf;pills.push([(dbf>0?"+":"")+dbf.toFixed(1)+"% GC",dbf<0]);}
-    if(ba.smm!=null&&bb.smm!=null){const ds=bb.smm-ba.smm;pills.push(["MME "+(ds>0?"+":"")+ds.toFixed(1),ds>0]);}
+    if(ba.weight!=null&&bb.weight!=null){const dw=bb.weight-ba.weight;pills.push([(dw>0?"+":"")+fmtN(dw,1)+" kg",dw<0]);}
+    if(ba.bf!=null&&bb.bf!=null){const dbf=bb.bf-ba.bf;pills.push([(dbf>0?"+":"")+fmtN(dbf,1)+"% GC",dbf<0]);}
+    if(ba.smm!=null&&bb.smm!=null){const ds=bb.smm-ba.smm;pills.push(["MME "+(ds>0?"+":"")+fmtN(ds,1),ds>0]);}
     if(pills.length)html+='<div style="display:flex;gap:6px;margin-top:10px">'+pills.map(p=>'<span style="flex:1;text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:600;padding:6px 2px;border-radius:6px;background:'+(p[1]?"rgba(52,211,153,.13)":"rgba(248,113,113,.13)")+';color:'+(p[1]?"var(--green)":"var(--red)")+'">'+p[0]+'</span>').join("")+'</div>';
   } else html+='<div class="note" style="margin-top:8px">Sem biometria a ±14d de uma das datas — registre peso/%GC na aba Saúde para ver os deltas.</div>';
   el.innerHTML=html;
@@ -3247,7 +3317,7 @@ function renderPersonal(){
   // · cinza claro = treino sem personal (toque marca) · vazio = sem treino. Tocar num dia alterna a aula.
   const closedW=weeks.filter(w=>w.closed),full=closedW.filter(w=>w.done>=n).length;
   h+='<div class="kpi" style="margin-bottom:10px">'+kpi3([weeks.slice(-4).reduce((a,w)=>a+w.done,0),"aulas · 4 sem"],
-    [closedW.length?(closedW.reduce((a,w)=>a+w.done,0)/closedW.length).toFixed(1):"—","média/sem"],
+    [closedW.length?fmtN(closedW.reduce((a,w)=>a+w.done,0)/closedW.length,1):"—","média/sem"],
     [closedW.length?Math.round(full/closedW.length*100)+"%":"—","semanas completas"])+'</div>';
   h+='<div class="heat heat-lg" id="ptHeat"></div><div class="legend"><span><i style="background:#34d399"></i>aula</span><span><i style="background:#60a5fa"></i>reposição</span><span><i style="background:#6b7280"></i>treino sem personal</span><span><i style="background:#33363c"></i>sem treino</span></div>';
   h+='<div style="display:flex;gap:8px;align-items:center;margin-top:12px"><div class="muted" style="flex:1;font-size:11px">Marque <b>Com personal</b> ao registrar o treino, ou toque num dia do calendário.</div></div>';
@@ -3271,7 +3341,12 @@ function logRest(dateK){const k=dateK||diaDate||todayInput();db.training.log[k]=
 function setDietStatus(v,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.status=v;db.diet.log[k]=e;save();refreshTD();toast("Dieta: "+({on:"no plano",partial:"parcial",off:"fora",refeed:"refeed"}[v]||v));}
 function toggleProtein(dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.protein=!e.protein;db.diet.log[k]=e;save();refreshTD();}
 function toggleMeal(R,dateK){const k=dateK||diaDate||todayInput();const e=db.diet.log[k]||{};e.meals=e.meals||{};e.meals[R]=!e.meals[R];db.diet.log[k]=e;save();refreshTD();}
-function refreshTD(){renderTrainingCard();renderTrainHeat();renderTrainScore();renderDietCard();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdhResult();renderRitual();renderPersonal();if($("#v-diario").classList.contains("active")&&$("#cardDieta")){const de=dietEntry(diaDate)||{};if(de.status&&mealKeys(diaDate).slice(0,mealsN()).every(R=>de.meals&&de.meals[R]))setCollap("#cardDieta",true);}}
+function refreshTD(){
+  if(activeView()==="diario"){renderTrainingCard();renderDietCard();
+    const de=dietEntry(diaDate)||{};if(de.status&&mealKeys(diaDate).slice(0,mealsN()).every(R=>de.meals&&de.meals[R]))setCollap("#cardDieta",true);}
+  else dirtyViews.add("diario");
+  refreshViews(["resumo","habitos"]);
+}
 
 function renderTrainingCard(){
   if(!$("#trainRing"))return;
@@ -3328,10 +3403,10 @@ function buildHeat(id,colorFn,titleFn,click=true){
     const k=dkey(d);if(k===tk)cell.classList.add("today");const col=colorFn(k,d);if(col)cell.style.background=col;
     if(titleFn)cell.title=titleFn(k,d);
     if(typeof click==="function")cell.onclick=()=>click(k);
-    else if(click)cell.onclick=()=>{diaDate=k;if($("#diaDate"))$("#diaDate").value=k;renderDiaryAll();};
+    else if(click)cell.onclick=()=>{diaDate=k;if($("#v-diario").classList.contains("active"))renderDiaryAll();else goView("diario");};
     el.appendChild(cell);}
 }
-function renderTrainHeat(){buildHeat("#trainHeat",(k)=>{const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);const ok=(isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train");if(!ok)return "#F59E0B";return e.type==="rest"?"#60a5fa":"#34d399";},(k)=>{const e=trainEntry(k);return fmtD(k+"T12:00:00")+" · prev:"+plannedFor(k)+(e?" · feito:"+(e.type==="rest"?"descanso":e.letter):"");});}
+function renderTrainHeat(){buildHeat("#trainHeat",(k)=>{const e=trainEntry(k);if(!e)return null;const pl=plannedFor(k);const ok=(isRest(pl)&&e.type==="rest")||(!isRest(pl)&&e.type==="train");if(!ok)return HEAT.mid;return e.type==="rest"?HEAT.alt:HEAT.high;},(k)=>{const e=trainEntry(k);return fmtD(k+"T12:00:00")+" · prev:"+plannedFor(k)+(e?" · feito:"+(e.type==="rest"?"descanso":e.letter):"");});}
 
 // Nº de refeições do plano (Dados › Configurações). Faixas de pulso escalam com ele: bom ≥ ⌈2N/3⌉, médio ≥ ⌈N/3⌉
 // (N=6 → 4+/2–3/0–1, como antes). pulseCount conta TODAS as refeições marcadas — histórico com R6 é preservado.
@@ -3340,7 +3415,7 @@ function mealKeys(k){const n=mealsN(),ks=[];for(let i=1;i<=n;i++)ks.push("R"+i);
   if(e&&e.meals)Object.keys(e.meals).filter(R=>e.meals[R]&&!ks.includes(R)).sort().forEach(R=>ks.push(R)); // extra marcada no dia
   return ks;}
 function pulseBands(){const n=mealsN();return {good:Math.ceil(2*n/3),mid:Math.ceil(n/3)};}
-function pulseColor(c){const b=pulseBands();return c>=b.good?"#34d399":c>=b.mid?"#F59E0B":"#7f1d1d";}
+function pulseColor(c){const b=pulseBands();return c>=b.good?HEAT.high:c>=b.mid?HEAT.mid:HEAT.low;}
 function pulseCount(k){const e=dietEntry(k);return e&&e.meals?Object.values(e.meals).filter(Boolean).length:0;}
 function pulseLogged(k){const e=dietEntry(k);return !!(e&&e.meals&&Object.keys(e.meals).length);}
 function renderDietCard(){
@@ -3364,7 +3439,7 @@ function renderPulse(){
   const avg=(days)=>{let s=0,c=0;for(let i=0;i<days;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(pulseLogged(k)){s+=pulseCount(k);c++;}}return c?(s/c):null;};
   const a4=avg(28),a12=avg(84);
   setText("pulseStreak","🔥 "+streakOf(k=>pulseLogged(k)&&pulseCount(k)>=pulseBands().good)+"d ≥"+pulseBands().good);
-  $("#pulseKpi").innerHTML=kpi3([today+"/"+mealsN(),"pulsos hoje"],[a4!=null?a4.toFixed(1):"—","média/dia · 4 sem"],[a12!=null?a12.toFixed(1):"—","média/dia · 12 sem"]);
+  $("#pulseKpi").innerHTML=kpi3([today+"/"+mealsN(),"pulsos hoje"],[a4!=null?fmtN(a4,1):"—","média/dia · 4 sem"],[a12!=null?fmtN(a12,1):"—","média/dia · 12 sem"]);
 }
 function renderPulseHeat(){
   const b=pulseBands(),rng=(a,z)=>a>=z?String(a):a+"–"+z,lg=$("#pulseLegend");
@@ -3377,7 +3452,7 @@ function renderDietScore(){
   setText("dietStreak","🔥 "+streakOf(k=>!!dietEntry(k))+"d seguidos");
   $("#dietScoreKpi").innerHTML=kpi3([s4.pct!=null?s4.pct+"%":"—","adesão · 4 sem"],[s12.pct!=null?s12.pct+"%":"—","adesão · 12 sem"],[s4.c,"dias reg. · 4 sem"]);
 }
-function renderDietHeat(){buildHeat("#dietHeat",(k)=>{const s=dietScore(k);if(s==null)return null;return s>=1?"#34d399":s>=.5?"#F59E0B":"#7f1d1d";},(k)=>{const e=dietEntry(k);return fmtD(k+"T12:00:00")+(e&&e.status?" · "+e.status:"");});}
+function renderDietHeat(){buildHeat("#dietHeat",(k)=>{const s=dietScore(k);if(s==null)return null;return s>=1?HEAT.high:s>=.5?HEAT.mid:HEAT.low;},(k)=>{const e=dietEntry(k);return fmtD(k+"T12:00:00")+(e&&e.status?" · "+e.status:"");});}
 
 function renderAdhResult(){
   if(!$("#chAdhResult"))return;
@@ -3602,7 +3677,8 @@ function initAll(){
   {const pt=db.settings.personal;$("#ptEnabled").checked=!!pt.enabled;$("#ptPerWeek").value=pt.perWeek;$("#ptStart").value=pt.start||"";$("#ptInitial").value=pt.initial||0;}
   fillTrendMarker();
   applyDrugContext();
-  renderLog();renderNextDose();renderWeekly();renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderLabTable();renderLabStatus();renderBodyMap();renderResumo();renderCoProtoEditor();initFotos();renderTrainCfg();renderGoals();renderPressure();renderCVDashboard();
+  initFotos();
+  Object.keys(VIEW_RENDER).forEach(v=>dirtyViews.add(v));{const a=activeView()||"resumo";dirtyViews.delete(a);VIEW_RENDER[a]();}
   if($("#trSavePat"))$("#trSavePat").onclick=saveTrainPattern;
   if($("#trShiftL"))$("#trShiftL").onclick=()=>shiftAnchor(-1);
   if($("#trShiftR"))$("#trShiftR").onclick=()=>shiftAnchor(1);
@@ -3613,10 +3689,11 @@ function initAll(){
    const cg=$("#cardGoals");if(cg&&hasGoal)cg.classList.add("collap");}
   updatePhaseChip();
   renderSyncState();
+  if(!$("#v-bio").dataset.sec)$("#v-bio").dataset.sec="corpo";
+  renderSubnav();
   linkLabels();
   setText("verFooter","Control · v"+APP_VERSION);
 }
-function goView(v){const b=document.querySelector(`#nav button[data-v="${v}"]`);if(b)b.click();}
 initAll();
 
 // Sync engine — inicia após render para não bloquear a UI
@@ -3644,6 +3721,11 @@ setTimeout(()=>{
 // Header auto-hide (a barra de dia do Diário gruda logo abaixo dele: --hdrH)
 (function(){const h=document.querySelector("header");document.documentElement.style.setProperty("--hdrH",h.offsetHeight+"px");let last=0;
   window.addEventListener("scroll",()=>{const y=window.scrollY;if(y>last&&y>56)h.classList.add("hide");else h.classList.remove("hide");last=y;},{passive:true});})();
+
+// Service worker (F3.8): abre offline e recebe atualizações sozinho. Exige sw.js publicado ao lado do index.html
+// e http(s) — no file:// é ignorado. Falha no registro não afeta o app.
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 
 // PWA: manifest + ícone gerado em runtime (sem arquivo externo)
 (function(){

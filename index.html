@@ -49,21 +49,26 @@ header{
 header.hide{transform:translateY(-101%)}
 header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
 header h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
-header .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:'IBM Plex Mono',monospace}
+header .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:'IBM Plex Mono',monospace;cursor:pointer;display:flex;align-items:center;gap:6px}
+header .sub .sync-dot{width:7px;height:7px;border-radius:50%;flex:none}
+header .sub[data-state="sync"] .sync-dot{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
 main{padding:16px;max-width:760px;margin:0 auto}
 .view{display:none;animation:fade .25s ease}
 .view.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;position:relative}
 .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin:0 0 13px;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.card h2 .hint{float:right;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;font-weight:400}
+.card h2 .hint{float:right;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
 label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:500}
 input,select,textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);padding:12px;font-size:15px;font-family:inherit;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--amber)}
 input[type=checkbox]{width:auto}
 .field{margin-bottom:13px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.grid-dd{display:grid;grid-template-columns:minmax(100px,2fr) minmax(0,3fr);gap:11px} /* Dose × Data/hora */
+input[type=time],input[type=date],input[type=datetime-local]{min-width:0}
 button{font-family:inherit;cursor:pointer;border:none}
 .btn{background:var(--amber);color:#181818;font-weight:600;padding:14px;border-radius:var(--r-sm);font-size:15px;width:100%}
 .btn:active{transform:scale(.985)}
@@ -73,27 +78,27 @@ button{font-family:inherit;cursor:pointer;border:none}
 .site-btn{background:var(--panel-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:11.5px;color:var(--txt);text-align:left;font-weight:500;transition:.12s;display:flex;align-items:center;justify-content:space-between;gap:6px}
 .site-btn.sel{border-color:var(--amber);background:rgba(245,158,11,.12);color:var(--amber-soft)}
 .site-btn .snm{display:flex;align-items:center;gap:4px;line-height:1.15}
-.site-btn .star{color:var(--green);font-size:9.5px}
-.site-btn small{color:var(--muted);font-size:9.5px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;margin:0}
+.site-btn .star{color:var(--green);font-size:11px}
+.site-btn small{color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;margin:0}
 .site-btn.sel small{color:var(--amber)}
 .bodymap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%}
 .bm-zone{display:flex;flex-direction:row;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-width:0}
 .bm-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;color:#111;flex-shrink:0}
 .bm-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .bm-zone .lbl{font-size:12.5px;text-align:left;line-height:1.2;color:var(--txt);font-weight:500;word-break:normal;overflow-wrap:normal}
-.bm-zone .days{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.bm-zone .days{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
 .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:7px}
 .kpi.k3{display:flex;gap:7px;width:100%}
 .kpi.k3>.box{flex:1 1 0;width:0;min-width:0;box-sizing:border-box}
 .kpi .box{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 7px;text-align:center;min-width:0}
-.kpi .box .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px;color:var(--txt);line-height:1.1;overflow-wrap:anywhere}
-.kpi .box .k{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+.kpi .box .v{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px;color:var(--txt);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .box .k{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.25}
 .note.ok{border-color:rgba(52,211,153,.4)}
 .ftile{position:relative;border-radius:10px;background:#15171a;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .ftile img{width:100%;height:100%;object-fit:cover;display:block}
 .ftile .ph{opacity:.7}
 .fcap{text-align:center;font-size:11px;color:var(--muted);margin-top:5px}
-.fdchip{position:absolute;bottom:5px;left:5px;background:rgba(15,16,18,.82);color:#e8e6e3;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 6px;border-radius:5px}
+.fdchip{position:absolute;bottom:5px;left:5px;background:rgba(15,16,18,.82);color:#e8e6e3;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 6px;border-radius:5px}
 .fdel{position:absolute;top:4px;right:4px;background:rgba(15,16,18,.78);color:#f87171;border:none;width:22px;height:22px;border-radius:6px;font-size:14px;line-height:1;cursor:pointer}
 .angbtn{flex:1;background:var(--panel-2);border:1.5px solid var(--line);color:var(--muted);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
 .angbtn.on{background:var(--amber);border-color:var(--amber);color:#1a1200}
@@ -107,7 +112,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .tribtn.on-good{background:rgba(52,211,153,.16);border-color:var(--green);color:var(--green)}
 .tribtn.on-warn{background:rgba(245,158,11,.16);border-color:var(--amber);color:var(--amber-soft,#fbbf24)}
 .tribtn.on-bad{background:rgba(248,113,113,.16);border-color:var(--red);color:var(--red)}
-.legend{display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--muted);margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
+.legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--muted);margin-top:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .log-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -115,7 +120,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .log-swatch{width:9px;height:34px;border-radius:4px;flex-shrink:0}
 .log-main{flex:1;min-width:0}
 .log-main .t{font-weight:600;font-size:14px}
-.log-main .s{font-size:11.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-main .s{font-size:11.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:1px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:anywhere} /* até 2 linhas: mostra a observação */
 .log-dose{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--amber-soft);font-size:14px;white-space:nowrap;text-align:right}
 .del{background:none;color:var(--muted);font-size:18px;padding:4px 8px;line-height:1}
 .del:active{color:var(--red)}
@@ -132,7 +137,7 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 #labTable,.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r-sm)}
 #labTable table,.scrollx table{white-space:nowrap;min-width:100%}
 th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line)}
-th{color:var(--muted);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace}
+th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace}
 td.num{font-family:'IBM Plex Mono',monospace}
 .flag-hi{color:var(--red)}
 .flag-ok{color:var(--green)}
@@ -140,9 +145,9 @@ td.num{font-family:'IBM Plex Mono',monospace}
 .scale button{flex:1;background:var(--panel-2);border:1.5px solid var(--line);color:var(--muted);padding:13px 0;border-radius:var(--r-sm);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16px}
 .scale button.on{border-color:var(--amber);background:rgba(245,158,11,.14);color:var(--amber-soft)}
 .scale-row{margin-bottom:14px}
-.scale-row .cap{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:5px;font-family:'IBM Plex Mono',monospace}
+.scale-row .cap{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px;font-family:'IBM Plex Mono',monospace}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(35,37,41,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;padding:4px 4px calc(4px + env(safe-area-inset-bottom)) 4px}
-nav button{flex:1;background:none;color:var(--muted);padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:500;border-radius:10px}
+nav button{flex:1;background:none;color:var(--muted);padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:500;border-radius:10px}
 nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--amber)}
 .toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#0a2018;padding:11px 16px;border-radius:30px;font-weight:600;font-size:13.5px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px}
@@ -152,7 +157,7 @@ nav button.on{color:var(--amber)}
 .note.warn{border-left-color:var(--red);color:#f3c0c0}
 .note.ok{border-left-color:var(--green);color:#bfe9d6}
 /* Ícone de ajuda "?" + popup */
-.help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;vertical-align:middle;line-height:1;flex:0 0 auto;-webkit-tap-highlight-color:transparent;user-select:none}
+.help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;vertical-align:middle;line-height:1;flex:0 0 auto;-webkit-tap-highlight-color:transparent;user-select:none}
 .help:hover,.help:active{border-color:var(--amber);color:var(--amber)}
 h2 .help{margin-left:6px}
 /* "?" no canto inferior direito do card */
@@ -170,7 +175,7 @@ h2 .help{margin-left:6px}
 .drug-row:last-child{border:none}
 .drug-row .sw{width:13px;height:13px;border-radius:4px;flex-shrink:0}
 .drug-row .nm{flex:1;font-weight:500}
-.tag{font-size:9px;background:var(--panel-2);border:1px solid var(--line);padding:1px 6px;border-radius:20px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.tag{font-size:11px;background:var(--panel-2);border:1px solid var(--line);padding:1px 6px;border-radius:20px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
 details summary{cursor:pointer;color:var(--amber);font-size:12px;padding:8px 0;font-family:'IBM Plex Mono',monospace;list-style:none}
 details summary::-webkit-details-marker{display:none}
 details summary::before{content:'▸ '}
@@ -186,26 +191,26 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .wk .mg{font-family:'IBM Plex Mono',monospace;color:var(--amber-soft);font-size:13px}
 .wk .bar{height:7px;background:var(--panel-2);border-radius:6px;margin-top:6px;overflow:hidden}
 .wk .bar i{display:block;height:100%;border-radius:6px}
-.wk .pct{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.wk .pct{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px}
 .drug-edit{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px;margin-bottom:9px}
 .drug-edit .head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
 .drug-edit .head .sw{width:14px;height:14px;border-radius:4px}
 .drug-edit .head .nm{flex:1;font-weight:600;font-size:14px}
 .mini{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
-.mini label{font-size:10px;margin-bottom:3px}
+.mini label{font-size:11px;margin-bottom:3px}
 .mini input,.mini select{padding:8px;font-size:13px}
 .ss-row td{font-size:12px}
 .ss-flu{font-weight:600}
 .phase-sel{margin-bottom:13px}
-.chip{display:inline-block;font-size:10px;background:rgba(245,158,11,.13);color:var(--amber-soft);padding:2px 9px;border-radius:20px;font-family:'IBM Plex Mono',monospace;border:1px solid rgba(245,158,11,.3)}
+.chip{display:inline-block;font-size:11px;background:rgba(245,158,11,.13);color:var(--amber-soft);padding:2px 9px;border-radius:20px;font-family:'IBM Plex Mono',monospace;border:1px solid rgba(245,158,11,.3)}
 .supp-head{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:7px}
 .supp-head b{flex:1;font-weight:600}
-.supp-all{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-size:10px;padding:4px 9px;border-radius:20px}
+.supp-all{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-size:11px;padding:4px 9px;border-radius:20px}
 .supp-item{display:flex;align-items:center;gap:11px;padding:10px 11px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:6px;font-size:13.5px;cursor:pointer;transition:.12s;user-select:none}
 .supp-item .box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#0a2018;font-weight:700}
 .supp-item.done{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.09);color:var(--green)}
 .supp-item.done .box{background:var(--green);border-color:var(--green)}
-.supp-note{font-size:10.5px;color:var(--muted);font-style:italic;margin:-1px 0 8px;padding-left:2px}
+.supp-note{font-size:11px;color:var(--muted);font-style:italic;margin:-1px 0 8px;padding-left:2px}
 .supp-blk{margin-bottom:16px}
 .heat{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;overflow-x:auto;padding-bottom:4px;justify-content:start}
 .heat .cell{width:13px;height:13px;border-radius:3px;background:#33363c;cursor:pointer;transition:.1s}
@@ -277,10 +282,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <label>Nome da droga (livre)</label>
       <input id="inCustomDrug" placeholder="ex.: Trembolona Acetato">
     </div>
-    <div class="grid2">
+    <div class="grid-dd">
       <div class="field">
         <label>Dose (mg)</label>
-        <input id="inDose" type="number" inputmode="decimal" placeholder="200" class="num">
+        <input id="inDose" type="text" inputmode="decimal" placeholder="200" class="num">
       </div>
       <div class="field">
         <label>Data / hora</label>
@@ -310,7 +315,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card">
-    <h2>Próxima dose <span class="hint" id="icsBtnWrap"></span></h2>
+    <h2>Próxima dose</h2>
     <div id="dueEaa"></div>
     <div id="nextDoseBox"><div class="empty">Sem aplicações registradas.</div></div>
     <button class="btn btn-ghost btn-sm" id="btnIcs" style="width:100%;margin-top:11px;display:none">📅 Exportar próximas doses (.ics)</button>
@@ -336,11 +341,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card collapsible" id="cardSono">
     <h2 class="chead">Sono <span class="hint" id="slpHint">noite anterior</span><span class="chev">▾</span></h2>
-    <div class="grid2">
-      <div class="field"><label>Horas dormidas</label><input id="slpH" type="number" inputmode="decimal" step="0.25" class="num" placeholder="6.5"></div>
-      <div class="field"><label>Deitar → acordar (opcional)</label>
-        <div style="display:flex;gap:6px"><input id="slpBed" type="time" style="padding:10px"><input id="slpWake" type="time" style="padding:10px"></div>
-      </div>
+    <div class="grid3">
+      <div class="field"><label>Horas</label><input id="slpH" type="text" inputmode="decimal" step="0.25" class="num" placeholder="6.5"></div>
+      <div class="field"><label>Deitou</label><input id="slpBed" type="time" style="padding:12px 8px"></div>
+      <div class="field"><label>Acordou</label><input id="slpWake" type="time" style="padding:12px 8px"></div>
     </div>
     <label>Qualidade</label>
     <div class="scale" id="slpQ"></div>
@@ -379,9 +383,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="dietStatus" style="display:flex;gap:6px"></div>
     <div id="dietToggles" style="margin-top:10px"></div>
     <div style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="margin:0">Pulsos de leucina <span class="muted" style="font-size:10px">(refeição ≥3,85g)</span></label><span class="hint" id="pulseDayCount"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="margin:0">Pulsos de leucina <span class="muted" style="font-size:11px">(refeição ≥3,85g)</span></label><span class="hint" id="pulseDayCount"></span></div>
       <div id="dietMeals" style="display:flex;flex-wrap:wrap;margin-top:8px"></div>
-      <div class="muted" style="font-size:10.5px;margin-top:4px">Marcar a refeição conta o pulso. Cumprir a dieta implica os pulsos; o contrário não — dá para bater os pulsos e ainda sair do plano.</div>
+      <div class="muted" style="font-size:11px;margin-top:4px">Marcar a refeição conta o pulso. Cumprir a dieta implica os pulsos; o contrário não — dá para bater os pulsos e ainda sair do plano.</div>
     </div>
   </div>
 
@@ -452,8 +456,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="btn btn-ghost btn-sm" id="gRepeat" style="width:100%;margin-bottom:13px">↻ Repetir última</button>
     <div class="field"><label>Análogo</label><select id="gDrug"></select></div>
     <div id="gCustomBox" style="display:none" class="field"><label>Nome (livre)</label><input id="gCustom" placeholder="ex.: Survodutida"></div>
-    <div class="grid2">
-      <div class="field"><label>Dose (mg)</label><input id="gDose" type="number" inputmode="decimal" step="0.05" class="num" placeholder="0.5"></div>
+    <div class="grid-dd">
+      <div class="field"><label>Dose (mg)</label><input id="gDose" type="text" inputmode="decimal" step="0.05" class="num" placeholder="0.5"></div>
       <div class="field"><label>Data / hora</label><input id="gDate" type="datetime-local"></div>
     </div>
     <div class="field"><label>Local (SC) <span class="muted" id="gSugHint"></span></label><div class="site-grid" id="gSiteGrid"></div></div>
@@ -488,7 +492,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <label>Colaterais presentes</label>
     <div id="gChips" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px"></div>
     <div class="grid2">
-      <div class="field"><label>FC repouso (bpm)</label><input id="gHr" type="number" inputmode="numeric" class="num" placeholder="—"></div>
+      <div class="field"><label>FC repouso (bpm)</label><input id="gHr" type="text" inputmode="numeric" class="num" placeholder="—"></div>
       <div class="field"><label>Data</label><input id="gSymDate" type="date"></div>
     </div>
     <div class="field"><label>Nota</label><input id="gSymNote" placeholder="—"></div>
@@ -583,11 +587,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <div class="card">
     <h2>Biometria <span class="hint" id="bioDue"></span></h2>
     <div class="grid3">
-      <div class="field"><label>Peso (kg)</label><input id="bWeight" type="number" inputmode="decimal" class="num" placeholder="79.6"></div>
-      <div class="field"><label>%GC</label><input id="bBf" type="number" inputmode="decimal" class="num" placeholder="21.3"></div>
+      <div class="field"><label>Peso (kg)</label><input id="bWeight" type="text" inputmode="decimal" class="num" placeholder="79.6"></div>
+      <div class="field"><label>%GC</label><input id="bBf" type="text" inputmode="decimal" class="num" placeholder="21.3"></div>
       <div class="field"><label>Método</label><select id="bMethod"><option>Pollock 7</option><option>InBody</option><option>Faulkner</option><option>Guedes</option><option>Outro</option></select></div>
-      <div class="field"><label>MME (kg)</label><input id="bSmm" type="number" inputmode="decimal" class="num" placeholder="38.7"></div>
-      <div class="field"><label>Gordura visceral (nível)</label><input id="bVisc" type="number" inputmode="decimal" class="num" placeholder="nível ou cm²"></div>
+      <div class="field"><label>MME (kg)</label><input id="bSmm" type="text" inputmode="decimal" class="num" placeholder="38.7"></div>
+      <div class="field"><label>Gordura visceral (nível)</label><input id="bVisc" type="text" inputmode="decimal" class="num" placeholder="nível ou cm²"></div>
     </div>
     <div class="field"><label>Data</label><input id="bDate" type="date"></div>
     <button class="btn btn-ghost" id="bSave">Salvar biometria</button>
@@ -600,10 +604,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="goalProgress" style="margin-top:6px"></div>
     <div class="goal-form">
       <div class="grid2" style="margin-top:12px">
-        <div class="field"><label>Objetivo de peso (kg)</label><input id="goalW" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-        <div class="field"><label>Objetivo de %GC</label><input id="goalBf" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-        <div class="field"><label>Objetivo massa magra (kg)</label><input id="goalLean" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-        <div class="field"><label>Objetivo de gordura (kg)</label><input id="goalFat" type="number" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo de peso (kg)</label><input id="goalW" type="text" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo de %GC</label><input id="goalBf" type="text" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo massa magra (kg)</label><input id="goalLean" type="text" inputmode="decimal" class="num" placeholder="—"></div>
+        <div class="field"><label>Objetivo de gordura (kg)</label><input id="goalFat" type="text" inputmode="decimal" class="num" placeholder="—"></div>
       </div>
       <div class="field"><label>Prazo (opcional)</label><input id="goalDeadline" type="date"></div>
       <button class="btn btn-ghost" id="goalSave">Salvar metas</button>
@@ -620,29 +624,29 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <div class="card">
     <h2>Painel laboratorial</h2>
     <div class="grid2">
-      <div class="field"><label>Estradiol (pg/mL)</label><input id="lE2" type="number" inputmode="decimal" class="num"></div>
-      <div class="field"><label>Prolactina (ng/mL)</label><input id="lProl" type="number" inputmode="decimal" class="num"></div>
-      <div class="field"><label>Testo Total (ng/dL)</label><input id="lTT" type="number" inputmode="decimal" class="num"></div>
-      <div class="field"><label>SHBG (nmol/L)</label><input id="lShbg" type="number" inputmode="decimal" class="num"></div>
+      <div class="field"><label>Estradiol (pg/mL)</label><input id="lE2" type="text" inputmode="decimal" class="num"></div>
+      <div class="field"><label>Prolactina (ng/mL)</label><input id="lProl" type="text" inputmode="decimal" class="num"></div>
+      <div class="field"><label>Testo Total (ng/dL)</label><input id="lTT" type="text" inputmode="decimal" class="num"></div>
+      <div class="field"><label>SHBG (nmol/L)</label><input id="lShbg" type="text" inputmode="decimal" class="num"></div>
     </div>
     <details>
       <summary>Painel expandido (opcional)</summary>
       <div class="grid2" style="margin-top:8px">
-        <div class="field"><label>Testo Livre (pg/mL)</label><input id="lFreeT" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>DHT (ng/dL)</label><input id="lDHT" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Hematócrito (%)</label><input id="lHct" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>HDL (mg/dL)</label><input id="lHDL" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>LDL (mg/dL)</label><input id="lLDL" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>VLDL (mg/dL)</label><input id="lVLDL" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Triglicérides</label><input id="lTG" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>TGO (U/L)</label><input id="lTGO" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>TGP (U/L)</label><input id="lTGP" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>GGT (U/L)</label><input id="lGGT" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Ureia (mg/dL)</label><input id="lUr" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Creatinina</label><input id="lCr" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Cistatina C</label><input id="lCys" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Ferritina (ng/mL)</label><input id="lFer" type="number" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Albumina (g/dL)</label><input id="lAlb" type="number" inputmode="decimal" class="num" placeholder="4.3"></div>
+        <div class="field"><label>Testo Livre (pg/mL)</label><input id="lFreeT" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>DHT (ng/dL)</label><input id="lDHT" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Hematócrito (%)</label><input id="lHct" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>HDL (mg/dL)</label><input id="lHDL" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>LDL (mg/dL)</label><input id="lLDL" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>VLDL (mg/dL)</label><input id="lVLDL" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Triglicérides</label><input id="lTG" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>TGO (U/L)</label><input id="lTGO" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>TGP (U/L)</label><input id="lTGP" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>GGT (U/L)</label><input id="lGGT" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Ureia (mg/dL)</label><input id="lUr" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Creatinina</label><input id="lCr" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Cistatina C</label><input id="lCys" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Ferritina (ng/mL)</label><input id="lFer" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Albumina (g/dL)</label><input id="lAlb" type="text" inputmode="decimal" class="num" placeholder="4.3"></div>
       </div>
     </details>
     <div class="field"><label>Data do exame</label><input id="lDate" type="date"></div>
@@ -673,9 +677,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="kpi" id="bpKpi"></div>
     <div id="bpStatus"></div>
     <div class="grid3" style="margin-top:10px">
-      <div class="field"><label>Sistólica</label><input id="bpSys" type="number" inputmode="numeric" class="num" placeholder="120"></div>
-      <div class="field"><label>Diastólica</label><input id="bpDia" type="number" inputmode="numeric" class="num" placeholder="80"></div>
-      <div class="field"><label>FC repouso (bpm)</label><input id="bpHr" type="number" inputmode="numeric" class="num" placeholder="opcional"></div>
+      <div class="field"><label>Sistólica</label><input id="bpSys" type="text" inputmode="numeric" class="num" placeholder="120"></div>
+      <div class="field"><label>Diastólica</label><input id="bpDia" type="text" inputmode="numeric" class="num" placeholder="80"></div>
+      <div class="field"><label>FC repouso (bpm)</label><input id="bpHr" type="text" inputmode="numeric" class="num" placeholder="opcional"></div>
     </div>
     <div class="field"><label>Data e hora</label><input id="bpDate" type="datetime-local"></div>
     <div class="field"><label>Nota (opcional)</label><input id="bpNote" type="text" placeholder="ex.: manhã, pré-treino, em jejum"></div>
@@ -754,12 +758,12 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <details style="margin-top:8px"><summary>Adicionar nova droga</summary>
       <div class="mini" style="margin-top:9px">
         <div style="grid-column:span 3"><label>Nome</label><input id="ndName" placeholder="nome"></div>
-        <div><label>½-vida (d)</label><input id="ndHl" type="number" inputmode="decimal" class="num" placeholder="4.5"></div>
+        <div><label>½-vida (d)</label><input id="ndHl" type="text" inputmode="decimal" class="num" placeholder="4.5"></div>
         <div><label>Tipo</label><select id="ndType"><option value="inj">injetável</option><option value="oral">oral</option></select></div>
         <div><label>Ancilar</label><select id="ndAnc"><option value="false">não</option><option value="true">sim</option></select></div>
-        <div><label>Dose alvo</label><input id="ndDose" type="number" inputmode="decimal" class="num" placeholder="200"></div>
-        <div><label>Cadência (d)</label><input id="ndCad" type="number" inputmode="decimal" class="num" placeholder="2"></div>
-        <div><label>mg/sem alvo</label><input id="ndWk" type="number" inputmode="decimal" class="num" placeholder="700"></div>
+        <div><label>Dose alvo</label><input id="ndDose" type="text" inputmode="decimal" class="num" placeholder="200"></div>
+        <div><label>Cadência (d)</label><input id="ndCad" type="text" inputmode="decimal" class="num" placeholder="2"></div>
+        <div><label>mg/sem alvo</label><input id="ndWk" type="text" inputmode="decimal" class="num" placeholder="700"></div>
       </div>
       <button class="btn btn-ghost btn-sm" id="addDrug" style="width:100%;margin-top:9px">+ Adicionar</button>
     </details>
@@ -772,14 +776,14 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="grid2">
       <div class="field"><label>Fase atual (nome)</label><input id="setPhase" placeholder="Hipertrofia 2026-Q2"></div>
       <div class="field"><label>Tipo de fase</label><select id="setPhaseType"></select></div>
-      <div class="field"><label>Alerta de reuso (dias)</label><input id="setWarn" type="number" inputmode="numeric" class="num" value="5"></div>
-      <div class="field"><label>Meta de água (ml/dia)</label><input id="setWater" type="number" inputmode="numeric" class="num" value="4000"></div>
-      <div class="field"><label>Refeições por dia (pulsos)</label><input id="setMeals" type="number" inputmode="numeric" class="num" min="1" max="8" value="6"></div>
-      <div class="field"><label>Intervalo de exames (dias)</label><input id="setExam" type="number" inputmode="numeric" class="num" value="120"></div>
-      <div class="field"><label>Intervalo de biometria (dias)</label><input id="setBio" type="number" inputmode="numeric" class="num" value="30"></div>
-      <div class="field"><label>Altura (cm)</label><input id="setHeight" type="number" inputmode="decimal" class="num" value="176"></div>
-      <div class="field"><label>Peso-alvo (kg, opcional)</label><input id="setGoal" type="number" inputmode="decimal" class="num" placeholder="—"></div>
-      <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="number" inputmode="decimal" class="num" value="4.3"></div>
+      <div class="field"><label>Alerta de reuso (dias)</label><input id="setWarn" type="text" inputmode="numeric" class="num" value="5"></div>
+      <div class="field"><label>Meta de água (ml/dia)</label><input id="setWater" type="text" inputmode="numeric" class="num" value="4000"></div>
+      <div class="field"><label>Refeições por dia (pulsos)</label><input id="setMeals" type="text" inputmode="numeric" class="num" min="1" max="8" value="6"></div>
+      <div class="field"><label>Intervalo de exames (dias)</label><input id="setExam" type="text" inputmode="numeric" class="num" value="120"></div>
+      <div class="field"><label>Intervalo de biometria (dias)</label><input id="setBio" type="text" inputmode="numeric" class="num" value="30"></div>
+      <div class="field"><label>Altura (cm)</label><input id="setHeight" type="text" inputmode="decimal" class="num" value="176"></div>
+      <div class="field"><label>Peso-alvo (kg, opcional)</label><input id="setGoal" type="text" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="text" inputmode="decimal" class="num" value="4.3"></div>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <input type="checkbox" id="setCycle" style="width:20px;height:20px">
@@ -792,10 +796,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
           <label for="cpEnabled" style="margin:0">Ativar derivação automática</label>
         </div>
         <div class="grid2">
-          <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="number" inputmode="decimal" class="num" placeholder="0.20"></div>
-          <div class="field"><label>Anastrozol — frequência (dias)</label><input id="cpAnaFreq" type="number" inputmode="numeric" class="num" placeholder="2"></div>
-          <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="number" inputmode="decimal" class="num" placeholder="0.25"></div>
-          <div class="field"><label>Cabergolina — frequência (dias)</label><input id="cpCabFreq" type="number" inputmode="numeric" class="num" placeholder="3"></div>
+          <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="text" inputmode="decimal" class="num" placeholder="0.20"></div>
+          <div class="field"><label>Anastrozol — frequência (dias)</label><input id="cpAnaFreq" type="text" inputmode="numeric" class="num" placeholder="2"></div>
+          <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="text" inputmode="decimal" class="num" placeholder="0.25"></div>
+          <div class="field"><label>Cabergolina — frequência (dias)</label><input id="cpCabFreq" type="text" inputmode="numeric" class="num" placeholder="3"></div>
         </div>
       </div>
     </details>
@@ -820,9 +824,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
           <label for="ptEnabled" style="margin:0">Controlar aulas com o personal</label>
         </div>
         <div class="grid2">
-          <div class="field"><label>Aulas por semana (plano)</label><input id="ptPerWeek" type="number" inputmode="numeric" class="num" placeholder="3"></div>
+          <div class="field"><label>Aulas por semana (plano)</label><input id="ptPerWeek" type="text" inputmode="numeric" class="num" placeholder="3"></div>
           <div class="field"><label>Início do plano (conta a partir da segunda)</label><input id="ptStart" type="date"></div>
-          <div class="field"><label>Saldo inicial (aulas a repor no início)</label><input id="ptInitial" type="number" inputmode="numeric" class="num" step="1" placeholder="0"></div>
+          <div class="field"><label>Saldo inicial (aulas a repor no início)</label><input id="ptInitial" type="text" inputmode="numeric" class="num" step="1" placeholder="0"></div>
         </div>
         <div class="muted" style="font-size:11px">Saldo inicial = aulas já acumuladas antes da data de início (negativo = aulas adiantadas).</div>
       </div>
@@ -847,7 +851,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.92</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v4.96</div>
 </section>
 
 </main>
@@ -877,7 +881,7 @@ const PAL={amber:"#F59E0B",amber2:"#fbbf24",blue:"#60a5fa",violet:"#a78bfa",gree
 // Estados de fase/ciclo (estruturados). [id, rótulo, cor]
 const PHASE_TYPES=[["blast","Blast",PAL.red],["cruise","Cruise",PAL.amber],["trt","TRT",PAL.green],["pct","PCT",PAL.violet],["off","Ponte / Off",PAL.muted]];
 const phaseInfo=t=>PHASE_TYPES.find(p=>p[0]===t)||["",t||"",PAL.muted];
-function phaseChipHTML(){const n=db.settings.currentPhase,i=phaseInfo(db.settings.currentPhaseType);return (n&&n!=="—")?`<span class="chip" style="border-color:${i[2]};color:${i[2]}">${i[1]?i[1]+" · ":""}${n}</span>`:"";}
+function phaseChipHTML(){const n=db.settings.currentPhase,i=phaseInfo(db.settings.currentPhaseType);return (n&&n!=="—")?`<span class="chip" style="border-color:${i[2]};color:${i[2]}">${i[1]?i[1]+" · ":""}${esc(n)}</span>`:"";}
 
 // ---------- Helpers utilitários compartilhados ----------
 // Data: meio-dia local evita drift de fuso ao comparar/iterar dias.
@@ -885,6 +889,8 @@ function today12(){const d=new Date();d.setHours(12,0,0,0);return d;}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
 // DOM: set-text seguro (no-op se o elemento não existe na view atual).
 function setText(id,v){const el=$("#"+id);if(el)el.textContent=v;}
+// HTML: escapa dado do usuário antes de interpolar em innerHTML (observações, nomes, notas).
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 // KPI: gera o markup padrão de box (valor + label).
 const kpiBox=(v,k,vs)=>`<div class="box"><div class="v"${vs?` style="${vs}"`:""}>${v}</div><div class="k">${k}</div></div>`;
 const kpi3=(...boxes)=>boxes.map(b=>kpiBox(b[0],b[1],b[2])).join("");
@@ -978,34 +984,94 @@ async function sbSignOut(){
 }
 
 // ---- SYNC ----
+// Envio agrupado (F1.1): save() só agenda; o envio sai ~2 s depois do último toque. Se um save() acontece com um
+// envio em andamento, marca _syncDirty e reenvia ao terminar. App indo para segundo plano força o envio.
+// Aba desatualizada (F1.2): SB_SEEN_KEY guarda o _syncTs remoto da última sincronização bem-sucedida deste aparelho.
+// Se o remoto mudou desde então (comparação por !==, imune a relógios desalinhados entre aparelhos):
+//   sem pendência local → adota o remoto · com pendência → guarda o local num snapshot, adota o remoto e avisa.
+const SB_SEEN_KEY="control_sb_seen";
+const SYNC_DEBOUNCE=2000;
+let _syncDirty=false,_pushTimer=null,_sbReady=false,_syncErr=false;
+let _lastSyncOk=+localStorage.getItem("control_sb_lastok")||0;
+function markSynced(){_lastSyncOk=Date.now();_syncErr=false;try{localStorage.setItem("control_sb_lastok",String(_lastSyncOk));}catch(e){}}
+const remoteSeen=()=>localStorage.getItem(SB_SEEN_KEY);           // null = aparelho ainda sem histórico de sync
+const setRemoteSeen=ts=>{try{localStorage.setItem(SB_SEEN_KEY,String(ts||0));}catch(e){}};
+const localPending=()=>!!localStorage.getItem(SB_PENDING_KEY)||_syncDirty||!!_pushTimer;
+function schedulePush(delay=SYNC_DEBOUNCE){clearTimeout(_pushTimer);_pushTimer=setTimeout(()=>{_pushTimer=null;sbPush(true);},delay);renderSyncState();}
+// _syncTs atual da linha remota, sem baixar o documento inteiro (PostgREST: coluna JSON → chave).
+async function sbRemoteTs(c,user){
+  const {data,error}=await c.from("control_data").select("ts:data->_syncTs").eq("user_id",user.id).maybeSingle();
+  if(error)throw error;
+  return data?String(data.ts??0):null; // null = ainda não existe linha remota
+}
+function adoptRemote(payload){
+  try{localStorage.setItem(KEY,JSON.stringify(payload));}catch(e){}
+  localStorage.removeItem(SB_PENDING_KEY);_syncDirty=false;clearTimeout(_pushTimer);_pushTimer=null;
+  setRemoteSeen(payload._syncTs||0);
+  db=migrate(JSON.parse(JSON.stringify(payload)));initAll();
+}
+// Remoto mudou desde a última sincronização deste aparelho.
+async function reconcileRemote(){
+  const remote=await sbPull();if(!remote)throw new Error("pull falhou");
+  if(!remote.payload)return false;                     // linha sumiu: segue com o envio
+  if(!localPending()){adoptRemote(remote.payload);toast("Atualizado com dados de outro aparelho");return true;}
+  pushSnap("versão deste aparelho antes de um conflito de sync");
+  adoptRemote(remote.payload);
+  toast("Havia dados mais novos em outro aparelho. A versão deste aparelho foi guardada em Snapshots.",()=>{goView("data");const d=$("#snapList");if(d){d.closest("details").open=true;d.scrollIntoView({block:"center"});}},"Ver");
+  return true;
+}
 async function sbPush(silent=false){
-  if(_syncInFlight)return;_syncInFlight=true;
+  clearTimeout(_pushTimer);_pushTimer=null;
+  if(!_sbReady){renderSyncState();return;}             // sbInit ainda não decidiu local × remoto
+  if(_syncInFlight){_syncDirty=true;return;}
+  _syncInFlight=true;_syncDirty=false;renderSyncState();
   try{
     const c=sbClient();const user=await sbGetUser();if(!c||!user)return;
-    const payload={user_id:user.id,data:JSON.parse(localStorage.getItem(KEY)||"null"),updated_by_device:navigator.userAgent.slice(0,80)};
-    if(!payload.data)return;
-    const {error}=await c.from("control_data").upsert(payload,{onConflict:"user_id"});
+    const rts=await sbRemoteTs(c,user);
+    const seen=remoteSeen();
+    if(rts!==null&&seen!==null&&rts!==seen){if(await reconcileRemote())return;}
+    const data=JSON.parse(JSON.stringify(db));         // retrato do estado enviado
+    const {error}=await c.from("control_data").upsert({user_id:user.id,data,updated_by_device:navigator.userAgent.slice(0,80)},{onConflict:"user_id"});
     if(error)throw error;
-    localStorage.removeItem(SB_PENDING_KEY);
+    setRemoteSeen(data._syncTs||0);
+    if((db._syncTs||0)===(data._syncTs||0))localStorage.removeItem(SB_PENDING_KEY); // nada mudou durante o envio
+    markSynced();
     if(!silent)toast("Sincronizado ✓");
-    renderAuthState();
   }catch(e){
-    localStorage.setItem(SB_PENDING_KEY,"1");
-    if(!silent)toast("Sem conexão — salvo localmente");
-  }finally{_syncInFlight=false;}
+    try{localStorage.setItem(SB_PENDING_KEY,"1");}catch(x){}
+    _syncErr=true;
+    if(!silent)toast("Sem conexão — salvo neste aparelho");
+  }finally{
+    _syncInFlight=false;
+    if(_syncDirty){_syncDirty=false;schedulePush(500);}
+    renderSyncState();renderAuthState();
+  }
 }
+// {payload, updatedAt} · payload null = sem linha remota · retorno null = erro/offline
 async function sbPull(){
   const c=sbClient();const user=await sbGetUser();if(!c||!user)return null;
   try{
-    const {data,error}=await c.from("control_data").select("data,updated_at").eq("user_id",user.id).single();
-    if(error||!data)return null;
-    return {payload:data.data,updatedAt:data.updated_at};
+    const {data,error}=await c.from("control_data").select("data,updated_at").eq("user_id",user.id).maybeSingle();
+    if(error)return null;
+    return data?{payload:data.data,updatedAt:data.updated_at}:{payload:null,updatedAt:null};
   }catch(e){return null;}
+}
+// Ao voltar para a aba/app: se o remoto mudou, atualiza antes de qualquer registro novo.
+async function sbRefresh(){
+  if(!_sbReady||!_sbUser||_syncInFlight)return;
+  const c=sbClient();if(!c)return;
+  try{
+    const rts=await sbRemoteTs(c,_sbUser),seen=remoteSeen();
+    if(rts!==null&&seen!==null&&rts!==seen)await reconcileRemote();
+    if(!localPending())markSynced();else _syncErr=false;
+  }catch(e){_syncErr=true;}
+  renderSyncState();
+  if(localPending())schedulePush(300);
 }
 
 // ---- SYNC NA ABERTURA ----
 async function sbInit(){
-  const c=sbClient();if(!c)return;
+  const c=sbClient();if(!c){renderSyncState();return;}
   // Captura token da URL (magic link callback)
   const hash=location.hash;
   if(hash.includes("access_token")){
@@ -1013,45 +1079,62 @@ async function sbInit(){
     history.replaceState(null,"",location.pathname);
   }
   _sbUser=await sbGetUser();
-  if(!_sbUser){renderAuthState();return;}
-  // Compara timestamp remoto com local
+  if(!_sbUser){renderAuthState();renderSyncState();return;}
   const remote=await sbPull();
   if(remote){
-    const localStr=localStorage.getItem(KEY);
-    const localData=localStr?JSON.parse(localStr):null;
-    const localHasData=localData&&(localData.injections?.length||localData.labs?.length);
-    if(localHasData&&!remote.payload){
-      // Primeiro login num dispositivo que já tem dados → sobe local
-      await sbPush(true);
-    } else if(remote.payload){
-      // Last-write-wins: só adota o remoto se ele for mais novo que a última mudança local.
-      // Evita que um remoto desatualizado desfaça exclusões/edições feitas localmente.
-      const localTs=localData?._syncTs||0;
-      const remoteTs=remote.payload._syncTs||0;
-      const dirty=!!localStorage.getItem(SB_PENDING_KEY);
-      if(localTs>remoteTs||(dirty&&localTs>=remoteTs)){
-        // Local é mais recente (ou tem mudança pendente) → mantém local e empurra para o remoto.
-        await sbPush(true);
-      }else{
-        // Remoto é a referência mais nova → adota e recarrega a UI para refletir.
-        localStorage.setItem(KEY,JSON.stringify(remote.payload));
-        localStorage.removeItem(SB_PENDING_KEY);
-        try{db=migrate(JSON.parse(localStorage.getItem(KEY)));initAll();}catch(e){}
+    const rp=remote.payload,dirty=localPending();
+    const localHasData=db.injections.length||db.labs.length||db.glp1.length||Object.keys(db.daily||{}).length;
+    if(!rp){
+      // Primeiro login: nada na nuvem → sobe o local (se houver)
+      if(localHasData)localStorage.setItem(SB_PENDING_KEY,"1");
+    }else{
+      const rts=String(rp._syncTs||0),seen=remoteSeen(),lts=db._syncTs||0;
+      if(!dirty){
+        if((rp._syncTs||0)>lts||!localHasData)adoptRemote(rp);   // nuvem mais nova → adota
+        else if(lts>(rp._syncTs||0))localStorage.setItem(SB_PENDING_KEY,"1"); // local mais novo sem marca → envia
+        else setRemoteSeen(rts);
+      }else if(seen===null){
+        // Aparelho sem histórico de sync (versões < 4.93): regra antiga de last-write-wins
+        if(lts>=(rp._syncTs||0))setRemoteSeen(rts); // deixa o envio abaixo subir o local
+        else adoptRemote(rp);
+      }else if(rts!==seen){
+        // Os dois lados mudaram desde a última sincronização → conflito
+        pushSnap("versão deste aparelho antes de um conflito de sync");
+        adoptRemote(rp);
+        toast("Havia dados mais novos em outro aparelho. A versão deste aparelho foi guardada em Snapshots.",()=>goView("data"),"Ver");
       }
     }
-  }
-  // Despacha pendentes
-  if(localStorage.getItem(SB_PENDING_KEY))await sbPush(true);
-  renderAuthState();
-  // Tenta sync a cada 3 min
-  setInterval(()=>sbPush(true),180000);
+    if(!localPending())markSynced();else _syncErr=false;
+  }else _syncErr=true;
+  _sbReady=true;
+  if(localPending())await sbPush(true);
+  renderAuthState();renderSyncState();
+  setInterval(()=>{if(localPending())sbPush(true);},180000); // rede de segurança
+}
+
+// ---- INDICADOR DE SYNC (cabeçalho) ----
+function syncState(){
+  if(!window.supabase)return {k:"off",t:"offline · sync indisponível",c:PAL.muted};
+  if(!_sbUser)return {k:"nologin",t:"sem login · só neste aparelho",c:PAL.muted};
+  if(_syncInFlight)return {k:"sync",t:"sincronizando…",c:PAL.blue};
+  if(!navigator.onLine)return {k:"offline",t:localPending()?"offline · alterações pendentes":"offline",c:PAL.muted};
+  if(_syncErr&&localPending())return {k:"err",t:"pendente · sem conexão com a nuvem",c:PAL.amber};
+  if(localPending())return {k:"pending",t:"alterações pendentes",c:PAL.amber};
+  const ago=_lastSyncOk?Math.round((Date.now()-_lastSyncOk)/60000):null;
+  return {k:"ok",t:"sincronizado"+(ago==null?"":ago<1?" agora":" há "+(ago<60?ago+" min":Math.round(ago/60)+" h")),c:PAL.green};
+}
+function renderSyncState(){
+  const el=$("#hdrSub");if(!el)return;const s=syncState();
+  el.innerHTML=`<span class="sync-dot" style="background:${s.c}"></span>${s.t}`;
+  el.dataset.state=s.k;
 }
 
 // ---- UI DE AUTH ----
 function renderAuthState(){
   const el=$("#authState");if(!el)return;
   if(_sbUser){
-    el.innerHTML=`<span style="color:var(--green);font-size:12px">● sincronizado · ${_sbUser.email}</span>
+    const st=syncState();
+    el.innerHTML=`<span style="color:${st.c};font-size:12px">● ${st.t} · ${esc(_sbUser.email)}</span>
       <button class="btn-ghost btn-sm" id="btnSignOut" style="font-size:11px;padding:4px 10px">Sair</button>`;
     $("#btnSignOut").onclick=()=>{if(confirm("Sair da conta? O app continua funcionando offline."))sbSignOut();};
   }else{
@@ -1103,7 +1186,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="4.92";
+const APP_VERSION="4.96";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1181,18 +1264,35 @@ function migrate(r){
 let lastSnap=0;
 function save(){
   db._syncTs=Date.now();                       // carimbo da última mudança local (last-write-wins)
-  localStorage.setItem(KEY,JSON.stringify(db));
-  localStorage.setItem(SB_PENDING_KEY,"1");     // há mudança local ainda não confirmada no remoto
+  persistLocal();
+  try{localStorage.setItem(SB_PENDING_KEY,"1");}catch(e){} // há mudança local ainda não confirmada no remoto
   const now=Date.now();
   if(now-lastSnap>120000){lastSnap=now;pushSnap();}
-  sbPush(true); // sync em background, silencioso
+  schedulePush(); // envio agrupado e silencioso (o envio usa o db em memória, mesmo se a gravação local falhar)
 }
-function pushSnap(){
+// Grava o db no localStorage. Cota cheia → libera os snapshots e tenta de novo; persistindo, aviso fixo (F1.4).
+function persistLocal(){
+  const s=JSON.stringify(db);
+  try{localStorage.setItem(KEY,s);storageWarn(false);return true;}catch(e){}
+  try{
+    ["0","1","2"].forEach(i=>localStorage.removeItem("control_snap_"+i));localStorage.removeItem("control_snapmeta");
+    localStorage.setItem(KEY,s);storageWarn(false);toast("Armazenamento cheio — snapshots automáticos removidos");return true;
+  }catch(e){storageWarn(true);return false;}
+}
+function storageWarn(on){
+  let el=$("#storageWarn");
+  if(!on){if(el)el.remove();return;}
+  if(el)return;
+  el=document.createElement("div");el.id="storageWarn";el.className="note warn";el.style.margin="0 0 14px";
+  el.innerHTML="<b>Não foi possível salvar neste aparelho</b> (armazenamento do navegador cheio). As alterações continuam sendo enviadas à nuvem se houver login — exporte um backup em Dados.";
+  $("main").prepend(el);
+}
+function pushSnap(label){
   try{
     const meta=JSON.parse(localStorage.getItem("control_snapmeta")||"[]");
     const idx=(meta.length?(meta[meta.length-1].slot+1):0)%3;
     localStorage.setItem("control_snap_"+idx,JSON.stringify(db));
-    meta.push({slot:idx,ts:Date.now()});
+    meta.push(label?{slot:idx,ts:Date.now(),label}:{slot:idx,ts:Date.now()});
     while(meta.length>3)meta.shift();
     localStorage.setItem("control_snapmeta",JSON.stringify(meta));
   }catch(e){}
@@ -1235,6 +1335,45 @@ function initHelp(){
     if(card){h.classList.add("help-corner");card.classList.add("has-help-corner");card.appendChild(h);}
   });
 }
+// ---------- FORMULÁRIOS (F1.9) ----------
+// Campos de valor são type="text" + inputmode (decimal/numeric): o Teclado Samsung exibe o separador decimal e
+// o Chrome em pt-BR não descarta a vírgula. A vírgula vira ponto ao digitar, então todo parseFloat segue válido.
+// Enter = "Próximo" (vai ao próximo campo de texto do mesmo card) ou "Concluído" no último.
+const NUM_SEL='input[inputmode="decimal"],input[inputmode="numeric"]';
+const TXT_SEL='input:not([type]),input[type=text],input[type=email],input[type=search],input[type=tel]';
+document.addEventListener("input",e=>{
+  const t=e.target;if(!t.matches||!t.matches(NUM_SEL))return;
+  const v=t.value,clean=v.replace(/,/g,".").replace(t.inputMode==="numeric"?/[^\d-]/g:/[^\d.\-]/g,"");
+  if(clean!==v){const pos=Math.max(0,(t.selectionStart||0)-(v.length-clean.length));t.value=clean;try{t.setSelectionRange(pos,pos);}catch(x){}}
+});
+function nextField(el){
+  const scope=el.closest(".card")||document;
+  const list=[...scope.querySelectorAll(TXT_SEL)].filter(x=>x.offsetParent&&!x.disabled&&!x.readOnly);
+  const i=list.indexOf(el);return i>=0?list[i+1]||null:null;
+}
+document.addEventListener("focusin",e=>{
+  const t=e.target;if(!t.matches||!t.matches(TXT_SEL))return;
+  t.setAttribute("enterkeyhint",nextField(t)?"next":"done");
+  if(t.matches(NUM_SEL))t.setAttribute("autocomplete","off");
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"||e.isComposing)return;const t=e.target;if(!t.matches||!t.matches(TXT_SEL))return;
+  e.preventDefault();const n=nextField(t);
+  if(n){n.focus();if(n.value)n.select();}else t.blur();
+});
+// Liga cada <label> ao seu campo (tocar no nome foca o campo). Roda no init e quando o DOM muda (editores dinâmicos).
+const FORM_SEL='input:not([type=hidden]),select,textarea';let _fid=0;
+function linkLabels(root=document){
+  root.querySelectorAll("label:not([for])").forEach(l=>{
+    if(l.control)return;
+    let c=l.nextElementSibling;
+    if(!(c&&c.matches(FORM_SEL))){const cs=l.parentElement?[...l.parentElement.querySelectorAll(FORM_SEL)]:[];c=cs.length===1?cs[0]:null;}
+    if(!c)return;
+    if(!c.id)c.id="fld_"+(++_fid);
+    l.htmlFor=c.id;
+  });
+}
+{let _lk=0;new MutationObserver(()=>{if(_lk)return;_lk=requestAnimationFrame(()=>{_lk=0;linkLabels();});}).observe(document.querySelector("main"),{childList:true,subtree:true});}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 function fmtD(iso){return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
 function nowLocalInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
@@ -1343,7 +1482,7 @@ $("#btnSave").onclick=()=>{
 // Linha de histórico compartilhada por EAA e GLP-1 (markup idêntico; variam cor, rótulo de sítio e handler).
 function logRow(i,color,siteTxt,onDel){
   const row=document.createElement("div");row.className="log-item";
-  row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${i.drug}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+i.note:""}${i.phase?" · "+i.phase:""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
+  row.innerHTML=`<div class="log-swatch" style="background:${color}"></div><div class="log-main"><div class="t">${esc(i.drug)}</div><div class="s">${siteTxt} · ${fmtDate(i.date)}${i.note?" · "+esc(i.note):""}${i.phase?" · "+esc(i.phase):""}</div></div><div class="log-dose">${i.doseMg} mg</div><button class="del">×</button>`;
   row.querySelector(".del").onclick=onDel;
   return row;
 }
@@ -1386,7 +1525,7 @@ function renderWeekly(){
     const w=tgt?Math.min(100,pct):100;
     const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${k}</b><span class="mg">${+sums[k].toFixed(1)} mg${tgt?" / "+tgt:""}</span></div>
+    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${+sums[k].toFixed(1)} mg${tgt?" / "+tgt:""}</span></div>
       <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
       <div class="pct">${tgt?pct+"% do alvo semanal":"sem alvo definido"}</div>`;
     box.appendChild(row);
@@ -1409,9 +1548,9 @@ function renderNextDose(){
     const col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML=`<div class="log-swatch" style="background:${c}"></div>
-      <div class="log-main"><div class="t">${k}</div>
+      <div class="log-main"><div class="t">${esc(k)}</div>
       <div class="s">cad. ${cad}d · última: ${fmtDate(last.date)}${last.site?" · "+last.site:""}</div></div>
-      <div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:10px;font-weight:400">${txt}</span></div>`;
+      <div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
     row.appendChild(stopBtn(k,"eaa"));
     box.appendChild(row);
   });
@@ -1421,7 +1560,7 @@ function renderNextDose(){
 function renderDueBanner(sel,due){
   const el=$(sel);if(!el)return;
   if(!due.length){el.innerHTML="";return;}
-  const txt=due.map(x=>x.dd<0?`${x.k} (${-x.dd}d atrasada)`:x.k).join(" · ");
+  const txt=due.map(x=>x.dd<0?`${esc(x.k)} (${-x.dd}d atrasada)`:esc(x.k)).join(" · ");
   el.innerHTML=`<div class="note warn" style="margin-top:0;margin-bottom:12px">⚠ Dose esperada ainda não registrada: <b>${txt}</b></div>`;
 }
 // ICS export
@@ -1515,9 +1654,9 @@ function renderSupps(){
   sched.forEach(blk=>{
     let bDone=0;const req=blk.items.filter(it=>!it.optional).length;
     const items=blk.items.map(it=>{const ck=!!supps[it.id];if(!it.optional){total++;if(ck){done++;bDone++;}}
-      return `<label class="supp-item${ck?' done':''}" data-id="${it.id}"><span class="box">${ck?'✓':''}</span>${it.name}${it.optional?' <span class="tag" style="margin-left:6px">opcional</span>':''}</label>`;}).join("");
+      return `<label class="supp-item${ck?' done':''}" data-id="${it.id}"><span class="box">${ck?'✓':''}</span>${esc(it.name)}${it.optional?' <span class="tag" style="margin-left:6px">opcional</span>':''}</label>`;}).join("");
     const c=document.createElement("div");c.className="supp-blk";
-    c.innerHTML=`<div class="supp-head"><b>${blk.time} · ${blk.name}</b><span class="muted">${req?bDone+"/"+req:"opcional"}</span><button class="supp-all" data-blk="${blk.id}">marcar tudo</button></div>${blk.note?`<div class="supp-note">${blk.note}</div>`:''}${items}`;
+    c.innerHTML=`<div class="supp-head"><b>${esc(blk.time)} · ${esc(blk.name)}</b><span class="muted">${req?bDone+"/"+req:"opcional"}</span><button class="supp-all" data-blk="${blk.id}">marcar tudo</button></div>${blk.note?`<div class="supp-note">${esc(blk.note)}</div>`:''}${items}`;
     el.appendChild(c);
   });
   el.querySelectorAll(".supp-item").forEach(l=>l.onclick=()=>toggleSupp(l.dataset.id));
@@ -1530,8 +1669,8 @@ function renderSuppEditor(){
   const el=$("#suppEditor");if(!el)return;el.innerHTML="";
   (db.suppSchedule||[]).forEach((blk,bi)=>{
     const box=document.createElement("div");box.className="drug-edit";
-    box.innerHTML=`<div class="head"><span class="nm">${blk.time} · ${blk.name}</span><button class="del" data-delblk="${bi}">×</button></div>`+
-      blk.items.map((it,ii)=>`<div style="display:flex;gap:8px;align-items:center;margin:5px 0"><input data-bi="${bi}" data-ii="${ii}" value="${it.name.replace(/"/g,'&quot;')}" style="flex:1;padding:7px;font-size:13px"><button class="del" data-delitem="${bi}_${ii}">×</button></div>`).join("")+
+    box.innerHTML=`<div class="head"><span class="nm">${esc(blk.time)} · ${esc(blk.name)}</span><button class="del" data-delblk="${bi}">×</button></div>`+
+      blk.items.map((it,ii)=>`<div style="display:flex;gap:8px;align-items:center;margin:5px 0"><input data-bi="${bi}" data-ii="${ii}" value="${esc(it.name)}" style="flex:1;padding:7px;font-size:13px"><button class="del" data-delitem="${bi}_${ii}">×</button></div>`).join("")+
       `<div style="display:flex;gap:8px;margin-top:6px"><input id="ni_${bi}" placeholder="novo item" style="flex:1;padding:7px;font-size:13px"><button class="btn-ghost btn-sm" data-additem="${bi}">+ item</button></div>`;
     el.appendChild(box);
   });
@@ -1592,7 +1731,7 @@ function renderAdherence(){
   rows.sort((a,b)=>a.pct-b.pct);ie.innerHTML="";
   rows.forEach(r=>{const col=r.pct>=85?PAL.green:r.pct>=60?PAL.amber:PAL.red;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b style="font-size:12.5px">${r.name}</b><span class="mg">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${col}"></i></div>`;
+    row.innerHTML=`<div class="top"><b style="font-size:12.5px">${esc(r.name)}</b><span class="mg">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${col}"></i></div>`;
     ie.appendChild(row);});
 }
 
@@ -1678,12 +1817,12 @@ function renderGlpNext(){
   box.innerHTML="";
   const due=[];
   keys.forEach(k=>{const last=byDrug[k];const d=glpDrugByName(k)||{};const c=d.color||PAL.muted;const cad=d.cadence||7;
-    const next=new Date(new Date(last.date).getTime()+cad*864e5);const dd=Math.ceil((next-Date.now())/864e5);
+    const dd=dueDays(last.date,cad);const next=today12();next.setDate(next.getDate()+dd); // mesma regra do Resumo (dia de calendário)
     if(dd<=0)due.push({k,dd});
     const txt=dd<0?`atrasada ${-dd}d`:dd===0?"hoje":`em ${dd}d`;const col=dd<=0?PAL.red:dd<=1?PAL.amber:PAL.green;
     const hist=db.glp1.filter(i=>i.drug===k).sort((a,b)=>new Date(b.date)-new Date(a.date));let n=0;for(const h of hist){if(h.doseMg===last.doseMg)n++;else break;}
     const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${k}</div><div class="s">${last.doseMg}mg · ${n}ª nesta dose · cad ${cad}d</div></div><div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:10px;font-weight:400">${txt}</span></div>`;
+    row.innerHTML=`<div class="log-swatch" style="background:${c}"></div><div class="log-main"><div class="t">${esc(k)}</div><div class="s">${last.doseMg}mg · ${n}ª nesta dose · cad ${cad}d</div></div><div class="log-dose" style="color:${col}">${next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}<br><span style="font-size:11px;font-weight:400">${txt}</span></div>`;
     row.appendChild(stopBtn(k,"glp1"));
     box.appendChild(row);});
   box.insertAdjacentHTML("beforeend",offCycleHTML(off,byDrug));
@@ -1790,7 +1929,7 @@ function renderGlpWeekly(){
     const pct=tgt?Math.round(sums[k]/tgt*100):0,w=tgt?Math.min(100,pct):100;
     const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${k}</b><span class="mg">${+sums[k].toFixed(2)} mg${tgt?" / "+tgt+" mg/sem":""}</span></div>
+    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${+sums[k].toFixed(2)} mg${tgt?" / "+tgt+" mg/sem":""}</span></div>
       <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
       <div class="pct">${tgt?pct+"% do alvo semanal (cad "+(d.cadence||"—")+"d)":"defina o alvo em Dados › Análogos GLP-1"}</div>`;
     box.appendChild(row);
@@ -1828,7 +1967,7 @@ function renderUsagePeriods(){
   ps.forEach(p=>{
     const iso=t=>new Date(t).toISOString();
     const fim=p.active?'<span style="color:var(--green);font-weight:600">em curso</span>':`${fmtD(iso(p.end))} <span class="muted">(encerrada)</span>`;
-    h+=`<tr><td><span class="tag" style="border-color:${p.color};color:${p.color}">●</span> ${p.name}</td>
+    h+=`<tr><td><span class="tag" style="border-color:${p.color};color:${p.color}">●</span> ${esc(p.name)}</td>
       <td>${fmtD(iso(p.start))}</td><td>${fim}</td>
       <td class="num">${p.count}</td><td class="num">${p.durDays}d</td><td class="num">${fmtMg(p.mgTotal)}</td><td class="num">${fmtMg(p.weekly)}</td></tr>`;
   });
@@ -1865,7 +2004,7 @@ function renderProtocolAdherence(){
     const pct=Math.min(150,Math.round(actual/expected*100));
     const col=pct>=90&&pct<=110?PAL.green:pct>=70?PAL.amber:PAL.red;
     const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b style="font-size:12.5px">${dr.name}</b><span class="mg">${actual}/${expected} <span class="muted" style="font-weight:400">(${label})</span></span></div>
+    row.innerHTML=`<div class="top"><b style="font-size:12.5px">${esc(dr.name)}</b><span class="mg">${actual}/${expected} <span class="muted" style="font-weight:400">(${label})</span></span></div>
       <div class="bar"><i style="width:${Math.min(100,pct)}%;background:${col}"></i></div><div class="pct">${pct}% da frequência esperada · cad ${dr.cadence}d</div>`;
     idx.appendChild(row);
   });
@@ -2012,7 +2151,7 @@ function renderSS(){
     const ss90=(d.hl*Math.log2(10)).toFixed(0); // ~3.32 t½
     const col=(drugByName(d.name)||{}).color||PAL.muted;
     const fcol=flu>120?PAL.red:flu>60?PAL.amber:PAL.green;
-    h+=`<tr class="ss-row"><td><span class="tag" style="border-color:${col};color:${col}">●</span> ${d.name}<br><span class="muted">${d.doseTarget}mg / ${tau}d</span></td>
+    h+=`<tr class="ss-row"><td><span class="tag" style="border-color:${col};color:${col}">●</span> ${esc(d.name)}<br><span class="muted">${d.doseTarget}mg / ${tau}d</span></td>
       <td class="num">${cmax.toFixed(0)}</td><td class="num">${cmin.toFixed(0)}</td>
       <td class="num ss-flu" style="color:${fcol}">${flu.toFixed(0)}%</td><td class="num">${ss90}d</td></tr>`;
   });
@@ -2063,7 +2202,7 @@ function renderBioList(){
     } else {due.textContent="";due.style.color="";}
   }
   if(!b.length){el.innerHTML='<div class="empty">Nenhum registro de biometria.</div>';return;}
-  el.innerHTML='<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Registros ('+b.length+')</div>';
+  el.innerHTML='<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Registros ('+b.length+')</div>';
   const mkRow=x=>{
     const parts=[];
     if(x.weight!=null)parts.push(x.weight+" kg");
@@ -2072,7 +2211,7 @@ function renderBioList(){
     if(x.visceral!=null)parts.push("visc "+x.visceral);
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML='<div class="log-main"><div class="t">'+fmtD(x.date)+
-      (x.method?' <span class="muted" style="font-size:10px">'+x.method+'</span>':'')+'</div>'+
+      (x.method?' <span class="muted" style="font-size:11px">'+esc(x.method)+'</span>':'')+'</div>'+
       '<div class="s">'+(parts.join(" · ")||"—")+'</div></div>'+
       '<button class="del" aria-label="Apagar">×</button>';
     row.querySelector(".del").onclick=()=>delBio(x);
@@ -2149,7 +2288,7 @@ function renderLabTable(){
   if(!labs.length){el.innerHTML='<div class="empty">Nenhum exame registrado.</div>';return;}
   const cols=[["e2","E2"],["prol","PRL"],["tt","T.total"],["shbg","SHBG"],["freeT","T.livre"],["dht","DHT"],["hct","Hct"],["fer","Ferr"]];
   let h='<table><thead><tr><th>Data</th>'+cols.map(c=>`<th>${c[1]}</th>`).join("")+'<th></th></tr></thead><tbody>';
-  labs.forEach(l=>{h+=`<tr><td class="num">${fmtD(l.date)}${l.phase?`<br><span style="font-size:9px;color:var(--muted)">${l.phase}</span>`:""}</td>`;
+  labs.forEach(l=>{h+=`<tr><td class="num">${fmtD(l.date)}${l.phase?`<br><span style="font-size:11px;color:var(--muted)">${esc(l.phase)}</span>`:""}</td>`;
     cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v)}">${v!=null?v:"·"}</td>`;});
     h+=`<td><button class="del" data-id="${l.id}">×</button></td></tr>`;});
   h+="</tbody></table>";el.innerHTML=h;
@@ -2224,17 +2363,15 @@ function stopDrug(name,kind){
 }
 function stopBtn(name,kind){
   const b=document.createElement("button");b.className="btn-ghost btn-sm";b.textContent="Encerrar";
-  b.title="Tirar do ciclo atual — uma nova aplicação reativa";b.style.cssText="font-size:10px;padding:5px 8px;margin-left:8px;flex:none";
+  b.title="Tirar do ciclo atual — uma nova aplicação reativa";b.style.cssText="font-size:11px;padding:5px 8px;margin-left:8px;flex:none";
   b.onclick=()=>stopDrug(name,kind);return b;
 }
 function offCycleHTML(off,byDrug){
   if(!off.length)return "";
-  return '<div class="muted" style="font-size:11px;margin-top:10px">Fora do ciclo: '+off.map(k=>"<b>"+k+"</b> (última "+fmtD(byDrug[k].date)+")").join(" · ")+'. Uma nova aplicação reativa.</div>';
+  return '<div class="muted" style="font-size:11px;margin-top:10px">Fora do ciclo: '+off.map(k=>"<b>"+esc(k)+"</b> (última "+fmtD(byDrug[k].date)+")").join(" · ")+'. Uma nova aplicação reativa.</div>';
 }
 function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{if(!drugActive(k,"eaa",e[k].date))return;const d=drugByName(k)||{};const cad=d.cadence||2;const dd=dueDays(e[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{if(!drugActive(k,"glp1",g[k].date))return;const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=dueDays(g[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
 // ---------- C1: co-protocolo (ancilares vinculados) ----------
-function isTesto(name){return /testosterona|durateston|sustanon/i.test(name||"");}
-function lastTestoInjection(){const t=db.injections.filter(i=>isTesto(i.drug)).sort((a,b)=>new Date(b.date)-new Date(a.date));return t[0]||null;}
 function coProtocolDue(){
   const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
   const out=[];const now=Date.now();
@@ -2293,10 +2430,10 @@ function renderCoProtocol(){
     else {col=PAL.muted;label=etaText(it.dueTime);}
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML='<div class="log-swatch" style="background:'+col+'"></div>'+
-      '<div class="log-main"><div class="t">'+it.drug+' <span class="muted" style="font-size:10px">'+it.dose+'mg</span></div>'+
-      '<div class="s">'+it.reason+'</div></div>';
+      '<div class="log-main"><div class="t">'+esc(it.drug)+' <span class="muted" style="font-size:11px">'+it.dose+'mg</span></div>'+
+      '<div class="s">'+esc(it.reason)+'</div></div>';
     const right=document.createElement("div");right.style.cssText="display:flex;align-items:center;gap:6px";
-    if(btn){const b=document.createElement("button");b.className="btn-amber btn-sm";b.textContent="Registrar";b.style.cssText="font-size:10px;padding:5px 9px";b.onclick=()=>logCoProtocol(it.drug,it.dose);right.appendChild(b);}
+    if(btn){const b=document.createElement("button");b.className="btn-amber btn-sm";b.textContent="Registrar";b.style.cssText="font-size:11px;padding:5px 9px";b.onclick=()=>logCoProtocol(it.drug,it.dose);right.appendChild(b);}
     else{const s=document.createElement("div");s.className="log-dose";s.style.cssText="color:"+col+";font-size:11px";s.textContent=label;right.appendChild(s);}
     row.appendChild(right);el.appendChild(row);
   });
@@ -2314,7 +2451,7 @@ function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
   const due=dueList();const dueEl=$("#resumoDue");
   let dueHtml="";
-  if(due.length)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>x.name+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
+  if(due.length)dueHtml+='<div class="note warn" style="margin:0 0 10px">⚠ Aplicação esperada hoje: <b>'+due.map(x=>esc(x.name)+(x.dd<0?" ("+(-x.dd)+"d atrasada)":"")).join(" · ")+'</b></div>';
   else dueHtml+='<div class="note ok" style="margin:0 0 10px">✓ Nenhuma aplicação pendente hoje.</div>';
   // Alerta de biometria atrasada
   {const lb=db.biometrics.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];const bd=db.settings.bioDays||30;
@@ -2327,12 +2464,14 @@ function renderResumo(){
   if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
     const avgR=recent.reduce((a,b)=>a+b.w,0)/recent.length;
     const avgO=older.length?older.reduce((a,b)=>a+b.w,0)/older.length:avgR;
-    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+diff.toFixed(1)+"kg";
+    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+diff.toFixed(1);
     trendCol=diff<-.05?PAL.green:diff>.05?PAL.red:PAL.muted;}
   const lastExam=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-  let examTxt="—";
-  if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);examTxt=dd<=0?"vencido":"em "+dd+"d";}
-  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?lw.weight.toFixed(1):"—","peso (kg)"],[trendTxt,"tendência 7d","color:"+trendCol+";font-size:13px"],[examTxt,"próx. exame","font-size:14px"]);
+  // Exame: valor curto em dias (cabe a 360 px); atrasado em vermelho com rótulo próprio
+  let examTxt="—",examLbl="próx. exame",examSty="font-size:15px";
+  if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);
+    if(dd<=0){examTxt=(-dd)+"d";examLbl="exame atrasado";examSty+=";color:"+PAL.red;}else examTxt=dd+"d";}
+  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?lw.weight.toFixed(1):"—","peso (kg)"],[trendTxt,"tendência 7d (kg)","color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
   renderResumoNext();renderAppAdherence();renderCoProtocol();renderRitual();renderPersonal();
 }
 function renderResumoNext(){
@@ -2343,7 +2482,7 @@ function renderResumoNext(){
   if(!rows.length){el.innerHTML='<div class="empty">'+(db.injections.length||db.glp1.length?"Nenhuma droga ativa no ciclo.":"Sem aplicações registradas.")+'</div>';return;}
   rows.sort((a,b)=>a.dd-b.dd);el.innerHTML="";
   rows.forEach(r=>{const col=r.dd<=0?PAL.red:r.dd<=1?PAL.amber:PAL.green;const row=document.createElement("div");row.className="log-item";
-    row.innerHTML='<div class="log-swatch" style="background:'+r.col+'"></div><div class="log-main"><div class="t">'+r.k+' <span class="muted" style="font-size:10px">'+r.kind+'</span></div><div class="s">'+r.next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+'</div></div><div class="log-dose" style="color:'+col+';font-size:12px">'+(r.dd<0?-r.dd+"d atras.":r.dd===0?"hoje":"em "+r.dd+"d")+'</div>';
+    row.innerHTML='<div class="log-swatch" style="background:'+r.col+'"></div><div class="log-main"><div class="t">'+esc(r.k)+' <span class="muted" style="font-size:11px">'+r.kind+'</span></div><div class="s">'+r.next.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+'</div></div><div class="log-dose" style="color:'+col+';font-size:12px">'+(r.dd<0?-r.dd+"d atras.":r.dd===0?"hoje":"em "+r.dd+"d")+'</div>';
     el.appendChild(row);});
 }
 function dayHasRecord(k){
@@ -2445,7 +2584,7 @@ function renderGoals(){
     rows.push(
       '<div class="wk">'+
         '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
-          '<span style="font-size:13px">'+lbl+' <span class="muted" style="font-size:10.5px">atual '+(+c).toFixed(dec)+unit+'</span></span>'+
+          '<span style="font-size:13px">'+lbl+' <span class="muted" style="font-size:11px">atual '+(+c).toFixed(dec)+unit+'</span></span>'+
           '<span class="mg">alvo '+(+target).toFixed(dec)+unit+'</span>'+
         '</div>'+
         '<div class="bar"><i style="width:'+pct+'%;background:'+barCol+'"></i></div>'+
@@ -2545,7 +2684,7 @@ function renderPressure(){
   list.slice(0,30).forEach(p=>{
     const c=bpClass(p.sys,p.dia);
     const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${fmtDate(p.date)}${p.note?" · "+p.note:""}</div></div><button class="del">×</button>`;
+    row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${fmtDate(p.date)}${p.note?" · "+esc(p.note):""}</div></div><button class="del">×</button>`;
     row.querySelector(".del").onclick=()=>{db.pressures=db.pressures.filter(x=>x.id!==p.id);save();renderPressure();renderCVDashboard();toast("Registro removido",()=>{db.pressures.push(p);save();renderPressure();renderCVDashboard();});};
     el.appendChild(row);
   });
@@ -2598,7 +2737,7 @@ function renderDerived(){
   if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",(last.tg/last.hdl).toFixed(1),"<2 ideal · resistência insulínica"]);
   if(last.cr!=null&&last.cr>0){const cr=last.cr,k=0.9,a=-0.302;const egfr=142*Math.pow(Math.min(cr/k,1),a)*Math.pow(Math.max(cr/k,1),-1.2);rows.push(["eGFR (CKD-EPI, s/ idade)",Math.round(egfr)+" mL/min","creatinina sofre viés por massa muscular"]);}
   if(!rows.length){el.innerHTML='<div class="empty">Faltam marcadores-base no último exame.</div>';return;}
-  el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:10.5px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
+  el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:11px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
 }
 
 // ---------- M9: ferro & hematócrito ----------
@@ -2884,12 +3023,12 @@ function renderTrainingCard(){
     const seg=document.createElement("div");seg.className="tseg "+cls+(isToday?" today":"")+(done?" done":"");
     seg.textContent=isRest(pl)?"Desc":isRegen(pl)?"Reg":((e&&e.type==="train"&&e.letter&&!isRegen(e.letter))?e.letter:pl);ring.appendChild(seg);}
   const e=trainEntry(date);
-  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":isRegen(planned)?"Regenerativo (leve)":"Treino "+planned)+'</b>';
-  if(e)h+=' · <span style="color:var(--green)">registrado: '+(e.type==="rest"?"descanso ✓":(isRegen(e.letter)?"regenerativo ✓":"treino "+(e.letter||"")+" ✓"))+(e.personal?" · com personal":"")+'</span>';
+  let h='<div style="font-size:13px">Previsto hoje: <b>'+(isRest(planned)?"Descanso":isRegen(planned)?"Regenerativo (leve)":"Treino "+esc(planned))+'</b>';
+  if(e)h+=' · <span style="color:var(--green)">registrado: '+(e.type==="rest"?"descanso ✓":(isRegen(e.letter)?"regenerativo ✓":"treino "+esc(e.letter||"")+" ✓"))+(e.personal?" · com personal":"")+'</span>';
   h+='</div>';
   const nw=nextWorkout(date);const nf=nextFicha(date);
-  if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo dia de treino: <b>'+(isRegen(nw.letter)?"Regenerativo":nw.letter)+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
-  if(nf&&(!nw||nf.date!==nw.date))h+='<div class="muted" style="font-size:11px;margin-top:2px">Próxima ficha: <b>'+nf.letter+'</b> em '+fmtD(nf.date+"T12:00:00")+'</div>';
+  if(nw)h+='<div class="muted" style="font-size:11px;margin-top:4px">Próximo dia de treino: <b>'+(isRegen(nw.letter)?"Regenerativo":esc(nw.letter))+'</b> em '+fmtD(nw.date+"T12:00:00")+'</div>';
+  if(nf&&(!nw||nf.date!==nw.date))h+='<div class="muted" style="font-size:11px;margin-top:2px">Próxima ficha: <b>'+esc(nf.letter)+'</b> em '+fmtD(nf.date+"T12:00:00")+'</div>';
   if(isRest(planned))h+='<div class="note ok" style="margin-top:8px">Descanso é parte do plano — registrar descanso conta como acerto.</div>';
   $("#trainToday").innerHTML=h;
   const act=$("#trainActions");act.innerHTML="";
@@ -2902,7 +3041,7 @@ function renderTrainingCard(){
   if(pt){pt.style.cssText="width:100%;margin-bottom:8px";act.appendChild(pt);}
   act.appendChild(prim);
   const r2=document.createElement("div");r2.style.cssText="display:flex;gap:8px;margin-top:8px;align-items:center";
-  const sel=document.createElement("select");sel.style.cssText="padding:10px;flex:1";sel.innerHTML=letters.map(l=>'<option'+(l===planned?" selected":"")+'>'+l+'</option>').join("")+'<option value="Reg">Regenerativo</option>';
+  const sel=document.createElement("select");sel.style.cssText="padding:10px;flex:1";sel.innerHTML=letters.map(l=>'<option value="'+esc(l)+'"'+(l===planned?" selected":"")+'>'+esc(l)+'</option>').join("")+'<option value="Reg">Regenerativo</option>';
   const ov=document.createElement("button");ov.className="btn btn-ghost btn-sm";ov.textContent="Registrar escolhido";ov.onclick=()=>logTrain(sel.value,date);
   r2.appendChild(sel);r2.appendChild(ov);act.appendChild(r2);
   if(!isRest(planned)){const rb=document.createElement("button");rb.className="btn btn-ghost btn-sm";rb.style.cssText="width:100%;margin-top:8px";rb.textContent="Registrar descanso";rb.onclick=()=>logRest(date);act.appendChild(rb);}
@@ -3017,7 +3156,7 @@ function renderTrainPreview(){
   const el=$("#trPreview");if(!el)return;
   let h='<div class="muted" style="font-size:11px;margin-bottom:5px">Próximos 7 dias — use ◀ ▶ até "hoje" bater com o treino real:</div><div style="display:flex;gap:5px;flex-wrap:wrap">';
   for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);const k=dkey(d);const pl=plannedFor(k);const t=i===0;
-    h+='<div class="tseg '+(isRest(pl)?"rest":isRegen(pl)?"regen":"train")+(t?" today":"")+'" style="flex:0 0 auto;min-width:46px;font-size:12px;padding:6px 4px">'+segLabel(pl)+'<div style="font-size:8px;font-weight:400;color:var(--muted);margin-top:2px">'+(t?"hoje":fmtD(k+"T12:00:00").slice(0,5))+'</div></div>';}
+    h+='<div class="tseg '+(isRest(pl)?"rest":isRegen(pl)?"regen":"train")+(t?" today":"")+'" style="flex:0 0 auto;min-width:46px;font-size:12px;padding:6px 4px">'+esc(segLabel(pl))+'<div style="font-size:11px;font-weight:400;color:var(--muted);margin-top:2px">'+(t?"hoje":fmtD(k+"T12:00:00").slice(0,5))+'</div></div>';}
   h+='</div>';el.innerHTML=h;
 }
 function saveTrainPattern(){
@@ -3036,14 +3175,14 @@ function renderDrugEditor(){
   db.drugs.forEach((d,idx)=>{
     const box=document.createElement("div");box.className="drug-edit";
     box.innerHTML=`<div class="head"><span class="sw" style="background:${d.color}"></span>
-      <span class="nm">${d.name}</span>${d.anc?'<span class="tag">ancilar</span>':''}<button class="del">×</button></div>
+      <span class="nm">${esc(d.name)}</span>${d.anc?'<span class="tag">ancilar</span>':''}<button class="del">×</button></div>
       <div class="mini">
-        <div><label>½-vida (d)</label><input data-f="hl" type="number" inputmode="decimal" class="num" value="${d.hl}" step="0.1"></div>
+        <div><label>½-vida (d)</label><input data-f="hl" type="text" inputmode="decimal" class="num" value="${d.hl}" step="0.1"></div>
         <div><label>Tipo</label><select data-f="type"><option value="inj"${d.type==="inj"?" selected":""}>injetável</option><option value="oral"${d.type==="oral"?" selected":""}>oral</option></select></div>
         <div><label>Ancilar</label><select data-f="anc"><option value="false"${!d.anc?" selected":""}>não</option><option value="true"${d.anc?" selected":""}>sim</option></select></div>
-        <div><label>Dose alvo</label><input data-f="doseTarget" type="number" inputmode="decimal" class="num" value="${d.doseTarget}"></div>
-        <div><label>Cadência (d)</label><input data-f="cadence" type="number" inputmode="decimal" class="num" value="${d.cadence}"></div>
-        <div><label>mg/sem</label><input data-f="weekly" type="number" inputmode="decimal" class="num" value="${d.weekly}"></div>
+        <div><label>Dose alvo</label><input data-f="doseTarget" type="text" inputmode="decimal" class="num" value="${d.doseTarget}"></div>
+        <div><label>Cadência (d)</label><input data-f="cadence" type="text" inputmode="decimal" class="num" value="${d.cadence}"></div>
+        <div><label>mg/sem</label><input data-f="weekly" type="text" inputmode="decimal" class="num" value="${d.weekly}"></div>
       </div>`;
     box.querySelectorAll("[data-f]").forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f;let v=inp.value;
@@ -3074,12 +3213,12 @@ function renderGlpDrugEditor(){
     const deriv=(d.doseTarget&&d.cadence)?+(d.doseTarget*7/d.cadence).toFixed(2):0;
     const box=document.createElement("div");box.className="drug-edit";
     box.innerHTML=`<div class="head"><span class="sw" style="background:${d.color||PAL.muted}"></span>
-      <span class="nm">${d.name}</span><button class="del">×</button></div>
+      <span class="nm">${esc(d.name)}</span><button class="del">×</button></div>
       <div class="mini">
-        <div><label>½-vida (d)</label><input data-f="hl" type="number" inputmode="decimal" class="num" value="${d.hl}" step="0.1"></div>
-        <div><label>Dose alvo (mg)</label><input data-f="doseTarget" type="number" inputmode="decimal" class="num" value="${d.doseTarget}" step="0.05"></div>
-        <div><label>Cadência (d)</label><input data-f="cadence" type="number" inputmode="decimal" class="num" value="${d.cadence}"></div>
-        <div><label>Alvo semanal (mg)</label><input data-f="weekly" type="number" inputmode="decimal" class="num" value="${d.weekly!=null?d.weekly:""}" step="0.05" placeholder="auto ${deriv}"></div>
+        <div><label>½-vida (d)</label><input data-f="hl" type="text" inputmode="decimal" class="num" value="${d.hl}" step="0.1"></div>
+        <div><label>Dose alvo (mg)</label><input data-f="doseTarget" type="text" inputmode="decimal" class="num" value="${d.doseTarget}" step="0.05"></div>
+        <div><label>Cadência (d)</label><input data-f="cadence" type="text" inputmode="decimal" class="num" value="${d.cadence}"></div>
+        <div><label>Alvo semanal (mg)</label><input data-f="weekly" type="text" inputmode="decimal" class="num" value="${d.weekly!=null?d.weekly:""}" step="0.05" placeholder="auto ${deriv}"></div>
       </div>`;
     box.querySelectorAll("[data-f]").forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f;
@@ -3099,8 +3238,8 @@ function renderRefEditor(){
     const r=refs[k]||[null,null];
     const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;align-items:center;margin-bottom:7px";
     row.innerHTML=`<span style="flex:1;font-size:12px">${REF_LBL[k]}</span>
-      <input data-k="${k}" data-i="0" type="number" inputmode="decimal" class="num" placeholder="mín" value="${r[0]??""}" style="width:74px;padding:7px">
-      <input data-k="${k}" data-i="1" type="number" inputmode="decimal" class="num" placeholder="máx" value="${r[1]??""}" style="width:74px;padding:7px">`;
+      <input data-k="${k}" data-i="0" type="text" inputmode="decimal" class="num" placeholder="mín" value="${r[0]??""}" style="width:84px;padding:7px">
+      <input data-k="${k}" data-i="1" type="text" inputmode="decimal" class="num" placeholder="máx" value="${r[1]??""}" style="width:84px;padding:7px">`;
     el.appendChild(row);
   });
   el.querySelectorAll("input").forEach(inp=>inp.onchange=()=>{
@@ -3148,7 +3287,7 @@ function renderSnapList(){
     const s=snapSummary(m.slot);
     const sub=s?`${s.inj} aplic. · ${s.glp} GLP-1 · ${s.labs} exames · ${s.dias} dias`:"conteúdo indisponível";
     const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-main"><div class="t" style="font-size:13px">${new Date(m.ts).toLocaleString("pt-BR")}</div><div class="s">${sub}</div></div>
+    row.innerHTML=`<div class="log-main"><div class="t" style="font-size:13px">${new Date(m.ts).toLocaleString("pt-BR")}${m.label?` <span class="tag" style="color:var(--amber);border-color:var(--amber)">${m.label}</span>`:""}</div><div class="s">${sub}</div></div>
       <button class="btn-ghost btn-sm" style="padding:6px 12px">Restaurar</button>`;
     row.querySelector("button").onclick=()=>{
       const c=snapSummary(m.slot);
@@ -3209,13 +3348,24 @@ function initAll(){
   {const g=db.settings.goals||{};const hasGoal=[g.weight,g.bf,g.lean,g.fat].some(v=>v!=null);
    const cg=$("#cardGoals");if(cg&&hasGoal)cg.classList.add("collap");}
   updatePhaseChip();
-  const c=db.injections.length;
-  $("#hdrSub").textContent=c?`${c} aplicações · ${db.labs.length} exames · v${APP_VERSION}`:`monitor de aplicações · v${APP_VERSION}`;
+  renderSyncState();
+  linkLabels();
   setText("verFooter","Control · v"+APP_VERSION);
 }
+function goView(v){const b=document.querySelector(`#nav button[data-v="${v}"]`);if(b)b.click();}
 initAll();
 
 // Sync engine — inicia após render para não bloquear a UI
+$("#hdrSub").onclick=()=>goView("data");
+// Segundo plano → envia pendências já (F1.1) · volta ao app → confere se a nuvem mudou (F1.2)
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){if(localPending())sbPush(true);}
+  else sbRefresh();
+});
+window.addEventListener("pagehide",()=>{if(localPending())sbPush(true);});
+window.addEventListener("online",()=>{renderSyncState();if(localPending())sbPush(true);else sbRefresh();});
+window.addEventListener("offline",renderSyncState);
+setInterval(renderSyncState,60000); // "sincronizado há X min"
 setTimeout(()=>{
   sbInit();
   const btnS=$("#btnSyncNow");

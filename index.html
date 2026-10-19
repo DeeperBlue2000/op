@@ -387,6 +387,12 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <label>Qualidade</label>
     <div class="scale" id="slpQ"></div>
     <div class="scale-row"><div class="cap"><span>1 · péssimo</span><span>restaurador · 5</span></div></div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="field"><label>FC média (bpm)</label><input id="slpHr" type="text" inputmode="numeric" class="num" placeholder="relógio"></div>
+      <div class="field"><label>FC mín. (bpm)</label><input id="slpHrMin" type="text" inputmode="numeric" class="num" placeholder="relógio"></div>
+      <div class="field"><label>HRV (ms)</label><input id="slpHrv" type="text" inputmode="numeric" class="num" placeholder="relógio"></div>
+    </div>
+    <div class="muted" style="font-size:11px;margin:-6px 0 10px">Samsung Health › Sono › noite de hoje. Opcional.</div>
     <button class="btn btn-ghost" id="slpSave">Salvar sono</button>
     <div class="note" id="slpAvg" style="display:none"></div>
   </div>
@@ -736,6 +742,15 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <template class="help-src" id="helpBP">Classificação por <b>ACC/AHA 2017</b> (Whelton et al., Hypertension 2018), cortes de consultório: normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. Diretrizes europeia (ESC) e brasileira (SBC) só rotulam hipertensão a partir de ≥140/90. Medições em casa tendem a ser mais baixas que no consultório. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
   </div>
 
+  <div class="card" data-sec="cardio">
+    <h2>Sono — FC &amp; HRV <span class="hint" id="nsHint"></span> <span class="help" data-note-id="helpNS" data-help-title="FC e HRV no sono">?</span></h2>
+    <div class="kpi" id="nsKpi"></div>
+    <div id="nsStatus"></div>
+    <div class="chart-wrap" style="margin-top:12px"><canvas id="chNightHr"></canvas></div>
+    <div class="muted" style="font-size:11px;margin-top:8px">Registro no Diário › Sono (valores do Samsung Health).</div>
+    <template class="help-src" id="helpNS">Frequência cardíaca e variabilidade (HRV) medidas pelo relógio durante o sono — o momento mais estável do dia para ler o sistema nervoso autônomo. A <b>HRV não tem faixa universal</b>: varia muito entre pessoas, então o app compara a média dos últimos 7 dias com a <b>sua linha de base</b> (noites dos 60 dias anteriores; precisa de ≥ 14). HRV 7d abaixo da base − 1 desvio-padrão ou FC 7d acima da base + 1 DP = recuperação reduzida (treino pesado, álcool, doença, sono curto, estimulantes, mudança de dose). FC média no sono ≥ 70 bpm entra como sinal âmbar no painel de risco CV (≥ 80 vermelho). Use sempre o mesmo relógio e o mesmo número do app — trocar de aparelho muda a escala. Ferramenta de leitura — decisões com seu médico.</template>
+  </div>
+
   <div class="card" data-sec="exames">
     <h2>Tendência dos exames <span class="hint" id="examDue"></span> <span class="help" data-note-id="help11" data-help-title="Tendência dos exames">?</span></h2>
     <div class="field"><label>Marcador</label><select id="trendMarker"></select></div>
@@ -898,7 +913,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.10</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.20</div>
 </section>
 
 </main>
@@ -1281,7 +1296,7 @@ const DEFAULT_SCHEDULE=[
 const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="5.10";
+const APP_VERSION="5.20";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1500,7 +1515,7 @@ const VIEW_RENDER={
   glp1:()=>renderGlp(),
   charts:()=>{fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();renderGlpLevel();renderGlpResult();updatePhaseTags();},
   habitos:()=>{renderAppAdherence();renderTrainHeat();renderTrainScore();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdherence();renderAdhResult();renderDiaryChart();},
-  bio:()=>{renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderCVDashboard();},
+  bio:()=>{renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderNightHr();renderCVDashboard();},
   fotos:()=>renderFotos(),
   data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
 };
@@ -1907,9 +1922,11 @@ function syncSleepHours(){const h=sleepHours($("#slpBed").value,$("#slpWake").va
 $("#slpBed").onchange=syncSleepHours;$("#slpWake").onchange=syncSleepHours;
 function renderSleep(){
   const d=curDay(false);
-  setText("slpHint",(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"noite anterior"));
+  const sh=(d.sleepH!=null)?("✓ "+d.sleepH+"h"+(d.sleepQ?" · Q"+d.sleepQ:"")):(d.sleepQ?("✓ Q"+d.sleepQ):"");
+  setText("slpHint",d.sleepHrv!=null?(sh?sh+" · HRV "+d.sleepHrv:"✓ HRV "+d.sleepHrv):(sh||"noite anterior"));
   $("#slpH").value=d.sleepH!=null?d.sleepH:"";
   $("#slpBed").value=d.sleepBed||"";$("#slpWake").value=d.sleepWake||"";
+  $("#slpHr").value=d.sleepHr??"";$("#slpHrMin").value=d.sleepHrMin??"";$("#slpHrv").value=d.sleepHrv??"";
   // Dia sem registro: sugere os horários da última noite registrada (só grava se você salvar)
   const sug=(d.sleepH==null&&!d.sleepBed&&!d.sleepWake)?lastSleepTimes(diaDate):null;
   if(sug){$("#slpBed").value=sug.bed;$("#slpWake").value=sug.wake;syncSleepHours();}
@@ -1925,9 +1942,13 @@ function renderSleep(){
 $("#slpSave").onclick=()=>{
   let h=parseFloat($("#slpH").value);if(isNaN(h)){const c=sleepHours($("#slpBed").value,$("#slpWake").value);if(c!=null)h=c;}
   const on=$("#slpQ button.on");const q=on?+on.dataset.v:null;
-  if(isNaN(h)&&q==null)return toast("Informe horas ou qualidade");
+  const int=id=>{const v=parseInt($(id).value,10);return isNaN(v)?null:v;};
+  const hr=int("#slpHr"),hrMin=int("#slpHrMin"),hrv=int("#slpHrv");
+  if(isNaN(h)&&q==null&&hr==null&&hrMin==null&&hrv==null)return toast("Informe horas, qualidade ou FC/HRV");
+  if([hr,hrMin].some(v=>v!=null&&(v<25||v>200))||(hrv!=null&&(hrv<1||hrv>400)))return toast("FC/HRV fora da faixa plausível");
   const d=curDay(true);d.sleepH=isNaN(h)?null:h;d.sleepBed=$("#slpBed").value||null;d.sleepWake=$("#slpWake").value||null;d.sleepQ=q;
-  save();renderSleep();renderDiaryChart();setCollap("#cardSono",true);toast("Sono salvo ✓");
+  d.sleepHr=hr;d.sleepHrMin=hrMin;d.sleepHrv=hrv;
+  save();renderSleep();setCollap("#cardSono",true);refreshViews(["habitos","bio"]);toast("Sono salvo ✓");
 };
 
 // suplementos
@@ -3028,6 +3049,46 @@ $("#bpSave").onclick=()=>{
   save();$("#bpSys").value="";$("#bpDia").value="";$("#bpHr").value="";$("#bpNote").value="";
   renderPressure();renderCVDashboard();toast("Pressão salva ✓");
 };
+// ---------- FC & HRV no sono (relógio · Samsung Health) ----------
+// Série por noite em db.daily[k].sleepHr / sleepHrMin / sleepHrv. HRV sem faixa universal → compara 7d com a linha de base pessoal.
+function nightSeries(f){return Object.keys(db.daily||{}).filter(k=>db.daily[k]&&db.daily[k][f]!=null).sort().map(k=>({k,v:db.daily[k][f]}));}
+function nightStats(f){
+  const all=nightSeries(f);if(!all.length)return null;
+  const t=dkey(today12()),c7=dkey(addDays(today12(),-7)),c67=dkey(addDays(today12(),-67));
+  const mean=a=>a.reduce((s,x)=>s+x.v,0)/a.length;
+  const last7=all.filter(x=>x.k>c7&&x.k<=t),base=all.filter(x=>x.k>c67&&x.k<=c7);
+  const st={last:all[all.length-1],avg7:last7.length?mean(last7):null,n7:last7.length,base:null,sd:null,nBase:base.length};
+  if(base.length>=14){st.base=mean(base);st.sd=Math.sqrt(base.reduce((s,x)=>s+(x.v-st.base)**2,0)/(base.length-1));}
+  return st;
+}
+function renderNightHr(){
+  if(!$("#nsKpi"))return;
+  const hrv=nightStats("sleepHrv"),hr=nightStats("sleepHr");
+  setText("nsHint",hrv||hr?`última ${fmtD((hrv||hr).last.k+"T12:00:00")}`:"sem registros");
+  const fmt=(s,u)=>s&&s.avg7!=null?fmtN(s.avg7,0)+u:"—";
+  const baseTxt=hrv&&hrv.base!=null?fmtN(hrv.base,0)+" ± "+fmtN(hrv.sd,0):"—";
+  $("#nsKpi").innerHTML=kpi3([fmt(hrv," ms"),"HRV 7d"],[baseTxt,"base HRV 60d"],[fmt(hr," bpm"),"FC sono 7d"]);
+  const st=$("#nsStatus"),msgs=[];let warn=false;
+  if(hrv&&hrv.base!=null&&hrv.avg7!=null){
+    if(hrv.avg7<hrv.base-hrv.sd){warn=true;msgs.push(`HRV 7d <b>abaixo</b> da sua base (${fmtN(hrv.avg7,0)} vs ${fmtN(hrv.base,0)} ms) — recuperação reduzida.`);}
+    else if(hrv.avg7>hrv.base+hrv.sd)msgs.push(`HRV 7d acima da base (${fmtN(hrv.avg7,0)} vs ${fmtN(hrv.base,0)} ms).`);
+    else msgs.push("HRV 7d dentro da sua faixa habitual.");
+  }else if(hrv)msgs.push(`Linha de base da HRV em formação: ${hrv.nBase}/14 noites nos 60 dias anteriores à última semana.`);
+  if(hr&&hr.base!=null&&hr.avg7!=null&&hr.avg7>hr.base+hr.sd){warn=true;msgs.push(`FC no sono 7d <b>acima</b> da base (${fmtN(hr.avg7,0)} vs ${fmtN(hr.base,0)} bpm).`);}
+  if(hr&&hr.avg7!=null&&hr.avg7>=70){warn=true;msgs.push(`FC média no sono de ${fmtN(hr.avg7,0)} bpm — elevada.`);}
+  if(msgs.length){st.className="note"+(warn?" warn":" ok");st.style.margin="8px 0 0";st.innerHTML=msgs.join(" ");}else{st.className="";st.innerHTML="";}
+  const keys=Object.keys(db.daily||{}).filter(k=>{const d=db.daily[k];return d&&(d.sleepHrv!=null||d.sleepHr!=null||d.sleepHrMin!=null);}).sort();
+  if(!keys.length)return clearCanvas("chNightHr","sem registros de FC/HRV no sono");
+  const v=(k,f)=>db.daily[k][f]??null;
+  const roll=keys.map(k=>{const lo=dkey(addDays(new Date(k+"T12:00:00"),-6));const w=keys.filter(x=>x>=lo&&x<=k).map(x=>v(x,"sleepHrv")).filter(x=>x!=null);return w.length?+(w.reduce((a,b)=>a+b,0)/w.length).toFixed(1):null;});
+  mkChart("chNightHr",{panDates:keys.map(k=>k+"T12:00:00"),data:{labels:keys.map(k=>fmtD(k+"T12:00:00")),datasets:[
+    {type:"line",label:"HRV (ms)",data:keys.map(k=>v(k,"sleepHrv")),borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:0,showLine:false,pointRadius:3,yAxisID:"y"},
+    {type:"line",label:"HRV 7d",data:roll,borderColor:PAL.green,backgroundColor:PAL.green,borderWidth:2,tension:.3,pointRadius:0,yAxisID:"y",spanGaps:true},
+    {type:"line",label:"FC média",data:keys.map(k=>v(k,"sleepHr")),borderColor:PAL.red,backgroundColor:PAL.red,borderWidth:1.5,tension:.3,pointRadius:2,yAxisID:"y1",spanGaps:true},
+    {type:"line",label:"FC mín.",data:keys.map(k=>v(k,"sleepHrMin")),borderColor:PAL.muted,backgroundColor:PAL.muted,borderWidth:1.5,borderDash:[4,3],tension:.3,pointRadius:0,yAxisID:"y1",spanGaps:true}
+  ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("ms",{beginAtZero:false}),
+    y1:{position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("bpm")}}}});
+}
 function renderCVDashboard(){
   if(!$("#cvSignals"))return;
   const bp=latestPressure(),sig=[];
@@ -3038,6 +3099,10 @@ function renderCVDashboard(){
   const add=(lbl,val,lvl,hint)=>sig.push({lbl,val,lvl,col:tone(lvl),hint:hint||""});
   if(bp){const c=bpClass(bp.sys,bp.dia);add("Pressão arterial",`${bp.sys}/${bp.dia}`,c.lvl,c.lbl);}
   if(bp&&bp.hr!=null){const hr=bp.hr;let lvl=hr>100?3:(hr>80||hr<40)?1:0;add("FC de repouso",hr+" bpm",lvl,lvl?(hr>80?"elevada":"baixa"):"ok");}
+  const ns=nightStats("sleepHr");
+  if(ns&&ns.avg7!=null){const hr=Math.round(ns.avg7);let lvl=hr>=80?3:hr>=70?1:0;add("FC no sono (7d)",hr+" bpm",lvl,lvl?"elevada":"ok");}
+  const nv=nightStats("sleepHrv");
+  if(nv&&nv.base!=null&&nv.avg7!=null){const low=nv.avg7<nv.base-nv.sd;add("HRV no sono (7d)",fmtN(nv.avg7,0)+" ms",low?1:0,low?"abaixo da sua base":"na sua faixa");}
   if(hdl!=null){let lvl=hdl<40?3:hdl<50?1:0;add("HDL",hdl+" mg/dL",lvl,lvl?"baixo (orais derrubam o HDL)":"ok");}
   if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
   const nh=(ldl!=null||vldl!=null)?((ldl||0)+(vldl||0)):null;
@@ -3045,7 +3110,7 @@ function renderCVDashboard(){
   if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",fmtN(r,1),lvl,lvl?"resistência insulínica / aterogênico":"ok");}
   if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",hct+" %",lvl,lvl>=3?"eritrocitose — considere doar":lvl?"próximo do teto":"ok");}
   const v=$("#cvVerdict"),box=$("#cvSignals");
-  if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial e um exame para ver o painel.</div>';box.innerHTML="";return;}
+  if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial, FC do sono ou um exame para ver o painel.</div>';box.innerHTML="";return;}
   const worst=sig.reduce((m,s)=>s.lvl>m.lvl?s:m,sig[0]);
   const vcol=tone(worst.lvl),vtxt=worst.lvl>=3?"Atenção":worst.lvl>=1?"Vigiar":"Tudo no verde";
   v.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:${vcol};flex:none"></span><b style="color:${vcol};font-size:14px">${vtxt}</b><span class="muted" style="font-size:12px">${worst.lvl>=1?`${worst.lbl}: ${worst.val}${worst.hint?" ("+worst.hint+")":""}`:"nenhum sinal de alerta"}</span></div>`;

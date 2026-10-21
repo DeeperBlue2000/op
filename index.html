@@ -699,6 +699,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div class="field"><label>Creatinina</label><input id="lCr" type="text" inputmode="decimal" class="num"></div>
         <div class="field"><label>Cistatina C</label><input id="lCys" type="text" inputmode="decimal" class="num"></div>
         <div class="field"><label>Ferritina (ng/mL)</label><input id="lFer" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Ferro sérico (µg/dL)</label><input id="lFeSer" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>Sat. transferrina (%)</label><input id="lSat" type="text" inputmode="decimal" class="num"></div>
+        <div class="field"><label>PCR-us (mg/L)</label><input id="lPcr" type="text" inputmode="decimal" class="num"></div>
         <div class="field"><label>Albumina (g/dL)</label><input id="lAlb" type="text" inputmode="decimal" class="num" placeholder="4.3"></div>
       </div>
     </details>
@@ -711,7 +714,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <div class="card" data-sec="exames">
     <h2>Marcadores derivados <span class="hint">do último exame</span> <span class="help" data-note-id="help10" data-help-title="Marcadores derivados">?</span></h2>
     <div id="derivedBox"></div>
-    <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e eGFR (CKD-EPI 2021). Ferramenta de leitura — decisões com o médico.</template>
+    <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e TFG com a idade na data do exame (exige data de nascimento em Configurações): por cistatina (CKD-EPI 2012, a principal — creatina e massa muscular sobem a creatinina sem mexer no rim), combinada (2021) e por creatinina (2021). Constantes masculinas. Ferramenta de leitura — decisões com o médico.</template>
   </div>
 
   <div class="card" data-sec="exames">
@@ -735,11 +738,14 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>FC repouso (bpm)</label><input id="bpHr" type="text" inputmode="numeric" class="num" placeholder="opcional"></div>
     </div>
     <div class="field"><label>Data e hora</label><input id="bpDate" type="datetime-local"></div>
-    <div class="field"><label>Nota (opcional)</label><input id="bpNote" type="text" placeholder="ex.: manhã, pré-treino, em jejum"></div>
+    <div class="grid2">
+      <div class="field"><label>Local</label><select id="bpCtx"><option value="casa">Casa</option><option value="cons">Consultório</option></select></div>
+      <div class="field"><label>Nota (opcional)</label><input id="bpNote" type="text" placeholder="ex.: manhã, em jejum"></div>
+    </div>
     <button class="btn btn-ghost" id="bpSave">Salvar pressão</button>
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chBP"></canvas></div>
     <div id="bpList" style="margin-top:12px"></div>
-    <template class="help-src" id="helpBP">Classificação por <b>ACC/AHA 2017</b> (Whelton et al., Hypertension 2018), cortes de consultório: normal &lt;120/80 · elevada 120–129/&lt;80 · estágio 1 130–139/80–89 · estágio 2 ≥140/90 · crise ≥180/120. Diretrizes europeia (ESC) e brasileira (SBC) só rotulam hipertensão a partir de ≥140/90. Medições em casa tendem a ser mais baixas que no consultório. EAA e estimulantes (cafeína/ioimbina do seu pré-treino) elevam a PA — meça em repouso, sentado, sempre no mesmo horário. Os KPIs e o gráfico usam a média móvel de 7 dias.</template>
+    <template class="help-src" id="helpBP">Cada leitura tem um <b>local</b>. <b>Casa</b> é comparada com a sua meta (Configurações; padrão até 130/80 — a Diretriz Brasileira de Hipertensão 2020 considera alterado a partir de 130/80 em medidas fora do consultório; ajuste ao que o cardiologista definir). <b>Consultório</b> segue a Diretriz Brasileira 2020: ótima &lt;120/80 · normal 120–129/80–84 · pré-hipertensão 130–139/85–89 · HA estágio 1 140–159/90–99 · estágio 2 160–179/100–109 · estágio 3 ≥180/110. O status usa a média de 7 dias quando há 2 ou mais leituras em casa — uma leitura isolada não define a pressão. Meça sentado, em repouso, sempre nos mesmos horários; cafeína e o protocolo hormonal elevam a PA. Registros anteriores à v5.30 contam como casa.</template>
   </div>
 
   <div class="card" data-sec="cardio">
@@ -844,8 +850,14 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Intervalo de exames (dias)</label><input id="setExam" type="text" inputmode="numeric" class="num" value="120"></div>
       <div class="field"><label>Intervalo de biometria (dias)</label><input id="setBio" type="text" inputmode="numeric" class="num" value="30"></div>
       <div class="field"><label>Altura (cm)</label><input id="setHeight" type="text" inputmode="decimal" class="num" value="176"></div>
-      <div class="field"><label>Peso-alvo (kg, opcional)</label><input id="setGoal" type="text" inputmode="decimal" class="num" placeholder="—"></div>
+      <div class="field"><label>Data de nascimento (TFG)</label><input id="setBirth" type="date"></div>
       <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="text" inputmode="decimal" class="num" value="4.3"></div>
+      <div class="field"><label>Meta PA casa · sist.</label><input id="setBpS" type="text" inputmode="numeric" class="num" value="130"></div>
+      <div class="field"><label>Meta PA casa · diast.</label><input id="setBpD" type="text" inputmode="numeric" class="num" value="80"></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <input type="checkbox" id="setInbody" style="width:20px;height:20px">
+      <label for="setInbody" style="margin:0">Peso só no InBody (sem balança em casa) — uma pendência só, pela biometria completa</label>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <input type="checkbox" id="setCycle" style="width:20px;height:20px">
@@ -910,10 +922,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <details style="margin-top:8px"><summary>Snapshots automáticos</summary>
       <div id="snapList" style="margin-top:8px"></div>
     </details>
+    <div id="storageState" class="muted" style="font-size:12px;margin-top:8px"></div>
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.20</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.30</div>
 </section>
 
 </main>
@@ -931,10 +944,203 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <div class="help-pop" id="helpPop"><button class="help-x" id="helpX" aria-label="Fechar">×</button><div class="help-title" id="helpTitle">Explicação</div><div id="helpBody"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script id="calc">
+"use strict";
+// ===== CÁLCULOS PUROS (T3, v5.30) =====
+// Sem DOM e sem db: recebem dados e devolvem dados. Textos e cores ficam no script principal.
+// Testados por tests/calc.test.mjs (node --test tests/). Ao mudar uma conta daqui, atualize/rode os testes.
+
+// ---------- Mesclagem de 3 vias do sync (F3.9) ----------
+// Iguais nos dois lados → mantém · só um lado mudou → vale esse lado · arrays de registros → por id/name ·
+// objetos → campo a campo · apagado num lado × editado no outro → mantém a edição · mesmo campo → pref.
+function stableStr(v){
+  if(v===undefined)return "~u";if(v===null||typeof v!=="object")return JSON.stringify(v);
+  if(Array.isArray(v))return "["+v.map(stableStr).join(",")+"]";
+  return "{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+stableStr(v[k])).join(",")+"}";
+}
+const same=(a,b)=>stableStr(a)===stableStr(b);
+const keyOfRec=o=>o&&typeof o==="object"?(o.id!=null?"id:"+o.id:(o.name!=null?"nm:"+o.name:null)):null;
+const isKeyedArr=a=>Array.isArray(a)&&a.length>0&&a.every(o=>keyOfRec(o)!=null);
+const isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+const cloneV=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
+function merge3(b,l,r,pref){
+  if(same(l,r))return cloneV(l);
+  if(same(l,b))return cloneV(r);                     // só o remoto mudou
+  if(same(r,b))return cloneV(l);                     // só o local mudou
+  const lk=Array.isArray(l)&&(l.length===0||isKeyedArr(l)),rk=Array.isArray(r)&&(r.length===0||isKeyedArr(r));
+  if(lk&&rk&&(isKeyedArr(l)||isKeyedArr(r))){        // coleção de registros: mescla por id/name
+    const map=a=>{const m=new Map();(Array.isArray(a)?a:[]).forEach(o=>{const k=keyOfRec(o);if(k)m.set(k,o);});return m;};
+    const B=map(b),L=map(l),R=map(r),out=[],seen=new Set();
+    [...L.keys(),...R.keys()].forEach(k=>{if(seen.has(k))return;seen.add(k);
+      const v=merge3(B.get(k),L.get(k),R.get(k),pref);if(v!==undefined)out.push(v);});
+    return out;
+  }
+  if(isObj(l)&&isObj(r)){                            // objeto: mescla campo a campo
+    const out={},bb=isObj(b)?b:{};
+    new Set([...Object.keys(l),...Object.keys(r)]).forEach(k=>{const v=merge3(bb[k],l[k],r[k],pref);if(v!==undefined)out[k]=v;});
+    return out;
+  }
+  if(l===undefined)return cloneV(r);                 // apagado aqui, editado lá → mantém a edição
+  if(r===undefined)return cloneV(l);                 // apagado lá, editado aqui → mantém a edição
+  return cloneV(pref==="l"?l:r);                     // conflito real no mesmo campo → documento mais novo
+}
+
+// ---------- Datas ----------
+const daysSince=(iso,nowMs)=>Math.floor(((nowMs||Date.now())-+new Date(iso))/864e5);
+// Anos completos entre o nascimento ("YYYY-MM-DD") e a data de referência (ISO). null sem nascimento válido.
+function ageAt(birth,atISO){
+  if(!birth)return null;
+  const b=new Date(birth+"T12:00:00"),a=atISO?new Date(atISO):new Date();
+  if(isNaN(b)||isNaN(a))return null;
+  let y=a.getFullYear()-b.getFullYear();
+  if(a.getMonth()<b.getMonth()||(a.getMonth()===b.getMonth()&&a.getDate()<b.getDate()))y--;
+  return y>=0&&y<130?y:null;
+}
+
+// ---------- TFG (CKD-EPI, constantes masculinas) — C1 ----------
+// 2021 creatinina (Inker, NEJM 2021) · 2012 cistatina C (Inker, NEJM 2012) · 2021 creatinina + cistatina.
+// Sem idade não há número: a fórmula sem o fator de idade infla o resultado (~34% aos 47 anos).
+function egfrCr(cr,age){if(!(cr>0)||age==null)return null;const k=0.9;return 142*Math.pow(Math.min(cr/k,1),-0.302)*Math.pow(Math.max(cr/k,1),-1.2)*Math.pow(0.9938,age);}
+function egfrCys(cys,age){if(!(cys>0)||age==null)return null;return 133*Math.pow(Math.min(cys/0.8,1),-0.499)*Math.pow(Math.max(cys/0.8,1),-1.328)*Math.pow(0.996,age);}
+function egfrCrCys(cr,cys,age){if(!(cr>0)||!(cys>0)||age==null)return null;const k=0.9;
+  return 135*Math.pow(Math.min(cr/k,1),-0.144)*Math.pow(Math.max(cr/k,1),-0.544)*Math.pow(Math.min(cys/0.8,1),-0.323)*Math.pow(Math.max(cys/0.8,1),-0.778)*Math.pow(0.9961,age);}
+
+// ---------- T livre (Vermeulen) ----------
+function calcFreeT(ttNgDl,shbgNmol,albGdl){
+  if(ttNgDl==null||shbgNmol==null||shbgNmol<=0)return null;
+  const Tt=ttNgDl/28.84*1e-9; // ng/dL -> mol/L (MM 288.4: ng/dL/28.84 = nmol/L)
+  const S=shbgNmol*1e-9, alb=(albGdl||4.3)*10/66500; // g/dL->g/L->mol/L
+  const Kt=1.0e9, Ka=3.6e4;
+  const A=Kt*(1+Ka*alb);
+  const B=Kt*(S-Tt)+(1+Ka*alb);
+  const C=-Tt;
+  const FT=(-B+Math.sqrt(B*B-4*A*C))/(2*A);
+  if(!isFinite(FT)||FT<=0)return null;
+  return FT*288.4*1e9; // mol/L -> ng/L = pg/mL
+}
+
+// ---------- Pressão arterial — C3 ----------
+// ctx "cons" (consultório): Diretriz Brasileira de Hipertensão 2020 (pior entre sistólica e diastólica).
+// ctx "casa" (padrão): meta pessoal, limite incluído (padrão até 130/80; a diretriz considera alterado ≥ 130/80
+// em medidas fora do consultório). lvl: 0 ok · 1 atenção leve · 2 acima · 3 alta · 4 muito alta.
+function bpLevel(s,d,ctx,target){
+  if(s==null||d==null)return {lbl:"—",lvl:0};
+  if(ctx==="cons"){
+    if(s>=180||d>=110)return {lbl:"HA estágio 3",lvl:4};
+    if(s>=160||d>=100)return {lbl:"HA estágio 2",lvl:3};
+    if(s>=140||d>=90)return {lbl:"HA estágio 1",lvl:2};
+    if(s>=130||d>=85)return {lbl:"pré-hipertensão",lvl:1};
+    if(s>=120||d>=80)return {lbl:"normal",lvl:0};
+    return {lbl:"ótima",lvl:0};
+  }
+  const t=target&&target.sys&&target.dia?target:{sys:130,dia:80};
+  if(s>=180||d>=110)return {lbl:"muito alta",lvl:4};
+  if(s>=160||d>=100)return {lbl:"alta",lvl:3};
+  if(s>t.sys||d>t.dia)return {lbl:"acima da meta",lvl:2};
+  return {lbl:"na meta",lvl:0};
+}
+// Resumo de uma lista de leituras: média dos últimos 7 dias com ≥ 2 leituras; senão a última (nunca 1 leitura
+// vira "média"). ageDays = dias desde a leitura mais recente.
+function bpSummary(list,nowMs){
+  if(!list||!list.length)return null;
+  const now=nowMs||Date.now(),sorted=list.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const avg=arr=>{const v=arr.filter(x=>x!=null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null;};
+  const ageDays=daysSince(sorted[0].date,now),wk=sorted.filter(p=>now-+new Date(p.date)<=7*864e5);
+  if(wk.length>=2)return {mode:"avg7",n:wk.length,sys:avg(wk.map(p=>p.sys)),dia:avg(wk.map(p=>p.dia)),hr:avg(wk.map(p=>p.hr)),ageDays};
+  const l=sorted[0];return {mode:"last",n:1,sys:l.sys,dia:l.dia,hr:l.hr!=null?l.hr:null,ageDays};
+}
+
+// ---------- Metas de composição — C4 ----------
+// Duas metas definem as outras (peso = magra + gordura; gordura = peso × %GC). O par é formado pelas duas
+// primeiras preenchidas na ordem peso, %GC, magra, gordura; as demais precisam bater com o par (± 0,3).
+const GOAL_KEYS=["weight","bf","lean","fat"];
+function goalFromPair(a,va,b,vb){
+  const v={[a]:va,[b]:vb};let W=v.weight,B=v.bf,L=v.lean,F=v.fat;
+  if(W!=null&&B!=null){F=W*B/100;L=W-F;}
+  else if(W!=null&&L!=null){F=W-L;B=W>0?F/W*100:null;}
+  else if(W!=null&&F!=null){L=W-F;B=W>0?F/W*100:null;}
+  else if(B!=null&&L!=null){if(B>=100)return null;W=L/(1-B/100);F=W-L;}
+  else if(B!=null&&F!=null){if(!(B>0))return null;W=F/(B/100);L=W-F;}
+  else if(L!=null&&F!=null){W=L+F;B=W>0?F/W*100:null;}
+  if([W,B,L,F].some(x=>x==null||!isFinite(x)||x<0)||B>=100)return null;
+  return {weight:W,bf:B,lean:L,fat:F};
+}
+// g: {weight,bf,lean,fat} (null = vazio) → {vals, basis, conflict:[{k,given,calc}]|null, invalid}
+function goalDerive(g){
+  const given=GOAL_KEYS.filter(k=>g&&g[k]!=null&&!isNaN(g[k]));
+  const raw={weight:null,bf:null,lean:null,fat:null};given.forEach(k=>raw[k]=+g[k]);
+  if(given.length<2)return {vals:raw,basis:given,conflict:null,invalid:false};
+  const [a,b]=given,vals=goalFromPair(a,raw[a],b,raw[b]);
+  if(!vals)return {vals:raw,basis:[a,b],conflict:null,invalid:true};
+  const c=given.slice(2).filter(k=>Math.abs(raw[k]-vals[k])>0.3).map(k=>({k,given:raw[k],calc:vals[k]}));
+  return {vals,basis:[a,b],conflict:c.length?c:null,invalid:false};
+}
+// O que a meta implica a partir da composição atual (cur: {weight, bf?}). Ritmo de referência: 0,5–1% do peso/semana.
+function goalImplication(cur,vals,deadline,nowMs){
+  if(!cur||cur.weight==null||!vals||vals.weight==null)return null;
+  const o={dW:vals.weight-cur.weight,dFat:null,dLean:null,weeks:null,needPct:null};
+  if(cur.bf!=null&&vals.bf!=null){const cf=cur.weight*cur.bf/100;o.dFat=vals.fat-cf;o.dLean=vals.lean-(cur.weight-cf);}
+  if(o.dW<0){const loss=-o.dW;o.weeks=[loss/(0.01*cur.weight),loss/(0.005*cur.weight)];
+    if(deadline){const wk=(+new Date(deadline+"T12:00:00")-(nowMs||Date.now()))/(7*864e5);if(wk>0)o.needPct=loss/cur.weight/wk*100;}}
+  return o;
+}
+
+// ---------- Composição entre duas medições — C5 ----------
+// kind: "recomp" (magra sobe e gordura cai) · "fatLoss" (magra estável dentro do erro, gordura cai) ·
+// "both" (as duas caem) · "leanHeavy" (cai mais magra que gordura) · "gain" · "flat".
+// Duas bioimpedâncias têm erro de ~1 kg cada: a fração magra (leanShare) é indicativa, não diagnóstico.
+function compAssess(first,last){
+  const lean=x=>x.weight*(1-x.bf/100),fat=x=>x.weight*x.bf/100;
+  const dW=last.weight-first.weight,dLean=lean(last)-lean(first),dFat=fat(last)-fat(first);
+  const leanShare=dW<0?Math.max(0,-dLean)/-dW:null;
+  let kind="flat";
+  if(dLean>=0&&dFat<0)kind="recomp";
+  else if(dW<-.3&&dLean<-.5&&-dLean>-dFat)kind="leanHeavy";
+  else if(dW<-.3&&dLean>-.5&&dFat<-.5)kind="fatLoss";
+  else if(dW<-.3&&dLean<0&&dFat<0)kind="both";
+  else if(dW>.3)kind="gain";
+  return {kind,dW,dLean,dFat,leanShare};
+}
+
+// ---------- Peso: ritmo em kg/semana — C6 ----------
+// Regressão dos pontos dos últimos 28 dias (≥ 3); senão, entre as duas últimas medições (InBody esparso).
+function weightRate(pts,nowMs){
+  if(!pts||pts.length<2)return null;
+  const now=nowMs||Date.now(),rec=pts.filter(p=>p.t>=now-28*864e5);
+  if(rec.length>=3){const n=rec.length,x=rec.map(p=>(p.t-rec[0].t)/864e5),y=rec.map(p=>p.w);
+    const mx=x.reduce((s,v)=>s+v,0)/n,my=y.reduce((s,v)=>s+v,0)/n;let num=0,den=0;
+    for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx);}
+    return {rate:den?num/den*7:0,mode:"28d",n,lastT:pts[pts.length-1].t};}
+  const a=pts[pts.length-2],b=pts[pts.length-1],days=(b.t-a.t)/864e5;
+  if(days<=0)return null;
+  return {rate:(b.w-a.w)/days*7,mode:"2pts",n:2,fromT:a.t,lastT:b.t};
+}
+
+// ---------- Ferro × hematócrito — C2 ----------
+// Ferritina sobe com inflamação: sem saturação de transferrina ≥ 20% ela não confirma ferro disponível.
+// o: {hct, uln, fer, sat} → códigos (o texto fica em renderIron/renderLabStatus).
+function ironAssess(o){
+  const out=[],hctHi=o.hct!=null&&o.hct>=o.uln,satLow=o.sat!=null&&o.sat<20;
+  if(hctHi)out.push("hctHigh");
+  if(o.fer!=null){
+    if(o.fer<30)out.push("ferDepleted");
+    else if(o.fer<100)out.push("ferLow");
+    else if(satLow)out.push("ferHighSatLow");
+    else if(o.sat==null)out.push("ferHighNoSat");
+    else out.push("ferOk");
+  }else if(satLow)out.push("satLow");
+  if(hctHi&&o.fer!=null){
+    if(o.fer>=100&&o.sat!=null&&!satLow)out.push("donWindow");
+    else if(o.fer<100||satLow)out.push("hctIronConflict");
+    else out.push("hctNeedSat");
+  }
+  return out;
+}
+</script>
 <script>
 "use strict";
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
-const KEY="control_v2", OLD_KEY="ciclolog_v1";
+const KEY="control_v2";
 const SITES=["Deltóide D","Deltóide E","Vasto Lateral D","Vasto Lateral E","Ventroglúteo D","Ventroglúteo E","Abdômen D","Abdômen E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
 const PAL={amber:"#F59E0B",amber2:"#fbbf24",blue:"#60a5fa",violet:"#a78bfa",green:"#34d399",pink:"#f472b6",red:"#f87171",muted:"#9aa0a8"};
 // Escala única dos heatmaps (vazio · baixo · médio · alto · descanso/reposição · treino sem personal) — F3.5
@@ -1076,37 +1282,7 @@ async function sbRemoteTs(c,user){
 const SB_BASE_KEY="control_sb_base";
 const getBase=()=>{try{return JSON.parse(localStorage.getItem(SB_BASE_KEY)||"null");}catch(e){return null;}};
 const setBase=obj=>{try{localStorage.setItem(SB_BASE_KEY,JSON.stringify(obj));}catch(e){}};
-function stableStr(v){
-  if(v===undefined)return "~u";if(v===null||typeof v!=="object")return JSON.stringify(v);
-  if(Array.isArray(v))return "["+v.map(stableStr).join(",")+"]";
-  return "{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+stableStr(v[k])).join(",")+"}";
-}
-const same=(a,b)=>stableStr(a)===stableStr(b);
-const keyOfRec=o=>o&&typeof o==="object"?(o.id!=null?"id:"+o.id:(o.name!=null?"nm:"+o.name:null)):null;
-const isKeyedArr=a=>Array.isArray(a)&&a.length>0&&a.every(o=>keyOfRec(o)!=null);
-const isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
-const cloneV=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
-function merge3(b,l,r,pref){
-  if(same(l,r))return cloneV(l);
-  if(same(l,b))return cloneV(r);                     // só o remoto mudou
-  if(same(r,b))return cloneV(l);                     // só o local mudou
-  const lk=Array.isArray(l)&&(l.length===0||isKeyedArr(l)),rk=Array.isArray(r)&&(r.length===0||isKeyedArr(r));
-  if(lk&&rk&&(isKeyedArr(l)||isKeyedArr(r))){        // coleção de registros: mescla por id/name
-    const map=a=>{const m=new Map();(Array.isArray(a)?a:[]).forEach(o=>{const k=keyOfRec(o);if(k)m.set(k,o);});return m;};
-    const B=map(b),L=map(l),R=map(r),out=[],seen=new Set();
-    [...L.keys(),...R.keys()].forEach(k=>{if(seen.has(k))return;seen.add(k);
-      const v=merge3(B.get(k),L.get(k),R.get(k),pref);if(v!==undefined)out.push(v);});
-    return out;
-  }
-  if(isObj(l)&&isObj(r)){                            // objeto: mescla campo a campo
-    const out={},bb=isObj(b)?b:{};
-    new Set([...Object.keys(l),...Object.keys(r)]).forEach(k=>{const v=merge3(bb[k],l[k],r[k],pref);if(v!==undefined)out[k]=v;});
-    return out;
-  }
-  if(l===undefined)return cloneV(r);                 // apagado aqui, editado lá → mantém a edição
-  if(r===undefined)return cloneV(l);                 // apagado lá, editado aqui → mantém a edição
-  return cloneV(pref==="l"?l:r);                     // conflito real no mesmo campo → documento mais novo
-}
+// stableStr/same/keyOfRec/merge3: no bloco <script id="calc"> (testados).
 // Remoto e local mudaram desde a última sincronização → mescla, salva e envia.
 function mergeRemote(rp){
   pushSnap("antes de mesclar com outro aparelho");
@@ -1282,7 +1458,7 @@ const CHECKS=[
   {k:"sleep",lbl:"Sono",lo:"péssimo",hi:"restaurador"},
   {k:"irrit",lbl:"Irritabilidade",lo:"calmo",hi:"explosivo"}
 ];
-const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[30,85],hct:[null,52],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,41],ggt:[null,60],ur:[null,50],cr:[null,1.3],cys:[null,1.1],fer:[30,null],alb:[3.5,5.2]};
+const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[30,85],hct:[null,52],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,41],ggt:[null,60],ur:[null,50],cr:[null,1.3],cys:[null,1.1],fer:[30,null],alb:[3.5,5.2],feSer:[65,175],sat:[20,50],pcr:[null,3]};
 // Protocolo de suplementação v2.4 + unificação C+D (relatório de 12/10/2026). Ids de itens mantidos quando o
 // composto continua (preserva o histórico de adesão). Itens "optional" não entram no % de adesão.
 const SUPP_SCHEDULE_REV=2; // incrementar ao trocar o protocolo padrão → migrate() substitui o cronograma salvo
@@ -1293,10 +1469,10 @@ const DEFAULT_SCHEDULE=[
   {id:"b6",time:"21:30",name:"E · Pré-sono",note:"Fora de refeição, 30 min antes da R5.",items:[{id:"mgb",name:"Magnésio bisglicinato 300–400 mg (elementar)"},{id:"gli",name:"Glicina 3 g"},{id:"the",name:"L-Teanina 200 mg"},{id:"tau",name:"Taurina 2 g"}]},
   {id:"b7",time:"22:30",name:"F · Ferro isolado",note:"Dias alternados · em revisão. 2 h antes / 1 h depois: sem Ca, Zn, Mg, café, chá, lácteos ou NAC.",items:[{id:"fe",name:"Bisglicinato ferroso 100 mg + Vit. C 500 mg",optional:true}]}
 ];
-const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina"};
+const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina",feSer:"Ferro sérico",sat:"Sat. transferrina",pcr:"PCR-us"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="5.20";
+const APP_VERSION="5.30";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1311,7 +1487,6 @@ let db=load();
 function load(){
   let raw=null;
   try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}
-  if(!raw){try{const o=JSON.parse(localStorage.getItem(OLD_KEY));if(o&&o.schemaVersion)raw=o;}catch(e){}}
   if(raw&&raw.schemaVersion)return migrate(raw);
   return fresh();
 }
@@ -1319,9 +1494,10 @@ function fresh(){
   return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],pressures:[],
     training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
-    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,goalWeight:null,albumin:4.3,
-      goals:{weight:null,bf:null,lean:null,fat:null,deadline:null},
-      personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0,settlements:[]},
+    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,albumin:4.3,
+      birthDate:null,inbodyOnly:false,bpTarget:{sys:130,dia:80},
+      goals:{weight:null,bf:null,lean:null,fat:null,deadline:null,basis:null},
+      personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0},
       suppRev:SUPP_SCHEDULE_REV,meals:6,
       coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}}}};
 }
@@ -1338,11 +1514,17 @@ function migrate(r){
   if(s.examDays==null)s.examDays=120;
   if(s.bioDays==null)s.bioDays=30;
   if(s.heightCm==null)s.heightCm=176;
-  if(s.goalWeight===undefined)s.goalWeight=null;
+  // goalWeight é legado (v5.30 parou de gravar): só serve para criar goals em dados antigos.
   if(!s.goals)s.goals={weight:(s.goalWeight!=null?s.goalWeight:null),bf:null,lean:null,fat:null,deadline:null};
+  if(s.goals.basis===undefined)s.goals.basis=null;
+  if(s.birthDate===undefined)s.birthDate=null;
+  if(s.inbodyOnly==null)s.inbodyOnly=false;
+  if(!s.bpTarget||!s.bpTarget.sys||!s.bpTarget.dia)s.bpTarget={sys:130,dia:80};
   if(s.albumin==null)s.albumin=4.3;
-  if(!s.personal)s.personal={enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0,settlements:[]};
-  s.personal.settlements=s.personal.settlements||[];if(s.personal.initial==null)s.personal.initial=0;
+  if(!s.personal)s.personal={enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0};
+  if(s.personal.initial==null)s.personal.initial=0;
+  // Acertos legados do "Zerar saldo" (sem UI desde v4.92): somados ao saldo inicial uma vez e removidos (v5.30).
+  if(Array.isArray(s.personal.settlements)){s.personal.initial=(+s.personal.initial||0)-s.personal.settlements.reduce((a,x)=>a+(+x.amount||0),0);delete s.personal.settlements;}
   if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}};
   // Anastrozol agora é independente do EAA (frequência em dias). Converte config antiga (offsetH).
   if(s.coProtocol&&s.coProtocol.anastrozol&&s.coProtocol.anastrozol.everyDays==null){s.coProtocol.anastrozol.everyDays=2;delete s.coProtocol.anastrozol.offsetH;}
@@ -1517,7 +1699,7 @@ const VIEW_RENDER={
   habitos:()=>{renderAppAdherence();renderTrainHeat();renderTrainScore();renderDietHeat();renderDietScore();renderPulse();renderPulseHeat();renderAdherence();renderAdhResult();renderDiaryChart();},
   bio:()=>{renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();renderMoodChart();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderNightHr();renderCVDashboard();},
   fotos:()=>renderFotos(),
-  data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
+  data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderStorageState();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
 };
 // Render sob demanda (F3.6): só a tela visível é desenhada; as outras ficam "sujas" e renderizam ao abrir.
 const dirtyViews=new Set();
@@ -1826,7 +2008,7 @@ function clearForm(kind){
   else if(kind==="glp1"){$("#gDose").value="";$("#gNote").value="";gSelectedSite=null;$("#gDate").value=nowLocalInput();glpDrugContext();}
   else if(kind==="bio"){["bWeight","bBf","bSmm","bVisc"].forEach(id=>$("#"+id).value="");$("#bDate").value=todayInput();fillBioHints();}
   else if(kind==="lab"){LABF.forEach(([,id])=>$("#"+id).value="");$("#lDate").value=todayInput();}
-  else if(kind==="bp"){["bpSys","bpDia","bpHr","bpNote"].forEach(id=>$("#"+id).value="");$("#bpDate").value=nowLocalInput();}
+  else if(kind==="bp"){["bpSys","bpDia","bpHr","bpNote"].forEach(id=>$("#"+id).value="");$("#bpCtx").value="casa";$("#bpDate").value=nowLocalInput();}
 }
 function editDose(kind,rec){
   if(kind==="glp1"){goView("glp1");startEdit("glp1",rec,r=>{fillGlpSelect(r.drug);$("#gDrug").value=r.drug;$("#gDose").value="";glpDrugContext();
@@ -1837,7 +2019,7 @@ function editDose(kind,rec){
 function editBio(rec){goCard("bio","#bWeight");startEdit("bio",rec,r=>{$("#bWeight").value=r.weight??"";$("#bBf").value=r.bf??"";$("#bSmm").value=r.smm??"";$("#bVisc").value=r.visceral??"";if(r.method)$("#bMethod").value=r.method;$("#bDate").value=dkey(r.date);});}
 function editLab(rec){goCard("bio","#lE2");startEdit("lab",rec,r=>{LABF.forEach(([k,id])=>$("#"+id).value=r[k]??"");$("#lDate").value=dkey(r.date);
   const exp=LABF.some(([k,id])=>r[k]!=null&&$("#"+id).closest("details"));if(exp)$("#lFreeT").closest("details").open=true;});}
-function editBp(rec){goCard("bio","#bpSys");startEdit("bp",rec,r=>{$("#bpSys").value=r.sys;$("#bpDia").value=r.dia;$("#bpHr").value=r.hr??"";$("#bpNote").value=r.note||"";$("#bpDate").value=String(r.date).slice(0,16);});}
+function editBp(rec){goCard("bio","#bpSys");startEdit("bp",rec,r=>{$("#bpSys").value=r.sys;$("#bpDia").value=r.dia;$("#bpHr").value=r.hr??"";$("#bpNote").value=r.note||"";$("#bpCtx").value=r.ctx==="cons"?"cons":"casa";$("#bpDate").value=String(r.date).slice(0,16);});}
 // Botões da linha de próxima dose: Registrar (âmbar se vencida) + Encerrar, numa linha abaixo do texto.
 function doseActions(kind,drug,due){
   const box=document.createElement("div");box.className="row-actions";
@@ -2070,7 +2252,7 @@ function renderAdherence(){
 }
 
 // ---------- TENDÊNCIA DE EXAMES ----------
-const TREND_MARKERS=[["e2","Estradiol","pg/mL"],["prol","Prolactina","ng/mL"],["tt","Testo Total","ng/dL"],["freeT","Testo Livre","pg/mL"],["shbg","SHBG","nmol/L"],["dht","DHT","ng/dL"],["hct","Hematócrito","%"],["hdl","HDL","mg/dL"],["ldl","LDL","mg/dL"],["vldl","VLDL","mg/dL"],["tg","Triglicérides","mg/dL"],["tgo","TGO","U/L"],["tgp","TGP","U/L"],["ggt","GGT","U/L"],["ur","Ureia","mg/dL"],["cr","Creatinina","mg/dL"],["cys","Cistatina C","mg/L"],["fer","Ferritina","ng/mL"]];
+const TREND_MARKERS=[["e2","Estradiol","pg/mL"],["prol","Prolactina","ng/mL"],["tt","Testo Total","ng/dL"],["freeT","Testo Livre","pg/mL"],["shbg","SHBG","nmol/L"],["dht","DHT","ng/dL"],["hct","Hematócrito","%"],["hdl","HDL","mg/dL"],["ldl","LDL","mg/dL"],["vldl","VLDL","mg/dL"],["tg","Triglicérides","mg/dL"],["tgo","TGO","U/L"],["tgp","TGP","U/L"],["ggt","GGT","U/L"],["ur","Ureia","mg/dL"],["cr","Creatinina","mg/dL"],["cys","Cistatina C","mg/L"],["fer","Ferritina","ng/mL"],["feSer","Ferro sérico","µg/dL"],["sat","Sat. transferrina","%"],["pcr","PCR-us","mg/L"]];
 function fillTrendMarker(){const s=$("#trendMarker");if(s.options.length)return;TREND_MARKERS.forEach(m=>s.add(new Option(m[1],m[0])));}
 $("#trendMarker").onchange=renderLabTrend;
 function renderLabTrend(){
@@ -2564,31 +2746,36 @@ $("#bSave").onclick=()=>{
   db.biometrics.push({id:uid(),...f});
   save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";refreshBioViews();toast("Biometria salva ✓");
 };
+// C4 (v5.30): duas metas definem as outras. Campos vazios mostram o valor calculado como dica; 3 ou 4 metas
+// só são aceitas se baterem com o par (goalDerive, no bloco de cálculo).
+const GOAL_FIELDS=[["weight","#goalW","kg",1],["bf","#goalBf","%",1],["lean","#goalLean","kg",1],["fat","#goalFat","kg",1]];
+const GOAL_LBL={weight:"peso",bf:"%GC",lean:"massa magra",fat:"gordura"};
+function goalInputs(){const g={};GOAL_FIELDS.forEach(([k,id])=>{const el=$(id),v=el?el.value.trim():"";g[k]=v!==""?parseFloat(v):null;});return g;}
+function goalHints(){
+  const d=goalDerive(goalInputs());
+  GOAL_FIELDS.forEach(([k,id,u,dec])=>{const el=$(id);if(!el)return;
+    el.placeholder=(el.value.trim()===""&&d.basis.length>=2&&!d.invalid&&d.vals[k]!=null)?"= "+fmtN(d.vals[k],dec):"—";});
+}
+GOAL_FIELDS.forEach(([,id])=>{const el=$(id);if(el)el.addEventListener("input",goalHints);});
 $("#goalSave").onclick=()=>{
-  const num=id=>{const v=$(id).value;return v!==""?parseFloat(v):null;};
-  db.settings.goals={
-    weight: num("#goalW"),
-    bf:     num("#goalBf"),
-    lean:   num("#goalLean"),
-    fat:    num("#goalFat"),
-    deadline: $("#goalDeadline").value||null
-  };
-  // Mantém o campo legado de peso-alvo (usado na tendência de peso) em sincronia
-  db.settings.goalWeight=db.settings.goals.weight;
-  if($("#setGoal"))$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";
-  save();renderGoals();renderWeightTrend();
+  const d=goalDerive(goalInputs()),deadline=$("#goalDeadline").value||null;
+  if(d.invalid)return toast("Essas metas não formam uma composição possível");
+  if(d.conflict){const c=d.conflict[0],[a,b]=d.basis,dec=GOAL_FIELDS.find(f=>f[0]===c.k)[3];
+    return toast(`Metas incoerentes: com ${GOAL_LBL[a]} e ${GOAL_LBL[b]}, ${GOAL_LBL[c.k]} seria ${fmtN(c.calc,dec)}${c.k==="bf"?"%":" kg"}. Deixe só duas.`);}
+  db.settings.goals={...d.vals,deadline,basis:d.basis.length?d.basis.slice(0,2):null};
+  save();goalHints();refreshViews(["bio","resumo"]);
   {const cg=$("#cardGoals");if(cg)cg.classList.add("collap");}
   toast("Metas salvas ✓");
 };
-const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["alb","lAlb"]];
+const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["feSer","lFeSer"],["sat","lSat"],["pcr","lPcr"],["alb","lAlb"]];
 $("#lSave").onclick=()=>{
   const rec={id:uid(),date:($("#lDate").value||todayInput())+"T12:00:00",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType};let any=false;
   LABF.forEach(([k,id])=>{const v=$("#"+id).value;if(v!==""){rec[k]=parseFloat(v);any=true;}});
   if(!any)return toast("Preencha ao menos um marcador");
   if(editRec("lab")){const f={date:rec.date};LABF.forEach(([k])=>f[k]=rec[k]);   // marcador apagado → undefined → removido
-    return commitEdit("lab",f,()=>{renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderCVDashboard();});}
+    return commitEdit("lab",f,refreshLabViews);}
   db.labs.push(rec);save();LABF.forEach(([,id])=>$("#"+id).value="");
-  renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();toast("Exame salvo ✓");
+  refreshLabViews();toast("Exame salvo ✓");
 };
 // Em PCT/Off queremos ver E2/TT/T livre/DHT (recuperação do eixo) → não suprime nessas fases.
 const suppressExpected=()=>db.settings.cycleMode&&!["pct","off"].includes(db.settings.currentPhaseType);
@@ -2613,9 +2800,29 @@ function renderLabTable(){
     tr.onclick=e=>{if(e.target.closest(".del"))return;const l=db.labs.find(x=>x.id===id);if(l)editLab(l);};});
   el.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     const item=db.labs.find(x=>x.id===b.dataset.id);
-    db.labs=db.labs.filter(x=>x.id!==b.dataset.id);save();renderLabTable();renderLabStatus();
-    toast("Exame excluído",()=>{db.labs.push(item);save();renderLabTable();renderLabStatus();});
+    db.labs=db.labs.filter(x=>x.id!==b.dataset.id);save();refreshLabViews();
+    toast("Exame excluído",()=>{db.labs.push(item);save();refreshLabViews();});
   });
+}
+// Tudo que lê db.labs: a seção Exames, o painel CV (Cardio, mesma tela) e as telas que mostram exames.
+// Antes da v5.30 o exame novo não atualizava o painel CV nem os derivados ao excluir.
+function refreshLabViews(){refreshViews(["bio","resumo","charts"]);}
+// C2 (v5.30): notas de ferro × Hct a partir de ironAssess (bloco de cálculo). Tom: aponta o tema, não a conduta.
+function ironNotes(o){
+  const f=v=>fmtV(v,1),out=[];
+  ironAssess(o).forEach(c=>{
+    if(c==="hctHigh")out.push(["warn",`Hct ${f(o.hct)}% no/acima do teto (${o.uln}%) — eritrocitose; tema para o médico (flebotomia/doação é decisão dele).`]);
+    else if(c==="ferDepleted")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL — depleção de ferro. Doação não indicada; reposição é tema para o médico.`]);
+    else if(c==="ferLow")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL — abaixo de 100.`]);
+    else if(c==="ferHighSatLow")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL com saturação de ${f(o.sat)}% — ferro disponível baixo (a ferritina sobe com inflamação). Não indica reserva para doar; tema para o médico.`]);
+    else if(c==="ferHighNoSat")out.push(["",`Ferritina ${f(o.fer)} ng/mL. Sozinha não confirma reserva (sobe com inflamação): registre a saturação de transferrina do mesmo exame.`]);
+    else if(c==="ferOk")out.push(["ok",`Ferritina ${f(o.fer)} ng/mL e saturação de ${f(o.sat)}% — ferro disponível.`]);
+    else if(c==="satLow")out.push(["warn",`Saturação de transferrina de ${f(o.sat)}% — abaixo de 20%.`]);
+    else if(c==="donWindow")out.push(["ok","Hct alto com ferro disponível — tema de flebotomia/doação para levar ao médico."]);
+    else if(c==="hctIronConflict")out.push(["warn","Conflito: Hct alto, mas ferro baixo ou indisponível. Doar pioraria o ferro — decisão médica."]);
+    else if(c==="hctNeedSat")out.push(["","Hct alto: falta a saturação de transferrina para saber se o ferro está disponível."]);
+  });
+  return out;
 }
 function renderLabStatus(){
   const el=$("#labStatus");el.innerHTML="";
@@ -2624,9 +2831,7 @@ function renderLabStatus(){
   const out=[];
   if(last.hct!=null){const uln=(db.settings.refs.hct||[])[1]||52;
     if(last.hct>=uln)out.push(['warn',`Hematócrito ${last.hct}% — no/acima do teto (${uln}%). Atenção à viscosidade; tema para o médico.`]);}
-  if(last.fer!=null){
-    if(last.fer>=100)out.push(['ok',`Ferritina ${last.fer} ng/mL — ≥100, critério de ferro para doação atendido.`]);
-    else out.push(['warn',`Ferritina ${last.fer} ng/mL — abaixo de 100; reposição de ferro antes de doar.`]);}
+  if(last.fer!=null||last.sat!=null)ironNotes({hct:null,uln:0,fer:last.fer??null,sat:last.sat??null}).forEach(n=>out.push(n));
   out.forEach(([cls,msg])=>{const n=document.createElement("div");n.className="note "+cls;n.textContent=msg;el.appendChild(n);});
 }
 function buildCheckScales(){
@@ -2655,7 +2860,9 @@ $("#donSave").onclick=()=>{
 // ---------- RESUMO / M11 ----------
 function lastBioWeight(){const b=db.biometrics.filter(x=>x.weight!=null).sort((a,b)=>new Date(b.date)-new Date(a.date));return b[0]||null;}
 function weightSeries(){return db.biometrics.filter(x=>x.weight!=null).map(x=>({t:+new Date(x.date),date:x.date,w:x.weight})).sort((a,b)=>a.t-b.t);}
-function cycleDay(){const inj=db.injections.filter(i=>!(drugByName(i.drug)||{}).anc).map(i=>+new Date(i.date)).sort((a,b)=>a-b);if(!inj.length)return null;return Math.floor((Date.now()-inj[0])/864e5)+1;}
+// T6 (v5.30): conta desde a 1ª aplicação não-ancilar da fase atual (por nome); sem nenhuma, desde a 1ª de sempre.
+function cycleDay(){const all=db.injections.filter(i=>!(drugByName(i.drug)||{}).anc);const ph=all.filter(i=>i.phase&&i.phase===db.settings.currentPhase);
+  const inj=(ph.length?ph:all).map(i=>+new Date(i.date)).sort((a,b)=>a-b);if(!inj.length)return null;return Math.floor((Date.now()-inj[0])/864e5)+1;}
 function lastByDrug(arr,fn){const m={};arr.forEach(i=>{if(fn&&fn(i)===false)return;if(!m[i.drug]||new Date(i.date)>new Date(m[i.drug].date))m[i.drug]=i;});return m;}
 function dueDays(lastISO,cad){
   const due=new Date(+new Date(lastISO)+(cad||0)*864e5);due.setHours(0,0,0,0);
@@ -2749,18 +2956,19 @@ function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
   renderPending();
   const cd=cycleDay();const lw=lastBioWeight();const series=weightSeries();
-  let trendTxt="—",trendCol=PAL.muted;
-  if(series.length>=2){const recent=series.slice(-7),older=series.slice(-14,-7);
-    const avgR=recent.reduce((a,b)=>a+b.w,0)/recent.length;
-    const avgO=older.length?older.reduce((a,b)=>a+b.w,0)/older.length:avgR;
-    const diff=avgR-avgO;trendTxt=(diff<-.05?"▼":diff>.05?"▲":"▬")+" "+(diff>0?"+":"")+fmtN(diff,1);
-    trendCol=diff<-.05?PAL.green:diff>.05?PAL.red:PAL.muted;}
+  // C6 (v5.30): ritmo em kg/semana (weightRate) — regressão de 28 dias ou, com InBody esparso, entre as 2 últimas
+  // medições. Antes comparava os últimos 7 *registros*, que com InBody são meses.
+  let trendTxt="—",trendCol=PAL.muted,trendLbl="kg/semana";
+  const wr=weightRate(series.map(p=>({t:p.t,w:p.w})));
+  if(wr){const r=wr.rate;trendTxt=(r<-.05?"▼":r>.05?"▲":"▬")+" "+(r>0?"+":"")+fmtN(r,2);
+    trendCol=r<-.05?PAL.green:r>.05?PAL.red:PAL.muted;
+    if(daysSince(new Date(wr.lastT).toISOString())>7){const d=new Date(wr.lastT);trendLbl="kg/sem até "+String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");}}
   const lastExam=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   // Exame: valor curto em dias (cabe a 360 px); atrasado em vermelho com rótulo próprio
   let examTxt="—",examLbl="próx. exame",examSty="font-size:15px";
   if(lastExam){const days=db.settings.examDays||120;const dd=Math.ceil((+new Date(lastExam.date)+days*864e5-Date.now())/864e5);
     if(dd<=0){examTxt=(-dd)+"d";examLbl="exame atrasado";examSty+=";color:"+PAL.red;}else examTxt=dd+"d";}
-  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?fmtN(lw.weight,1):"—","peso (kg)"],[trendTxt,"tendência 7d (kg)","color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
+  $("#resumoKpi").innerHTML=kpi3([cd!=null?cd:"—","dia do ciclo"],[lw?fmtN(lw.weight,1):"—","peso (kg)"],[trendTxt,trendLbl,"color:"+trendCol+";font-size:14px"],[examTxt,examLbl,examSty]);
   renderResumoNext();renderRitual();renderPersonal();
 }
 // ---------- PENDÊNCIAS DE HOJE (F2.2) ----------
@@ -2774,7 +2982,8 @@ function pendItems(){
   const sp=suppPending();
   if(sp)out.push({col:sp.others?PAL.amber:PAL.blue,t:"Suplementos",s:sp.blk.time+" · "+sp.blk.name+" · "+sp.st.done+"/"+sp.st.req+(sp.others?" · +"+sp.others+" bloco"+(sp.others>1?"s":"")+" atrasado"+(sp.others>1?"s":""):""),act:"supp",blk:sp.blk.id,blkName:sp.blk.name});
   const lw=lastBioWeight(),dW=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
-  if(dW==null||dW>=4)out.push({col:PAL.amber,t:"Peso",s:dW==null?"nenhum registro ainda":"último "+fmtN(lw.weight,1)+" kg · há "+dW+"d",act:"peso"});
+  // C6 (v5.30): com "peso só no InBody" a pendência de peso some — a biometria completa (bioDays) cobre a mesma ida.
+  if(!db.settings.inbodyOnly&&(dW==null||dW>=4))out.push({col:PAL.amber,t:"Peso",s:dW==null?"nenhum registro ainda":"último "+fmtN(lw.weight,1)+" kg · há "+dW+"d",act:"peso"});
   const fb=lastFullBio(),bd=db.settings.bioDays||30;
   if(fb){const dd=Math.ceil((+new Date(fb.date)+bd*864e5-Date.now())/864e5);if(dd<=0)out.push({col:PAL.amber,t:"Biometria completa",s:"%GC e medidas · atrasada "+(-dd)+"d",act:"bio"});}
   const le=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
@@ -2847,7 +3056,7 @@ function renderAppAdherence(){
   let streak=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d);if(rs.has(k))streak++;else if(i===0)continue;else break;}
   let days7=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(rs.has(dkey(d)))days7++;}
   const lw=lastBioWeight();const noWeight=lw?Math.floor((Date.now()-+new Date(lw.date))/864e5):null;
-  $("#appAdhKpi").innerHTML=kpi3([streak,"dias seguidos"],[days7+"/7","últimos 7 dias"],[noWeight==null?"—":noWeight+"d","sem pesar"]);
+  $("#appAdhKpi").innerHTML=kpi3([streak,"dias seguidos"],[days7+"/7","últimos 7 dias"],[noWeight==null?"—":noWeight+"d",db.settings.inbodyOnly?"desde o InBody":"sem pesar"]);
   const n=[];
   if(days7<=3)n.push("Poucos registros nesta semana. Registros diários mantêm gráficos e adesão fiéis.");
   $("#appAdhNudge").innerHTML=n.length?n.map(x=>'<div class="note warn" style="margin:6px 0 0">'+x+'</div>').join(""):'<div class="note ok" style="margin:6px 0 0">✓ Registro em dia.</div>';
@@ -2879,10 +3088,14 @@ function renderBodyComp(){
   const opts={...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("kg")}};
   if(viscPts.length)opts.scales.y1={position:"right",ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{drawOnChartArea:false},title:axisTitle("visceral")};
   mkChart("chComp",{panDates:s.map(x=>x.date),data:{labels,datasets},options:opts});
-  if(s.length>=2){const dLean=last.lean-first.lean,dFat=last.fat-first.fat,dW=last.weight-first.weight;let msg,cls="";
-    if(dW<-.3&&dLean<-.5&&Math.abs(dLean)>Math.abs(dFat)){cls="warn";msg="Atenção: massa magra caiu "+fmtN(dLean,1)+"kg vs "+fmtN(dFat,1)+"kg de gordura no período. Perda magra desproporcional — revisar proteína, déficit e sono com o médico/treinador.";}
-    else if(dW<-.3&&dFat<dLean){cls="ok";msg="✓ Recomposição favorável: gordura "+fmtN(dFat,1)+"kg, magra "+(dLean>=0?"+":"")+fmtN(dLean,1)+"kg no período.";}
-    else msg="Variação no período: magra "+(dLean>=0?"+":"")+fmtN(dLean,1)+"kg · gordura "+(dFat>=0?"+":"")+fmtN(dFat,1)+"kg.";
+  if(s.length>=2){const a=compAssess(first,last),sg=v=>(v>=0?"+":"")+fmtN(v,1);let msg,cls="";
+    // C5 (v5.30): "recomposição" só quando a magra sobe e a gordura cai; perda das duas mostra a divisão, sem ✓.
+    const share=a.leanShare!=null?" ("+Math.round(a.leanShare*100)+"% da perda foi massa magra)":"";
+    if(a.kind==="leanHeavy"){cls="warn";msg="Atenção: massa magra "+sg(a.dLean)+" kg contra "+sg(a.dFat)+" kg de gordura"+share+". Tema de proteína, déficit e sono com a nutricionista e o médico.";}
+    else if(a.kind==="recomp"){cls="ok";msg="✓ Recomposição: magra "+sg(a.dLean)+" kg, gordura "+sg(a.dFat)+" kg no período.";}
+    else if(a.kind==="fatLoss"){cls="ok";msg="✓ Perda quase toda de gordura: gordura "+sg(a.dFat)+" kg, magra "+sg(a.dLean)+" kg no período.";}
+    else if(a.kind==="both")msg="Perda de "+fmtN(-a.dW,1)+" kg: magra "+sg(a.dLean)+" kg · gordura "+sg(a.dFat)+" kg"+share+". Bioimpedância erra ~1 kg por medição — confirme a tendência nas próximas, nas mesmas condições.";
+    else msg="Variação no período: magra "+sg(a.dLean)+" kg · gordura "+sg(a.dFat)+" kg.";
     if(lastSmm&&firstSmm&&smmPts.length>1){const dS=lastSmm.smm-firstSmm.smm;msg+=" MME medida "+(dS>=0?"+":"")+fmtN(dS,1)+"kg.";}
     note.innerHTML='<div class="note '+cls+'" style="margin-top:10px">'+msg+'</div>';
   } else note.innerHTML="";
@@ -2949,8 +3162,21 @@ function renderGoals(){
     const dstr=new Date(g.deadline+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});
     deadlineTxt='<div class="note" style="margin-top:10px;border-left-color:'+col+'">Prazo: <b>'+dstr+'</b> · '+(dd<0?Math.abs(dd)+" dias atrás (vencido)":dd===0?"hoje":"em "+dd+" dias")+'</div>';
   }
-  if(!rows.length&&!deadlineTxt){el.innerHTML='<div class="muted" style="font-size:12px">Defina ao menos um objetivo acima para acompanhar o progresso.</div>';return;}
-  el.innerHTML=rows.join("")+deadlineTxt;
+  if(!rows.length&&!deadlineTxt){el.innerHTML='<div class="muted" style="font-size:12px">Defina até duas metas abaixo (as outras são calculadas) para acompanhar o progresso.</div>';return;}
+  // C4: metas que não fecham entre si (dados de antes da v5.30) e o que a meta implica a partir de hoje.
+  let extra="";const d=goalDerive(g);
+  if(d.conflict){const c=d.conflict[0],[a,b]=d.basis,dec=GOAL_FIELDS.find(f=>f[0]===c.k)[3],u=c.k==="bf"?"%":" kg";
+    extra='<div class="note warn" style="margin-top:10px">As metas não fecham entre si: com '+GOAL_LBL[a]+' e '+GOAL_LBL[b]+', '+GOAL_LBL[c.k]+' seria '+fmtN(c.calc,dec)+u+' (a meta diz '+fmtN(c.given,dec)+u+'). Edite deixando só duas; as outras são calculadas.</div>';}
+  else if(!d.invalid){const im=goalImplication(lastC?{weight:lastC.weight,bf:lastC.bf}:(lastW?{weight:lastW.weight,bf:null}:null),d.vals,g.deadline);
+    if(im){const parts=[];const sg=v=>(v>0?"+":"")+fmtN(v,1);
+      if(im.dFat!=null)parts.push("gordura "+sg(im.dFat)+" kg","magra "+sg(im.dLean)+" kg");else parts.push("peso "+sg(im.dW)+" kg");
+      let txt="A meta implica, a partir da última medição: "+parts.join(" · ")+".";
+      if(im.weeks)txt+=" No ritmo de 0,5–1% do peso por semana: ≈ "+Math.round(im.weeks[0])+"–"+Math.round(im.weeks[1])+" semanas.";
+      if(im.needPct!=null)txt+=" O prazo pede "+fmtN(im.needPct,1)+"% por semana.";
+      const lossLean=im.dLean!=null&&im.dLean<-0.5;
+      if(lossLean)txt+=" A meta inclui perder massa magra.";
+      extra='<div class="note'+(lossLean||(im.needPct!=null&&im.needPct>1)?" warn":"")+'" style="margin-top:10px">'+txt+'</div>';}}
+  el.innerHTML=rows.join("")+deadlineTxt+extra;
 }
 
 // ---------- M6: tendência de peso ----------
@@ -2961,7 +3187,7 @@ function renderWeightTrend(){
   const recent=ma.filter(p=>p.t>=Date.now()-28*864e5);const reg=recent.length>=2?recent:ma;
   let rate=null;
   if(reg.length>=2){const n=reg.length,x=reg.map(p=>(p.t-reg[0].t)/864e5),y=reg.map(p=>p.ma);const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let num=0,den=0;for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx);}rate=den?num/den*7:0;}
-  const curMA=ma[ma.length-1].ma;const goal=db.settings.goalWeight;
+  const curMA=ma[ma.length-1].ma;const goal=(db.settings.goals||{}).weight;
   let etaTxt="—";
   if(goal&&rate&&rate<-.02&&curMA>goal){const eta=new Date(Date.now()+(curMA-goal)/-rate*7*864e5);etaTxt=eta.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"});}
   else if(goal&&curMA<=goal)etaTxt="atingida ✓";
@@ -2978,29 +3204,23 @@ function renderWeightTrend(){
 }
 
 // ---------- M7: marcadores derivados ----------
-function calcFreeT(ttNgDl,shbgNmol,albGdl){
-  if(ttNgDl==null||shbgNmol==null||shbgNmol<=0)return null;
-  const Tt=ttNgDl/28.84*1e-9; // ng/dL -> mol/L (MM 288.4: ng/dL/28.84 = nmol/L)
-  const S=shbgNmol*1e-9, alb=(albGdl||4.3)*10/66500; // g/dL->g/L->mol/L
-  const Kt=1.0e9, Ka=3.6e4;
-  const A=Kt*(1+Ka*alb);
-  const B=Kt*(S-Tt)+(1+Ka*alb);
-  const C=-Tt;
-  const FT=(-B+Math.sqrt(B*B-4*A*C))/(2*A);
-  if(!isFinite(FT)||FT<=0)return null;
-  return FT*288.4*1e9; // mol/L -> ng/L = pg/mL
-}
 // ---------- PRESSÃO ARTERIAL & RISCO CARDIOVASCULAR ----------
 // Classificação AHA. lvl: 0 normal · 1 elevada · 2 estágio 1 · 3 estágio 2 · 4 crise.
-function bpClass(s,d){
-  if(s==null||d==null)return {lbl:"—",col:PAL.muted,lvl:0};
-  if(s>=180||d>=120)return {lbl:"crise hipertensiva",col:PAL.red,lvl:4};
-  if(s>=140||d>=90)return {lbl:"estágio 2",col:PAL.red,lvl:3};
-  if(s>=130||d>=80)return {lbl:"estágio 1",col:PAL.amber,lvl:2};
-  if(s>=120)return {lbl:"elevada",col:PAL.amber,lvl:1};
-  return {lbl:"normal",col:PAL.green,lvl:0};
+// C3 (v5.30): classificação por local (bpLevel, no bloco de cálculo) — casa contra a meta pessoal,
+// consultório pela Diretriz Brasileira 2020. Registros sem ctx (anteriores à v5.30) contam como casa.
+const bpCtxOf=p=>p&&p.ctx==="cons"?"cons":"casa";
+const BP_CTX_LBL={casa:"casa",cons:"consultório"};
+function bpClass(s,d,ctx){
+  const c=bpLevel(s,d,ctx||"casa",db.settings.bpTarget);
+  return {...c,col:s==null||d==null?PAL.muted:c.lvl>=3?PAL.red:c.lvl>=1?PAL.amber:PAL.green};
 }
-const latestPressure=()=>db.pressures.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null;
+const bpTargetTxt=()=>{const t=db.settings.bpTarget||{sys:130,dia:80};return "meta ≤ "+t.sys+"/"+t.dia;};
+// Resumo para status e painel CV: leituras de casa (senão, de consultório) — média 7d com ≥ 2 leituras.
+function bpMain(){
+  const home=db.pressures.filter(p=>bpCtxOf(p)==="casa"),ctx=home.length?"casa":"cons";
+  const sm=bpSummary(home.length?home:db.pressures);if(!sm)return null;
+  return {...sm,ctx,cls:bpClass(sm.sys,sm.dia,ctx)};
+}
 function renderPressure(){
   if(!$("#bpKpi"))return;
   const list=db.pressures.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -3008,19 +3228,23 @@ function renderPressure(){
   const wk=Date.now()-7*864e5, recent=list.filter(p=>+new Date(p.date)>=wk);
   const avg=arr=>{const v=arr.filter(x=>x!=null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null;};
   const aS=avg(recent.map(p=>p.sys)),aD=avg(recent.map(p=>p.dia)),aH=avg(recent.map(p=>p.hr));
-  const cls=last?bpClass(last.sys,last.dia):bpClass(null,null);
-  setText("bpHint",last?cls.lbl:"sem registros");
+  const cls=last?bpClass(last.sys,last.dia,bpCtxOf(last)):bpClass(null,null);
+  const home7=recent.filter(p=>bpCtxOf(p)==="casa"),hS=avg(home7.map(p=>p.sys)),hD=avg(home7.map(p=>p.dia));
+  setText("bpHint",last?bpTargetTxt()+" em casa":"sem registros");
   $("#bpKpi").innerHTML=kpi3(
-    [last?`${last.sys}/${last.dia}`:"—","última",last?"color:"+cls.col:""],
-    [aS!=null?`${aS}/${aD}`:"—","média 7d",aS!=null?"color:"+bpClass(aS,aD).col:""],
+    [last?`${last.sys}/${last.dia}`:"—","última · "+(last?BP_CTX_LBL[bpCtxOf(last)]:"—"),last?"color:"+cls.col:""],
+    [home7.length>=2?`${hS}/${hD}`:"—","média 7d casa",home7.length>=2?"color:"+bpClass(hS,hD,"casa").col:""],
     [aH!=null?aH:(last&&last.hr!=null?last.hr:"—"),"FC repouso"]);
-  const st=$("#bpStatus");
-  if(last){
-    let cl="note",msg=`Última: <b>${last.sys}/${last.dia}</b> — ${cls.lbl}.`;
-    if(cls.lvl>=4){cl="note warn";msg+=" <b>Crise:</b> procure atendimento se houver dor no peito, falta de ar ou déficit visual/neurológico.";}
-    else if(cls.lvl>=2){cl="note warn";msg+=" EAA + estimulantes elevam a PA — considere reduzir ioimbina/cafeína e sódio, e revise com o médico.";}
-    else if(cls.lvl>=1){cl="note";msg+=" Ainda não é hipertensão, mas merece atenção.";}
-    else {cl="note ok";msg+=" Dentro da faixa.";}
+  const st=$("#bpStatus"),m=bpMain();
+  if(m){
+    const base=m.mode==="avg7"?`Média de 7 dias (${m.n} leituras, ${BP_CTX_LBL[m.ctx]}): <b>${m.sys}/${m.dia}</b> — ${m.cls.lbl}`
+      :`Última leitura (${BP_CTX_LBL[m.ctx]}, ${m.ageDays?"há "+m.ageDays+" d":"hoje"}): <b>${m.sys}/${m.dia}</b> — ${m.cls.lbl}`;
+    let cl="note",msg=base+(m.ctx==="casa"?` (${bpTargetTxt()}).`:".");
+    if(m.cls.lvl>=4){cl="note warn";msg+=" <b>Muito alta:</b> procure atendimento se houver dor no peito, falta de ar ou déficit visual/neurológico.";}
+    else if(m.cls.lvl>=2){cl="note warn";msg+=" Tema para o cardiologista; leve as leituras.";}
+    else if(m.cls.lvl>=1)cl="note";
+    else cl="note ok";
+    if(m.mode==="last")msg+=" Uma leitura isolada não define a pressão: meça de manhã e à noite por alguns dias (ou o protocolo que o médico pedir).";
     st.className=cl;st.style.margin="8px 0 0";st.innerHTML=msg;
   }else{st.className="";st.innerHTML="";}
   const pts=list.slice().reverse();
@@ -3032,9 +3256,9 @@ function renderPressure(){
   ]},options:{...baseOpts,scales:{x:baseOpts.scales.x,y:leftY("mmHg / bpm",{beginAtZero:false})}}});
   const el=$("#bpList");el.innerHTML="";
   list.slice(0,30).forEach(p=>{
-    const c=bpClass(p.sys,p.dia);
+    const c=bpClass(p.sys,p.dia,bpCtxOf(p));
     const row=document.createElement("div");row.className="log-item";
-    row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${fmtDate(p.date)}${p.note?" · "+esc(p.note):""}</div></div><button class="del">×</button>`;
+    row.innerHTML=`<div class="log-swatch" style="background:${c.col}"></div><div class="log-main"><div class="t">${p.sys}/${p.dia}${p.hr!=null?` · ${p.hr} bpm`:""}</div><div class="s">${c.lbl} · ${BP_CTX_LBL[bpCtxOf(p)]} · ${fmtDate(p.date)}${p.note?" · "+esc(p.note):""}</div></div><button class="del">×</button>`;
     editable(row,()=>editBp(p));
     row.querySelector(".del").onclick=()=>{db.pressures=db.pressures.filter(x=>x.id!==p.id);save();renderPressure();renderCVDashboard();toast("Registro removido",()=>{db.pressures.push(p);save();renderPressure();renderCVDashboard();});};
     el.appendChild(row);
@@ -3043,10 +3267,10 @@ function renderPressure(){
 $("#bpSave").onclick=()=>{
   const s=parseInt($("#bpSys").value,10),d=parseInt($("#bpDia").value,10),h=parseInt($("#bpHr").value,10);
   if(isNaN(s)||isNaN(d))return toast("Informe sistólica e diastólica");
-  const f={date:$("#bpDate").value||nowLocalInput(),sys:s,dia:d,hr:isNaN(h)?null:h,note:$("#bpNote").value||""};
+  const f={date:$("#bpDate").value||nowLocalInput(),sys:s,dia:d,hr:isNaN(h)?null:h,ctx:$("#bpCtx").value==="cons"?"cons":"casa",note:$("#bpNote").value||""};
   if(editRec("bp"))return commitEdit("bp",f,()=>{renderPressure();renderCVDashboard();});
   db.pressures.push({id:uid(),...f});
-  save();$("#bpSys").value="";$("#bpDia").value="";$("#bpHr").value="";$("#bpNote").value="";
+  save();$("#bpSys").value="";$("#bpDia").value="";$("#bpHr").value="";$("#bpNote").value="";$("#bpCtx").value="casa";
   renderPressure();renderCVDashboard();toast("Pressão salva ✓");
 };
 // ---------- FC & HRV no sono (relógio · Samsung Health) ----------
@@ -3091,33 +3315,40 @@ function renderNightHr(){
 }
 function renderCVDashboard(){
   if(!$("#cvSignals"))return;
-  const bp=latestPressure(),sig=[];
-  // valor mais recente de cada marcador (painéis podem ser parciais — não exige tudo no mesmo exame)
-  const lv=key=>{const a=db.labs.filter(l=>l[key]!=null).sort((x,y)=>new Date(y.date)-new Date(x.date));return a.length?a[0][key]:null;};
-  const hdl=lv("hdl"),ldl=lv("ldl"),vldl=lv("vldl"),tg=lv("tg"),hct=lv("hct");
+  const sig=[],bp=bpMain();
+  // C3 (v5.30): valor mais recente de cada marcador COM a data — sinal mais velho que o intervalo de exames
+  // (labs) ou 30 dias (PA) aparece esmaecido e com "há N d". A PA usa a média de 7 dias (bpMain), nunca 1 leitura
+  // quando há mais de uma.
+  const lv=key=>{const a=db.labs.filter(l=>l[key]!=null).sort((x,y)=>new Date(y.date)-new Date(x.date));return a.length?{v:a[0][key],date:a[0].date}:null;};
+  const L={hdl:lv("hdl"),ldl:lv("ldl"),vldl:lv("vldl"),tg:lv("tg"),hct:lv("hct")};const val=k=>L[k]?L[k].v:null;
+  const examMax=db.settings.examDays||120;
   const tone=lvl=>lvl>=3?PAL.red:lvl>=1?PAL.amber:PAL.green;
-  const add=(lbl,val,lvl,hint)=>sig.push({lbl,val,lvl,col:tone(lvl),hint:hint||""});
-  if(bp){const c=bpClass(bp.sys,bp.dia);add("Pressão arterial",`${bp.sys}/${bp.dia}`,c.lvl,c.lbl);}
-  if(bp&&bp.hr!=null){const hr=bp.hr;let lvl=hr>100?3:(hr>80||hr<40)?1:0;add("FC de repouso",hr+" bpm",lvl,lvl?(hr>80?"elevada":"baixa"):"ok");}
+  const add=(lbl,v,lvl,hint,age,maxAge)=>sig.push({lbl,val:v,lvl,col:tone(lvl),hint:hint||"",age,stale:age!=null&&age>maxAge});
+  const ageL=k=>L[k]?daysSince(L[k].date):null;
+  if(bp)add("Pressão arterial",`${bp.sys}/${bp.dia}`,bp.cls.lvl,bp.cls.lbl+" · "+(bp.mode==="avg7"?"média 7d, "+bp.n+" leituras":"1 leitura")+" · "+BP_CTX_LBL[bp.ctx],bp.ageDays,30);
+  if(bp&&bp.hr!=null){const hr=bp.hr;let lvl=hr>100?3:(hr>80||hr<40)?1:0;add("FC de repouso",hr+" bpm",lvl,lvl?(hr>80?"elevada":"baixa"):"ok",bp.ageDays,30);}
   const ns=nightStats("sleepHr");
-  if(ns&&ns.avg7!=null){const hr=Math.round(ns.avg7);let lvl=hr>=80?3:hr>=70?1:0;add("FC no sono (7d)",hr+" bpm",lvl,lvl?"elevada":"ok");}
+  if(ns&&ns.avg7!=null){const hr=Math.round(ns.avg7);let lvl=hr>=80?3:hr>=70?1:0;add("FC no sono (7d)",hr+" bpm",lvl,lvl?"elevada":"ok",null,0);}
   const nv=nightStats("sleepHrv");
-  if(nv&&nv.base!=null&&nv.avg7!=null){const low=nv.avg7<nv.base-nv.sd;add("HRV no sono (7d)",fmtN(nv.avg7,0)+" ms",low?1:0,low?"abaixo da sua base":"na sua faixa");}
-  if(hdl!=null){let lvl=hdl<40?3:hdl<50?1:0;add("HDL",hdl+" mg/dL",lvl,lvl?"baixo (orais derrubam o HDL)":"ok");}
-  if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
+  if(nv&&nv.base!=null&&nv.avg7!=null){const low=nv.avg7<nv.base-nv.sd;add("HRV no sono (7d)",fmtN(nv.avg7,0)+" ms",low?1:0,low?"abaixo da sua base":"na sua faixa",null,0);}
+  const hdl=val("hdl"),ldl=val("ldl"),vldl=val("vldl"),tg=val("tg"),hct=val("hct");
+  if(hdl!=null){let lvl=hdl<40?3:hdl<50?1:0;add("HDL",hdl+" mg/dL",lvl,lvl?"baixo (orais derrubam o HDL)":"ok",ageL("hdl"),examMax);}
+  if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok",ageL("ldl"),examMax);}
   const nh=(ldl!=null||vldl!=null)?((ldl||0)+(vldl||0)):null;
-  if(nh){let lvl=nh>=160?3:nh>=130?1:0;add("Não-HDL",nh+" mg/dL",lvl,lvl?"acima do alvo":"ok");}
-  if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",fmtN(r,1),lvl,lvl?"resistência insulínica / aterogênico":"ok");}
-  if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",hct+" %",lvl,lvl>=3?"eritrocitose — considere doar":lvl?"próximo do teto":"ok");}
+  if(nh){let lvl=nh>=160?3:nh>=130?1:0;add("Não-HDL",nh+" mg/dL",lvl,lvl?"acima do alvo":"ok",ageL(ldl!=null?"ldl":"vldl"),examMax);}
+  if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",fmtN(r,1),lvl,lvl?"resistência insulínica / aterogênico":"ok",ageL("tg"),examMax);}
+  if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",fmtV(hct,1)+" %",lvl,lvl>=3?"eritrocitose — tema para o médico":lvl?"próximo do teto":"ok",ageL("hct"),examMax);}
   const v=$("#cvVerdict"),box=$("#cvSignals");
   if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial, FC do sono ou um exame para ver o painel.</div>';box.innerHTML="";return;}
   const worst=sig.reduce((m,s)=>s.lvl>m.lvl?s:m,sig[0]);
   const vcol=tone(worst.lvl),vtxt=worst.lvl>=3?"Atenção":worst.lvl>=1?"Vigiar":"Tudo no verde";
-  v.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:${vcol};flex:none"></span><b style="color:${vcol};font-size:14px">${vtxt}</b><span class="muted" style="font-size:12px">${worst.lvl>=1?`${worst.lbl}: ${worst.val}${worst.hint?" ("+worst.hint+")":""}`:"nenhum sinal de alerta"}</span></div>`;
+  const ageTxt=s=>s.age==null?"":s.age?" · há "+s.age+" d":" · hoje";
+  v.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:${vcol};flex:none"></span><b style="color:${vcol};font-size:14px">${vtxt}</b><span class="muted" style="font-size:12px">${worst.lvl>=1?`${worst.lbl}: ${worst.val}${worst.hint?" ("+worst.hint+")":""}${ageTxt(worst)}`:"nenhum sinal de alerta"}</span></div>`;
   box.innerHTML="";
   sig.sort((a,b)=>b.lvl-a.lvl).forEach(s=>{
     const row=document.createElement("div");row.className="bm-zone";row.style.marginBottom="6px";
-    row.innerHTML=`<div class="bm-info" style="flex:1"><div class="lbl">${s.lbl}</div><div class="days">${s.hint}</div></div><div class="log-dose" style="color:${s.col}">${s.val}</div>`;
+    if(s.stale)row.style.opacity=".55";
+    row.innerHTML=`<div class="bm-info" style="flex:1"><div class="lbl">${s.lbl}</div><div class="days">${s.hint}${ageTxt(s)}${s.stale?" · antigo":""}</div></div><div class="log-dose" style="color:${s.col}">${s.val}</div>`;
     box.appendChild(row);
   });
 }
@@ -3132,7 +3363,15 @@ function renderDerived(){
   if(last.tgo!=null&&last.tgp!=null&&last.tgp>0)rows.push(["Razão TGO:TGP",fmtN((last.tgo/last.tgp),2),">1,5 = atenção hepática"]);
   if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",fmtN((last.ldl+(last.vldl||0)),0)+" mg/dL","LDL + VLDL"]);
   if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",fmtN((last.tg/last.hdl),1),"<2 ideal · resistência insulínica"]);
-  if(last.cr!=null&&last.cr>0){const cr=last.cr,k=0.9,a=-0.302;const egfr=142*Math.pow(Math.min(cr/k,1),a)*Math.pow(Math.max(cr/k,1),-1.2);rows.push(["eGFR (CKD-EPI, s/ idade)",Math.round(egfr)+" mL/min","creatinina sofre viés por massa muscular"]);}
+  // C1 (v5.30): TFG com idade na data do exame. Cistatina é a principal (creatina e massa muscular enviesam a creatinina).
+  // Usa o exame mais recente com creatinina ou cistatina (o último exame pode não ter função renal).
+  const rl=db.labs.filter(l=>l.cr!=null||l.cys!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(rl){const age=ageAt(db.settings.birthDate,rl.date),when=rl===last?"":" · exame de "+fmtD(rl.date);
+    if(age==null)rows.push(["TFG","—","informe a data de nascimento em Mais › Dados › Configurações"]);
+    else{const gC=egfrCys(rl.cys,age),gR=egfrCr(rl.cr,age),gRC=egfrCrCys(rl.cr,rl.cys,age);
+      if(gC!=null)rows.push(["<b>TFG cistatina</b>",Math.round(gC)+" mL/min","CKD-EPI 2012 · principal · "+age+" anos"+when]);
+      if(gRC!=null)rows.push(["TFG combinada",Math.round(gRC)+" mL/min","CKD-EPI 2021 creatinina + cistatina"+when]);
+      if(gR!=null)rows.push(["TFG creatinina",Math.round(gR)+" mL/min","CKD-EPI 2021 · subestima com creatina e massa muscular"+when]);}}
   if(!rows.length){el.innerHTML='<div class="empty">Faltam marcadores-base no último exame.</div>';return;}
   el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:11px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
 }
@@ -3153,14 +3392,10 @@ function renderIron(){
   const el=$("#ironStatus");
   const lh=db.labs.filter(l=>l.hct!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const lf=db.labs.filter(l=>l.fer!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const lastHct=lh[lh.length-1],lastFer=lf[lf.length-1];const out=[];
+  const lastHct=lh[lh.length-1],lastFer=lf[lf.length-1];
   const ulnHct=(db.settings.refs.hct||[])[1]||52;
-  if(lastHct&&lastHct.hct>=ulnHct)out.push(["warn","Hct "+lastHct.hct+"% no/acima do teto ("+ulnHct+"%) — eritrocitose; tema de flebotomia/doação com o médico."]);
-  if(lastFer){if(lastFer.fer<30)out.push(["warn","Ferritina "+lastFer.fer+" ng/mL — depleção. Repor ferro; doação contraindicada até recuperar."]);
-    else if(lastFer.fer<100)out.push(["warn","Ferritina "+lastFer.fer+" ng/mL — abaixo de 100; recuperar antes de doar."]);
-    else out.push(["ok","Ferritina "+lastFer.fer+" ng/mL — ≥100, reserva adequada para doar."]);}
-  if(lastHct&&lastFer){if(lastHct.hct>=ulnHct&&lastFer.fer>=100)out.push(["ok","Combinado: Hct alto + ferro reposto → janela favorável para doação (confirmar com o médico)."]);
-    else if(lastHct.hct>=ulnHct&&lastFer.fer<100)out.push(["warn","Conflito: Hct alto pede flebotomia, mas ferro baixo. Priorizar reposição de ferro; decisão médica."]);}
+  const lastSat=db.labs.filter(l=>l.sat!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  const out=ironNotes({hct:lastHct?lastHct.hct:null,uln:ulnHct,fer:lastFer?lastFer.fer:null,sat:lastSat?lastSat.sat:null});
   // C6 — preditor de hematócrito (regressão linear na tendência)
   const fc=hctForecast(ulnHct);
   if(fc){
@@ -3334,7 +3569,7 @@ function streakOf(has){let s=0;for(let i=0;i<400;i++){const d=new Date();d.setDa
 // ---------- PERSONAL (aulas do plano semanal) ----------
 // Aula = treino registrado com entry.personal=true. Semana seg–dom. Semana fechada com menos aulas que o plano
 // gera crédito a repor; aulas acima do plano (em qualquer semana, inclusive a atual) abatem o crédito.
-// settings.personal.settlements (acertos legados {id,date,amount}) ainda são descontados do saldo, sem UI.
+// Acertos legados (settlements) foram somados ao saldo inicial pelo migrate() na v5.30.
 let ptPending=false; // "Com personal" escolhido antes de registrar o treino do dia
 function ptCfg(){return db.settings.personal||{};}
 function ptWeekStart(k){const d=new Date(k+"T12:00:00");return dkey(addDays(d,-((d.getDay()+6)%7)));}
@@ -3350,7 +3585,6 @@ function ptWeeks(){
 function ptBalance(){
   const n=ptCfg().perWeek||3;let b=+ptCfg().initial||0; // saldo inicial (aulas já acumuladas antes do início)
   ptWeeks().forEach(w=>{if(w.closed)b+=n-w.done;else if(w.done>n)b-=w.done-n;});
-  (ptCfg().settlements||[]).forEach(s=>b-=s.amount);
   return b;
 }
 function ptToggleBtn(k){
@@ -3364,11 +3598,11 @@ function ptToggleBtn(k){
 function renderPersonal(){
   const card=$("#ptCard"),box=$("#ptBox");if(!box)return;const p=ptCfg();
   card.style.display=p.enabled?"":"none";if(!p.enabled)return;
-  const n=p.perWeek||3,weeks=ptWeeks(),bal=ptBalance(),lastSet=(p.settlements||[]).slice(-1)[0];
+  const n=p.perWeek||3,weeks=ptWeeks(),bal=ptBalance();
   setText("ptHint","plano "+n+"× por semana");
   const lbl=bal>0?(bal===1?"aula a repor":"aulas a repor"):bal<0?(bal===-1?"aula adiantada":"aulas adiantadas"):"saldo em dia";
   const col=bal>0?PAL.amber:bal<0?PAL.blue:PAL.green;
-  const since=lastSet?"desde o acerto em "+fmtD(lastSet.date+"T12:00:00"):"desde "+fmtD(p.start+"T12:00:00")+(+p.initial?" · saldo inicial "+p.initial:"");
+  const since="desde "+fmtD(p.start+"T12:00:00")+(+p.initial?" · saldo inicial "+p.initial:"");
   let h=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div class="num" style="font-size:38px;font-weight:600;line-height:1;color:${col}">${Math.abs(bal)}</div><div><div style="font-size:14px;font-weight:600">${lbl}</div><div class="muted" style="font-size:11.5px">${since}</div></div></div>`;
   // semana atual: uma vaga por aula do plano (+ extras)
   const cur=weeks[weeks.length-1],slots=Math.max(n,cur.done);
@@ -3660,11 +3894,10 @@ $("#saveSet").onclick=()=>{
   db.settings.examDays=+$("#setExam").value||120;
   db.settings.bioDays=+$("#setBio").value||30;
   db.settings.heightCm=+$("#setHeight").value||176;
-  db.settings.goalWeight=$("#setGoal").value!==""?+$("#setGoal").value:null;
-  // Espelha o peso-alvo no objeto de metas e no card de Metas/objetivos
-  db.settings.goals=db.settings.goals||{weight:null,bf:null,lean:null,fat:null,deadline:null};
-  db.settings.goals.weight=db.settings.goalWeight;
-  if($("#goalW"))$("#goalW").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";
+  db.settings.birthDate=$("#setBirth").value||null;
+  db.settings.inbodyOnly=$("#setInbody").checked;
+  {const bs=Math.round(+$("#setBpS").value),bd=Math.round(+$("#setBpD").value);
+   db.settings.bpTarget={sys:bs>=90&&bs<=200?bs:130,dia:bd>=50&&bd<=130?bd:80};$("#setBpS").value=db.settings.bpTarget.sys;$("#setBpD").value=db.settings.bpTarget.dia;}
   db.settings.albumin=+$("#setAlb").value||4.3;
   const cp=db.settings.coProtocol||{};
   cp.enabled=$("#cpEnabled").checked;
@@ -3676,7 +3909,7 @@ $("#saveSet").onclick=()=>{
   if($("#ptStart").value)pt.start=ptWeekStart($("#ptStart").value);
   pt.initial=Math.round(+$("#ptInitial").value)||0;$("#ptInitial").value=pt.initial;
   $("#ptStart").value=pt.start;
-  save();refreshTD();renderNextDose();renderLabTable();renderLabStatus();updatePhaseChip();renderCoProtocol();renderGoals();renderWeightTrend();toast("Configurações salvas ✓");
+  save();updatePhaseChip();refreshViews(["resumo","diario","apply","glp1","bio","habitos","charts"]);toast("Configurações salvas ✓");
 };
 function snapSummary(slot){
   try{const s=JSON.parse(localStorage.getItem("control_snap_"+slot));if(!s)return null;
@@ -3730,13 +3963,14 @@ function initAll(){
   if($("#bpDate"))$("#bpDate").value=nowLocalInput();
   $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;$("#setBio").value=db.settings.bioDays;
   {const sp=$("#setPhaseType");if(sp){sp.innerHTML="";PHASE_TYPES.forEach(p=>sp.add(new Option(p[1],p[0])));sp.value=db.settings.currentPhaseType||"blast";}}
-  $("#setHeight").value=db.settings.heightCm;$("#setGoal").value=db.settings.goalWeight!=null?db.settings.goalWeight:"";$("#setAlb").value=db.settings.albumin;
+  $("#setHeight").value=db.settings.heightCm;$("#setAlb").value=db.settings.albumin;
+  $("#setBirth").value=db.settings.birthDate||"";$("#setInbody").checked=!!db.settings.inbodyOnly;
+  {const t=db.settings.bpTarget||{sys:130,dia:80};$("#setBpS").value=t.sys;$("#setBpD").value=t.dia;}
   {const g=db.settings.goals||{};
-   if($("#goalW"))$("#goalW").value=g.weight!=null?g.weight:"";
-   if($("#goalBf"))$("#goalBf").value=g.bf!=null?g.bf:"";
-   if($("#goalLean"))$("#goalLean").value=g.lean!=null?g.lean:"";
-   if($("#goalFat"))$("#goalFat").value=g.fat!=null?g.fat:"";
-   if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";}
+   // Só as metas escolhidas (basis) voltam aos campos; as calculadas aparecem como dica (goalHints).
+   const show=k=>g[k]!=null&&(!Array.isArray(g.basis)||!g.basis.length||g.basis.includes(k));
+   GOAL_FIELDS.forEach(([k,id])=>{if($(id))$(id).value=show(k)?+(+g[k]).toFixed(2):"";});
+   if($("#goalDeadline"))$("#goalDeadline").value=g.deadline||"";goalHints();}
   $("#setMeals").value=mealsN();
   fillBioHints();
   {const pt=db.settings.personal;$("#ptEnabled").checked=!!pt.enabled;$("#ptPerWeek").value=pt.perWeek;$("#ptStart").value=pt.start||"";$("#ptInitial").value=pt.initial||0;}
@@ -3787,6 +4021,17 @@ setTimeout(()=>{
 (function(){const h=document.querySelector("header");document.documentElement.style.setProperty("--hdrH",h.offsetHeight+"px");let last=0;
   window.addEventListener("scroll",()=>{const y=window.scrollY;if(y>last&&y>56)h.classList.add("hide");else h.classList.remove("hide");last=y;},{passive:true});})();
 
+// C7 (v5.30): pede armazenamento persistente — sem isso o Android pode limpar localStorage/IndexedDB (fotos!) com
+// pouco espaço. Não protege contra "limpar dados" feito pelo usuário. Estado em Mais › Dados › Backup.
+let storagePersisted=null;
+function renderStorageState(){
+  const el=$("#storageState");if(!el)return;
+  el.textContent=storagePersisted===true?"Armazenamento persistente ✓ — o sistema não apaga os dados deste app sozinho."
+    :storagePersisted===false?"Armazenamento comum: com pouco espaço o sistema pode apagar os dados locais (as fotos não têm cópia). Instalar o app na tela inicial costuma liberar o modo persistente."
+    :"";
+}
+if(navigator.storage&&navigator.storage.persist)
+  navigator.storage.persisted().then(p=>p||navigator.storage.persist()).then(p=>{storagePersisted=!!p;renderStorageState();}).catch(()=>{});
 // Service worker (F3.8): abre offline e recebe atualizações sozinho. Exige sw.js publicado ao lado do index.html
 // e http(s) — no file:// é ignorado. Falha no registro não afeta o app.
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))

@@ -69,6 +69,21 @@ input[type=checkbox]{width:auto}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .grid-dd{display:grid;grid-template-columns:minmax(100px,2fr) minmax(0,3fr);gap:11px} /* Dose × Data/hora */
+/* Exames (D1/D2, v5.31): [= > <][valor][unidade] num só controle */
+.field.wide{grid-column:1/-1}
+.lab-in{display:flex;min-width:0}
+.lab-in input{flex:1;min-width:0;border-radius:0 var(--r-sm) var(--r-sm) 0}
+.lab-in input:not(:last-child){border-radius:0}
+.qbtn{flex:none;width:44px;background:var(--panel-2);border:1px solid var(--line);border-right:none;border-radius:var(--r-sm) 0 0 var(--r-sm);color:var(--muted);font:600 15px 'IBM Plex Mono',monospace}
+.qbtn.on{color:var(--amber);background:rgba(245,158,11,.12)}
+.usel{flex:none;width:96px;border-left:none;border-radius:0 var(--r-sm) var(--r-sm) 0;padding:12px 8px;font-size:13px;font-family:'IBM Plex Mono',monospace}
+.ref-row{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.ref-row span{flex:1;font-size:12px;min-width:0}
+.ref-row input{width:84px;padding:7px}
+.repair .rp-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 0;border-top:1px solid var(--line);font-size:12px;color:var(--txt);cursor:pointer}
+.repair .rp-row input{width:20px;height:20px;flex:none}
+.repair .rp-row span{flex:1;min-width:0}
+.repair .qbtn{width:40px;height:36px;border:1px solid var(--line);border-radius:var(--r-sm)}
 input[type=time],input[type=date],input[type=datetime-local]{min-width:0}
 button{font-family:inherit;cursor:pointer;border:none}
 .btn{background:var(--amber);color:#181818;font-weight:600;padding:14px;border-radius:var(--r-sm);font-size:15px;width:100%}
@@ -628,7 +643,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <h2>Risco cardiovascular <span class="hint">visão consolidada</span> <span class="help" data-note-id="helpCV" data-help-title="Risco cardiovascular">?</span></h2>
     <div id="cvVerdict"></div>
     <div id="cvSignals" style="margin-top:10px"></div>
-    <template class="help-src" id="helpCV">Reúne num só lugar os sinais de risco que o app já coleta — pressão arterial, FC de repouso, HDL, LDL, não-HDL, TG:HDL e hematócrito — cada um com farol verde/âmbar/vermelho. O veredito destaca o sinal mais crítico do momento. EAA (sobretudo orais) e estimulantes pioram vários desses ao mesmo tempo. Ferramenta de leitura — decisões com seu médico.</template>
+    <template class="help-src" id="helpCV">Reúne num só lugar os sinais de risco que o app já coleta — pressão arterial, FC de repouso, HDL, LDL, não-HDL, TG:HDL e hematócrito — cada um com farol verde/âmbar/vermelho. LDL e não-HDL são comparados ao alvo da sua categoria de risco CV (Configurações, definida pelo cardiologista — Diretriz Brasileira de Dislipidemias 2025); sem a categoria ficam em cinza, e só LDL ≥ 190 acende. O não-HDL usa colesterol total − HDL quando o exame tem o colesterol total. O veredito destaca o sinal mais crítico do momento. EAA (sobretudo orais) e estimulantes pioram vários desses ao mesmo tempo. Ferramenta de leitura — decisões com seu médico.</template>
   </div>
 
   <div class="card" data-sec="corpo">
@@ -675,46 +690,30 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </div>
 
   <div class="card" data-sec="exames">
-    <h2>Painel laboratorial</h2>
-    <div class="grid2">
-      <div class="field"><label>Estradiol (pg/mL)</label><input id="lE2" type="text" inputmode="decimal" class="num"></div>
-      <div class="field"><label>Prolactina (ng/mL)</label><input id="lProl" type="text" inputmode="decimal" class="num"></div>
-      <div class="field"><label>Testo Total (ng/dL)</label><input id="lTT" type="text" inputmode="decimal" class="num"></div>
-      <div class="field"><label>SHBG (nmol/L)</label><input id="lShbg" type="text" inputmode="decimal" class="num"></div>
-    </div>
-    <details>
+    <h2>Painel laboratorial <span class="help" data-note-id="helpLab" data-help-title="Painel laboratorial">?</span></h2>
+    <div id="labRepair"></div>
+    <!-- Campos gerados por buildLabForm() a partir de LABF (qualificador = / > / < e seletor de unidade) -->
+    <div class="grid2" id="labMain"></div>
+    <details id="labMoreBox">
       <summary>Painel expandido (opcional)</summary>
-      <div class="grid2" style="margin-top:8px">
-        <div class="field"><label>Testo Livre (pg/mL)</label><input id="lFreeT" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>DHT (ng/dL)</label><input id="lDHT" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Hematócrito (%)</label><input id="lHct" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>HDL (mg/dL)</label><input id="lHDL" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>LDL (mg/dL)</label><input id="lLDL" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>VLDL (mg/dL)</label><input id="lVLDL" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Triglicérides</label><input id="lTG" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>TGO (U/L)</label><input id="lTGO" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>TGP (U/L)</label><input id="lTGP" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>GGT (U/L)</label><input id="lGGT" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Ureia (mg/dL)</label><input id="lUr" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Creatinina</label><input id="lCr" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Cistatina C</label><input id="lCys" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Ferritina (ng/mL)</label><input id="lFer" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Ferro sérico (µg/dL)</label><input id="lFeSer" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Sat. transferrina (%)</label><input id="lSat" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>PCR-us (mg/L)</label><input id="lPcr" type="text" inputmode="decimal" class="num"></div>
-        <div class="field"><label>Albumina (g/dL)</label><input id="lAlb" type="text" inputmode="decimal" class="num" placeholder="4.3"></div>
-      </div>
+      <div class="grid2" id="labMore" style="margin-top:8px"></div>
+    </details>
+    <details id="labRefBox">
+      <summary>Referência do laudo (opcional)</summary>
+      <div class="muted" style="font-size:11px;margin:2px 0 8px">Já vem com a faixa padrão de cada marcador preenchido. Ajuste se o laudo trouxer outra: ela fica gravada neste exame.</div>
+      <div id="labRefRows"></div>
     </details>
     <div class="field"><label>Data do exame</label><input id="lDate" type="date"></div>
     <button class="btn btn-ghost" id="lSave">Salvar exame</button>
     <div id="labStatus"></div>
+    <template class="help-src" id="helpLab"><b>Valor censurado:</b> quando o laudo traz "&gt; 3.460,8" ou "&lt; 0,07", toque no <b>=</b> à esquerda do campo até virar <b>&gt;</b> ou <b>&lt;</b> (ou digite o sinal). O número fica gravado com o sinal: derivados viram piso ou teto ("T livre ≥ …") e o gráfico mostra uma seta. Ponto de milhar e vírgula decimal do laudo ("3.460,80") são aceitos.<br><br><b>Unidade:</b> alguns marcadores têm seletor de unidade (DHT e T livre em pg/mL ou ng/dL, PCR-us em mg/L ou mg/dL, testosterona em ng/dL ou nmol/L, estradiol em pg/mL ou pmol/L, creatinina em mg/dL ou µmol/L). Digite como está no laudo: o app converte e lembra a unidade usada. Se o número ficar cerca de 10× fora do esperado, o app pergunta antes de gravar.<br><br><b>Referência do laudo:</b> cada exame grava a faixa vigente no dia, e os alertas usam a faixa daquele exame. As faixas de Configurações são só o padrão de preenchimento.</template>
     <div id="labTable" style="margin-top:14px"></div>
   </div>
 
   <div class="card" data-sec="exames">
     <h2>Marcadores derivados <span class="hint">do último exame</span> <span class="help" data-note-id="help10" data-help-title="Marcadores derivados">?</span></h2>
     <div id="derivedBox"></div>
-    <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e TFG com a idade na data do exame (exige data de nascimento em Configurações): por cistatina (CKD-EPI 2012, a principal — creatina e massa muscular sobem a creatinina sem mexer no rim), combinada (2021) e por creatinina (2021). Constantes masculinas. Ferramenta de leitura — decisões com o médico.</template>
+    <template class="help-src" id="help10">Calculados a partir do último painel: T livre (Vermeulen, usa albumina — padrão 4,3 g/dL se ausente), razão T:E2, TGO:TGP, não-HDL, TG:HDL e TFG. Com a testosterona total censurada no laudo ("&gt; 3.460,8"), T livre e T:E2 aparecem como piso ("≥"): o número real só sai por LC-MS/MS.<br><br><b>TGO:TGP</b> só aponta o fígado quando a TGP ou a GGT passam do limite do laudo. TGO acima da TGP com as duas normais costuma ser músculo (treino nas 72 h antes da coleta; a CPK confirma).<br><br><b>Não-HDL</b> = colesterol total − HDL; sem o colesterol total, aproxima por LDL + VLDL.<br><br><b>TFG</b> com a idade na data do exame (exige data de nascimento em Configurações). A principal é a <b>combinada</b> creatinina + cistatina (CKD-EPI 2021), como recomenda o KDIGO 2024 quando a creatinina é pouco confiável. Creatinina (creatina e massa muscular a sobem) e cistatina (sobe com hormônio tireoidiano e inflamação) aparecem como réguas. Réguas que divergem mais de 15% da média pedem repetição; queda da combinada acima de 10% entre coletas, reteste em 6–8 semanas. Constantes masculinas. Ferramenta de leitura — decisões com o médico.</template>
   </div>
 
   <div class="card" data-sec="exames">
@@ -745,7 +744,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="btn btn-ghost" id="bpSave">Salvar pressão</button>
     <div class="chart-wrap" style="margin-top:16px"><canvas id="chBP"></canvas></div>
     <div id="bpList" style="margin-top:12px"></div>
-    <template class="help-src" id="helpBP">Cada leitura tem um <b>local</b>. <b>Casa</b> é comparada com a sua meta (Configurações; padrão até 130/80 — a Diretriz Brasileira de Hipertensão 2020 considera alterado a partir de 130/80 em medidas fora do consultório; ajuste ao que o cardiologista definir). <b>Consultório</b> segue a Diretriz Brasileira 2020: ótima &lt;120/80 · normal 120–129/80–84 · pré-hipertensão 130–139/85–89 · HA estágio 1 140–159/90–99 · estágio 2 160–179/100–109 · estágio 3 ≥180/110. O status usa a média de 7 dias quando há 2 ou mais leituras em casa — uma leitura isolada não define a pressão. Meça sentado, em repouso, sempre nos mesmos horários; cafeína e o protocolo hormonal elevam a PA. Registros anteriores à v5.30 contam como casa.</template>
+    <template class="help-src" id="helpBP">Cada leitura tem um <b>local</b>. <b>Casa</b> é comparada com a sua meta (Configurações; padrão abaixo de 130/80): 130/80 ou mais já conta como acima, porque a MRPA considera alterado a partir de 130/80. Ajuste ao que o cardiologista definir. <b>Consultório</b> segue a Diretriz Brasileira de Hipertensão 2025: normal &lt;120/80 · pré-hipertensão 120–139/80–89 · HA estágio 1 140–159/90–99 · estágio 2 160–179/100–109 · estágio 3 ≥180/110 (vale a pior entre sistólica e diastólica; confirme as categorias com o cardiologista). O status usa a média de 7 dias quando há 2 ou mais leituras em casa — uma leitura isolada não define a pressão. Meça sentado, em repouso, sempre nos mesmos horários; cafeína e o protocolo hormonal elevam a PA. Registros anteriores à v5.30 contam como casa.</template>
   </div>
 
   <div class="card" data-sec="cardio">
@@ -852,8 +851,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <div class="field"><label>Altura (cm)</label><input id="setHeight" type="text" inputmode="decimal" class="num" value="176"></div>
       <div class="field"><label>Data de nascimento (TFG)</label><input id="setBirth" type="date"></div>
       <div class="field"><label>Albumina padrão (g/dL)</label><input id="setAlb" type="text" inputmode="decimal" class="num" value="4.3"></div>
-      <div class="field"><label>Meta PA casa · sist.</label><input id="setBpS" type="text" inputmode="numeric" class="num" value="130"></div>
-      <div class="field"><label>Meta PA casa · diast.</label><input id="setBpD" type="text" inputmode="numeric" class="num" value="80"></div>
+      <div class="field"><label>Meta PA casa · sist. (abaixo de)</label><input id="setBpS" type="text" inputmode="numeric" class="num" value="130"></div>
+      <div class="field"><label>Meta PA casa · diast. (abaixo de)</label><input id="setBpD" type="text" inputmode="numeric" class="num" value="80"></div>
+      <div class="field wide"><label>Categoria de risco CV (definida pelo cardiologista)</label><select id="setCvRisk"><option value="">não definida</option><option value="baixo">baixo · LDL &lt; 115</option><option value="intermediario">intermediário · LDL &lt; 100</option><option value="alto">alto · LDL &lt; 70</option><option value="muitoAlto">muito alto · LDL &lt; 50</option><option value="extremo">extremo · LDL &lt; 40</option></select></div>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <input type="checkbox" id="setInbody" style="width:20px;height:20px">
@@ -905,7 +905,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div class="muted" style="font-size:11px">Saldo inicial = aulas já acumuladas antes da data de início (negativo = aulas adiantadas).</div>
       </div>
     </details>
-    <details><summary>Faixas de referência (editáveis)</summary>
+    <details><summary>Faixas de referência (padrão para exames novos)</summary>
+      <div class="muted" style="font-size:11px;margin-top:6px">Cada exame grava a faixa do laudo no dia da coleta; mudar aqui não altera exames já salvos.</div>
       <div id="refEditor" style="margin-top:9px"></div>
     </details>
     <button class="btn btn-ghost btn-sm" id="saveSet" style="width:100%;margin-top:11px">Salvar configurações</button>
@@ -926,7 +927,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.30</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.31</div>
 </section>
 
 </main>
@@ -1019,24 +1020,24 @@ function calcFreeT(ttNgDl,shbgNmol,albGdl){
   return FT*288.4*1e9; // mol/L -> ng/L = pg/mL
 }
 
-// ---------- Pressão arterial — C3 ----------
-// ctx "cons" (consultório): Diretriz Brasileira de Hipertensão 2020 (pior entre sistólica e diastólica).
-// ctx "casa" (padrão): meta pessoal, limite incluído (padrão até 130/80; a diretriz considera alterado ≥ 130/80
-// em medidas fora do consultório). lvl: 0 ok · 1 atenção leve · 2 acima · 3 alta · 4 muito alta.
+// ---------- Pressão arterial — C3 · D3 (v5.31) ----------
+// ctx "cons" (consultório): Diretriz Brasileira de Hipertensão 2025 (pior entre sistólica e diastólica) —
+// normal < 120/80 · pré-hipertensão 120–139/80–89 · HA 1 140–159/90–99 · HA 2 160–179/100–109 · HA 3 ≥ 180/110.
+// ctx "casa" (padrão): alterado a partir da meta pessoal, limite NÃO incluído (padrão 130/80: a MRPA considera
+// alterado ≥ 130/80). lvl: 0 ok · 1 atenção leve · 2 acima · 3 alta · 4 muito alta.
 function bpLevel(s,d,ctx,target){
   if(s==null||d==null)return {lbl:"—",lvl:0};
   if(ctx==="cons"){
     if(s>=180||d>=110)return {lbl:"HA estágio 3",lvl:4};
     if(s>=160||d>=100)return {lbl:"HA estágio 2",lvl:3};
     if(s>=140||d>=90)return {lbl:"HA estágio 1",lvl:2};
-    if(s>=130||d>=85)return {lbl:"pré-hipertensão",lvl:1};
-    if(s>=120||d>=80)return {lbl:"normal",lvl:0};
-    return {lbl:"ótima",lvl:0};
+    if(s>=120||d>=80)return {lbl:"pré-hipertensão",lvl:1};
+    return {lbl:"normal",lvl:0};
   }
   const t=target&&target.sys&&target.dia?target:{sys:130,dia:80};
   if(s>=180||d>=110)return {lbl:"muito alta",lvl:4};
   if(s>=160||d>=100)return {lbl:"alta",lvl:3};
-  if(s>t.sys||d>t.dia)return {lbl:"acima da meta",lvl:2};
+  if(s>=t.sys||d>=t.dia)return {lbl:"acima da meta",lvl:2};
   return {lbl:"na meta",lvl:0};
 }
 // Resumo de uma lista de leituras: média dos últimos 7 dias com ≥ 2 leituras; senão a última (nunca 1 leitura
@@ -1116,16 +1117,18 @@ function weightRate(pts,nowMs){
   return {rate:(b.w-a.w)/days*7,mode:"2pts",n:2,fromT:a.t,lastT:b.t};
 }
 
-// ---------- Ferro × hematócrito — C2 ----------
-// Ferritina sobe com inflamação: sem saturação de transferrina ≥ 20% ela não confirma ferro disponível.
-// o: {hct, uln, fer, sat} → códigos (o texto fica em renderIron/renderLabStatus).
+// ---------- Ferro × hematócrito — C2 · D5 (v5.31) ----------
+// A ferritina sobe com inflamação e com lesão muscular ou hepática: sem saturação de transferrina ≥ 20% ela não
+// confirma ferro disponível. Ferritina ≥ 100 com saturação < 20% é discordante; a PCR-us diz se inflamação entra
+// na lista de causas (pcrLow/pcrHigh/pcrNA, só nesse caso).
+// o: {hct, uln, fer, sat, pcr?, pcrUln?} → códigos (o texto fica em renderIron/renderLabStatus).
 function ironAssess(o){
   const out=[],hctHi=o.hct!=null&&o.hct>=o.uln,satLow=o.sat!=null&&o.sat<20;
   if(hctHi)out.push("hctHigh");
   if(o.fer!=null){
     if(o.fer<30)out.push("ferDepleted");
     else if(o.fer<100)out.push("ferLow");
-    else if(satLow)out.push("ferHighSatLow");
+    else if(satLow){out.push("ferHighSatLow");out.push(o.pcr==null?"pcrNA":o.pcr<(o.pcrUln||2)?"pcrLow":"pcrHigh");}
     else if(o.sat==null)out.push("ferHighNoSat");
     else out.push("ferOk");
   }else if(satLow)out.push("satLow");
@@ -1135,6 +1138,151 @@ function ironAssess(o){
     else out.push("hctNeedSat");
   }
   return out;
+}
+
+// ---------- Valores censurados — D1 (v5.31) ----------
+// Laudo com "> 3.460,8" ou "< 0,07": o número fica em rec[k] e o qualificador em rec.q[k] (formato aditivo — um
+// aparelho em versão antiga continua lendo o número). Aceita "≥/≤" e o milhar pt-BR ("3.460,80" → 3460,8).
+// → {v, q} (q: "" exato · ">" · "<") ou null.
+function parseLabInput(s){
+  if(s==null)return null;
+  let t=String(s).replace(/\s+/g,"").replace(/≥/g,">").replace(/≤/g,"<"),q="";
+  if(t[0]===">"||t[0]==="<"){q=t[0];t=t.slice(1);}
+  if(t.includes(","))t=t.replace(/\./g,"").replace(",",".");                    // ponto de milhar + vírgula decimal
+  else if((t.match(/\./g)||[]).length>1){const i=t.lastIndexOf(".");t=t.slice(0,i).replace(/\./g,"")+t.slice(i);}
+  if(!/^(\d+\.?\d*|\.\d+)$/.test(t))return null;
+  const v=parseFloat(t);return isFinite(v)?{v,q}:null;
+}
+// Direção do resultado de uma conta com entradas censuradas. parts: [[q, sinal], ...] — sinal +1 se o resultado
+// cresce com a entrada (TT na T livre), −1 se diminui (E2 na razão T:E2). "" exato · ">" piso (≥) · "<" teto (≤) ·
+// null quando as entradas puxam para lados opostos (não calculável).
+function boundDir(parts){
+  let d=0;
+  for(const [q,s] of parts){if(q!==">"&&q!=="<")continue;const x=(q===">"?1:-1)*s;if(d&&x!==d)return null;d=x;}
+  return d>0?">":d<0?"<":"";
+}
+// Valor × faixa [lo, hi] com o qualificador: "hi"/"lo" fora · "ok" dentro · "unk" censurado sem como saber
+// (">40" com teto 52) · "" sem referência. Censurado sem referência útil fica neutro, nunca vermelho.
+function refStatus(v,q,ref){
+  if(v==null||isNaN(v)||!ref)return "";
+  const lo=ref[0],hi=ref[1];if(lo==null&&hi==null)return "";
+  if(q===">"){if(hi!=null&&v>=hi)return "hi";if(hi==null&&(lo==null||v>=lo))return "ok";return "unk";}
+  if(q==="<"){if(lo!=null&&v<=lo)return "lo";if(lo==null&&(hi==null||v<=hi))return "ok";return "unk";}
+  if(hi!=null&&v>hi)return "hi";if(lo!=null&&v<lo)return "lo";return "ok";
+}
+
+// ---------- Unidades por marcador — D2 (v5.31) ----------
+// rec[k] fica sempre na unidade canônica (a 1ª da lista); a unidade digitada vai em rec.u[k].
+// Fator: valor digitado × f = canônico (relatório de exames, §11 F4).
+const LAB_UNITS={
+  e2:[["pg/mL",1],["pmol/L",1/3.671]],
+  tt:[["ng/dL",1],["nmol/L",28.84]],
+  freeT:[["pg/mL",1],["ng/dL",10]],
+  dht:[["ng/dL",1],["pg/mL",0.1]],
+  cr:[["mg/dL",1],["µmol/L",1/88.4]],
+  pcr:[["mg/L",1],["mg/dL",10]]
+};
+// Faixa plausível na unidade canônica (cobre doses suprafisiológicas). Sem histórico, valor fora dela leva o app a
+// procurar a unidade em que o número cabe (o erro de 10× do DHT do laudo em pg/mL no campo em ng/dL).
+const LAB_PLAUS={e2:[3,1500],tt:[20,5000],freeT:[5,2500],dht:[3,500],cr:[0.3,6],pcr:[0.05,300]};
+const canonUnit=k=>LAB_UNITS[k]?LAB_UNITS[k][0][0]:null;
+const unitFactor=(k,u)=>{const e=(LAB_UNITS[k]||[]).find(x=>x[0]===u);return e?e[1]:1;};
+const toCanon=(k,v,u)=>v==null?null:+(v*unitFactor(k,u)).toPrecision(12);
+const fromCanon=(k,v,u)=>v==null?null:+(v/unitFactor(k,u)).toPrecision(10);
+// Valor ~10× fora do esperado para a unidade escolhida: comparado ao último valor do marcador (≥ 5× acima ou
+// abaixo) ou, sem histórico, à faixa plausível. Sugere a unidade em que o número cabe → {unit, value} ou null.
+function unitSuggest(k,v,u,last){
+  const l=LAB_UNITS[k];if(!l||!(v>0))return null;
+  const P=LAB_PLAUS[k],c=toCanon(k,v,u);
+  const fits=x=>last>0?x/last>=1/3&&x/last<=3:x>=P[0]&&x<=P[1];
+  const far=last>0?c/last>=5||c/last<=0.2:c<P[0]||c>P[1];
+  if(!far)return null;
+  for(const [alt] of l){if(alt===u)continue;const c2=toCanon(k,v,alt);if(fits(c2))return {unit:alt,value:c2};}
+  return null;
+}
+// Reparo dos exames gravados antes da v5.31 (aplicado só com a confirmação do usuário):
+// "unit" — marcador com unidade alternativa, sem rec.u, fora da faixa plausível e que cabe em outra unidade
+//   (DHT do laudo em pg/mL). Número digitado múltiplo de 500 sugere ">" (limite típico de ensaio; o usuário decide).
+// "ceil" — o mesmo valor máximo, exato, em 2 ou mais exames de um marcador sujeito a teto de ensaio → ">".
+// Só olha o valor gravado sem sinal, unidade e referência (formulário anterior à v5.31): o que foi digitado ou
+// revisado depois já passou pelo formulário novo.
+const CEIL_PRONE=["tt","dht","e2","freeT","prol"];
+function labRepairs(labs){
+  const out=[],L=labs||[],has=(o,f,k)=>o[f]&&o[f][k]!=null,legacy=(r,k)=>r[k]!=null&&!has(r,"u",k)&&!has(r,"q",k)&&!has(r,"r",k);
+  L.forEach(r=>Object.keys(LAB_UNITS).forEach(k=>{
+    if(!legacy(r,k))return;const v=r[k],s=unitSuggest(k,v,canonUnit(k),null);
+    if(s)out.push({id:r.id,date:r.date,k,kind:"unit",from:v,to:s.value,unit:s.unit,q:v%500===0?">":""});
+  }));
+  CEIL_PRONE.forEach(k=>{
+    const rs=L.filter(r=>legacy(r,k));if(rs.length<2)return;
+    const mx=Math.max(...rs.map(r=>r[k])),at=rs.filter(r=>r[k]===mx);
+    if(at.length<2||out.some(o=>o.k===k&&at.some(r=>r.id===o.id)))return;
+    at.forEach(r=>out.push({id:r.id,date:r.date,k,kind:"ceil",from:mx,to:mx,q:">"}));
+  });
+  return out;
+}
+
+// ---------- TFG: combinada como principal — D4 (v5.31) ----------
+// KDIGO 2024: com a creatinina pouco confiável (massa muscular, creatina) a combinada é a principal; creatinina e
+// cistatina viram "réguas" (a cistatina sobe com hormônio tireoidiano). Réguas que divergem > 15% da média →
+// repetir. dropFrac = queda da combinada desde a coleta anterior (> 0,10 → reteste em 6–8 semanas).
+function egfrPanel(cur,age,prev,agePrev){
+  if(!cur||age==null)return null;
+  const cr=egfrCr(cur.cr,age),cys=egfrCys(cur.cys,age),crcys=egfrCrCys(cur.cr,cur.cys,age);
+  const main=crcys!=null?"crcys":cys!=null?"cys":cr!=null?"cr":null;if(!main)return null;
+  const discord=cr!=null&&cys!=null?Math.abs(cr-cys)/((cr+cys)/2)>0.15:null;
+  let dropFrac=null;
+  if(crcys!=null&&prev&&agePrev!=null){const p=egfrCrCys(prev.cr,prev.cys,agePrev);if(p)dropFrac=(p-crcys)/p;}
+  return {cr,cys,crcys,main,discord,dropFrac};
+}
+
+// ---------- TGO: fígado ou músculo? — D5 (v5.31) ----------
+// Só fala de fígado quando a TGP ou a GGT passam do limite. TGO acima da TGP com as duas normais aponta para
+// músculo (treino recente, CPK). o: {tgo, tgp, ggt, tgpHi, ggtHi} → "hepatic" | "muscle" | "ok" | null.
+function liverPattern(o){
+  if(o.tgo==null||o.tgp==null)return null;
+  const tgpHi=o.tgpHi!=null&&o.tgp>o.tgpHi,ggtHi=o.ggt!=null&&o.ggtHi!=null&&o.ggt>o.ggtHi;
+  if(tgpHi||ggtHi)return "hepatic";
+  return o.tgo>o.tgp?"muscle":"ok";
+}
+
+// ---------- Hct: projeção só no regime de dose atual — D5 (v5.31) ----------
+// Dose semanal por droga (mg/semana) nos `days` (28) dias até atMs. inj: [{drug, doseMg, date}].
+function weeklyDoseVec(inj,atMs,days){
+  const d=days||28,from=atMs-d*864e5,out={};
+  (inj||[]).forEach(i=>{const t=+new Date(i.date);if(t>from&&t<=atMs&&i.doseMg>0)out[i.drug]=(out[i.drug]||0)+i.doseMg;});
+  Object.keys(out).forEach(k=>out[k]=out[k]/(d/7));
+  return out;
+}
+// Mesmo regime: cada droga dentro de ±tol (15%) da maior das duas doses (droga que entra ou sai muda o regime).
+function sameRegime(a,b,tol){
+  const t=tol==null?0.15:tol,A=a||{},B=b||{};
+  return [...new Set([...Object.keys(A),...Object.keys(B)])].every(k=>{const x=A[k]||0,y=B[k]||0;return Math.abs(x-y)<=t*Math.max(x,y);});
+}
+// pts: [{t, v, vec}] em ordem de data; curVec = regime de hoje. Regressão só com a sequência final de coletas no
+// mesmo regime; se a dose mudou depois da última coleta, não projeta.
+// → {n, slopeWk, cur, fromT} ou {n, reason: "changedAfter" | "few"}.
+function hctTrend(pts,curVec){
+  if(!pts||!pts.length)return null;
+  const last=pts[pts.length-1];
+  if(curVec&&!sameRegime(last.vec,curVec))return {n:0,reason:"changedAfter"};
+  let i=pts.length-1;while(i>0&&sameRegime(pts[i-1].vec,last.vec))i--;
+  const seg=pts.slice(i),n=seg.length;
+  if(n<2)return {n,reason:"few"};
+  const x=seg.map(p=>(p.t-seg[0].t)/864e5),y=seg.map(p=>p.v),mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;for(let j=0;j<n;j++){num+=(x[j]-mx)*(y[j]-my);den+=(x[j]-mx)*(x[j]-mx);}
+  return {n,slopeWk:(den?num/den:0)*7,cur:last.v,fromT:seg[0].t};
+}
+
+// ---------- LDL pela categoria de risco CV — D5 (v5.31) ----------
+// Diretriz Brasileira de Dislipidemias 2025 (SBC): alvo de LDL por categoria; não-HDL = LDL + 30. A categoria é do
+// cardiologista (Configurações). Sem categoria não há alvo (lvl null) — só LDL ≥ 190 / não-HDL ≥ 220 acendem.
+const LDL_TARGETS={baixo:115,intermediario:100,alto:70,muitoAlto:50,extremo:40};
+function lipidLevel(v,cat,kind){
+  if(v==null)return null;
+  const base=LDL_TARGETS[cat],target=base==null?null:kind==="nonHdl"?base+30:base;
+  const lvl=v>=(kind==="nonHdl"?220:190)?3:target==null?null:v<target?0:1;
+  return {lvl,target};
 }
 </script>
 <script>
@@ -1458,7 +1606,11 @@ const CHECKS=[
   {k:"sleep",lbl:"Sono",lo:"péssimo",hi:"restaurador"},
   {k:"irrit",lbl:"Irritabilidade",lo:"calmo",hi:"explosivo"}
 ];
-const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[30,85],hct:[null,52],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,41],ggt:[null,60],ur:[null,50],cr:[null,1.3],cys:[null,1.1],fer:[30,null],alb:[3.5,5.2],feSer:[65,175],sat:[20,50],pcr:[null,3]};
+// Faixas padrão (unidade canônica). D6 (v5.31): são só o padrão de preenchimento — cada exame grava a sua (rec.r).
+const DEFAULT_REFS={e2:[null,39.8],prol:[2,18],freeT:[null,null],shbg:[10,57],tt:[null,null],dht:[14.3,84.2],hct:[null,52],ct:[null,190],hdl:[40,null],ldl:[null,130],vldl:[null,30],tg:[null,150],tgo:[null,40],tgp:[null,49],ggt:[null,73],ur:[null,50],cr:[null,1.3],cys:[null,1.23],fer:[30,null],alb:[3.5,5.2],feSer:[23,165],sat:[20,50],pcr:[null,2]};
+// Padrões trocados na v5.31 pelos do laudo de 30/08/2026: migrate() troca só a faixa que ainda é o padrão antigo.
+const REFS_REV=1;
+const REFS_OLD={dht:[30,85],tgp:[null,41],ggt:[null,60],cys:[null,1.1],feSer:[65,175],pcr:[null,3]};
 // Protocolo de suplementação v2.4 + unificação C+D (relatório de 12/10/2026). Ids de itens mantidos quando o
 // composto continua (preserva o histórico de adesão). Itens "optional" não entram no % de adesão.
 const SUPP_SCHEDULE_REV=2; // incrementar ao trocar o protocolo padrão → migrate() substitui o cronograma salvo
@@ -1469,10 +1621,12 @@ const DEFAULT_SCHEDULE=[
   {id:"b6",time:"21:30",name:"E · Pré-sono",note:"Fora de refeição, 30 min antes da R5.",items:[{id:"mgb",name:"Magnésio bisglicinato 300–400 mg (elementar)"},{id:"gli",name:"Glicina 3 g"},{id:"the",name:"L-Teanina 200 mg"},{id:"tau",name:"Taurina 2 g"}]},
   {id:"b7",time:"22:30",name:"F · Ferro isolado",note:"Dias alternados · em revisão. 2 h antes / 1 h depois: sem Ca, Zn, Mg, café, chá, lácteos ou NAC.",items:[{id:"fe",name:"Bisglicinato ferroso 100 mg + Vit. C 500 mg",optional:true}]}
 ];
-const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina",feSer:"Ferro sérico",sat:"Sat. transferrina",pcr:"PCR-us"};
+const REF_LBL={e2:"E2",prol:"Prolactina",freeT:"Testo livre",shbg:"SHBG",tt:"Testo total",dht:"DHT",hct:"Hematócrito",ct:"Colesterol total",hdl:"HDL",ldl:"LDL",vldl:"VLDL",tg:"Triglicérides",tgo:"TGO",tgp:"TGP",ggt:"GGT",ur:"Ureia",cr:"Creatinina",cys:"Cistatina C",fer:"Ferritina",feSer:"Ferro sérico",sat:"Sat. transferrina",pcr:"PCR-us"};
 const CYCLE_EXEMPT=["e2","tt","freeT","dht"]; // esperados altos sob protocolo (Hct mantido sinalizando — marcador de segurança)
+// Categorias de risco CV (Diretriz Brasileira de Dislipidemias 2025) — chaves de LDL_TARGETS, no bloco de cálculo.
+const CV_RISK_LBL={baixo:"baixo",intermediario:"intermediário",alto:"alto",muitoAlto:"muito alto",extremo:"extremo"};
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="5.30";
+const APP_VERSION="5.31";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -1494,8 +1648,8 @@ function fresh(){
   return {schemaVersion:2,injections:[],biometrics:[],labs:[],checkins:[],daily:{},glp1:[],glp1sym:[],donations:[],pressures:[],
     training:{pattern:["descanso","Regenerativo","A","B","descanso","Regenerativo","C","D"],anchor:null,log:{}},diet:{log:{}},
     drugs:DEFAULT_DRUGS.map(d=>({...d})),suppSchedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),glp1Drugs:DEFAULT_GLP1.map(d=>({...d})),
-    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:{...DEFAULT_REFS},waterTarget:4000,examDays:120,bioDays:30,heightCm:176,albumin:4.3,
-      birthDate:null,inbodyOnly:false,bpTarget:{sys:130,dia:80},
+    settings:{warnDays:5,cycleMode:true,currentPhase:"Hipertrofia 2026-Q2",currentPhaseType:"blast",refs:JSON.parse(JSON.stringify(DEFAULT_REFS)),refsRev:REFS_REV,waterTarget:4000,examDays:120,bioDays:30,heightCm:176,albumin:4.3,
+      birthDate:null,inbodyOnly:false,bpTarget:{sys:130,dia:80},cvRisk:null,labRepairSkip:[],
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null,basis:null},
       personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0},
       suppRev:SUPP_SCHEDULE_REV,meals:6,
@@ -1509,7 +1663,10 @@ function migrate(r){
   if(s.cycleMode==null)s.cycleMode=true;
   if(s.currentPhase==null)s.currentPhase="Hipertrofia 2026-Q2";
   if(s.currentPhaseType==null)s.currentPhaseType="blast";
-  s.refs=Object.assign({},DEFAULT_REFS,s.refs||{});
+  s.refs=Object.assign(JSON.parse(JSON.stringify(DEFAULT_REFS)),s.refs||{});
+  if((s.refsRev||0)<REFS_REV){Object.keys(REFS_OLD).forEach(k=>{if(same(s.refs[k],REFS_OLD[k]))s.refs[k]=DEFAULT_REFS[k].slice();});s.refsRev=REFS_REV;}
+  if(s.cvRisk===undefined)s.cvRisk=null;                    // categoria de risco CV (alvo de LDL), do cardiologista
+  if(!Array.isArray(s.labRepairSkip))s.labRepairSkip=[];   // reparos de exame dispensados ("id:chave")
   if(s.waterTarget==null)s.waterTarget=4000;
   if(s.examDays==null)s.examDays=120;
   if(s.bioDays==null)s.bioDays=30;
@@ -1633,11 +1790,17 @@ function initHelp(){
 // Campos de valor são type="text" + inputmode (decimal/numeric): o Teclado Samsung exibe o separador decimal e
 // o Chrome em pt-BR não descarta a vírgula. A vírgula vira ponto ao digitar, então todo parseFloat segue válido.
 // Enter = "Próximo" (vai ao próximo campo de texto do mesmo card) ou "Concluído" no último.
+// D1 (v5.31): campos com data-q (exames) aceitam ">" ou "<" no início (laudo censurado); "3.460," vira "3460."
+// (ponto de milhar pt-BR antes da vírgula decimal).
 const NUM_SEL='input[inputmode="decimal"],input[inputmode="numeric"]';
 const TXT_SEL='input:not([type]),input[type=text],input[type=email],input[type=search],input[type=tel]';
 document.addEventListener("input",e=>{
   const t=e.target;if(!t.matches||!t.matches(NUM_SEL))return;
-  const v=t.value,clean=v.replace(/,/g,".").replace(t.inputMode==="numeric"?/[^\d-]/g:/[^\d.\-]/g,"");
+  const v=t.value;let s=v.replace(/≥/g,">").replace(/≤/g,"<"),q="";
+  const ci=s.indexOf(",");
+  if(ci>0&&/^[<>]?\d{1,3}(\.\d{3})+$/.test(s.slice(0,ci)))s=s.slice(0,ci).replace(/\./g,"")+s.slice(ci);
+  if(t.dataset.q!=null&&/^[<>]/.test(s)){q=s[0];s=s.slice(1);}
+  const clean=q+s.replace(/,/g,".").replace(t.inputMode==="numeric"?/[^\d-]/g:/[^\d.\-]/g,"");
   if(clean!==v){const pos=Math.max(0,(t.selectionStart||0)-(v.length-clean.length));t.value=clean;try{t.setSelectionRange(pos,pos);}catch(x){}}
 });
 function nextField(el){
@@ -2007,7 +2170,8 @@ function clearForm(kind){
   if(kind==="eaa"){$("#inDose").value="";$("#inNote").value="";selectedSite=null;$("#inDate").value=nowLocalInput();applyDrugContext();}
   else if(kind==="glp1"){$("#gDose").value="";$("#gNote").value="";gSelectedSite=null;$("#gDate").value=nowLocalInput();glpDrugContext();}
   else if(kind==="bio"){["bWeight","bBf","bSmm","bVisc"].forEach(id=>$("#"+id).value="");$("#bDate").value=todayInput();fillBioHints();}
-  else if(kind==="lab"){LABF.forEach(([,id])=>$("#"+id).value="");$("#lDate").value=todayInput();}
+  else if(kind==="lab"){LABF.forEach(([,id])=>{const el=$("#"+id);el.value="";syncQBtn(el);});$("#lDate").value=todayInput();
+    resetLabUnits();labUnitOk.clear();labRefDraft={};$("#labRefBox").open=false;}
   else if(kind==="bp"){["bpSys","bpDia","bpHr","bpNote"].forEach(id=>$("#"+id).value="");$("#bpCtx").value="casa";$("#bpDate").value=nowLocalInput();}
 }
 function editDose(kind,rec){
@@ -2017,8 +2181,14 @@ function editDose(kind,rec){
     $("#inDose").value=r.doseMg;selectedSite=r.site;if(r.site){$("#siteField").style.display="block";buildSiteGrid();}$("#inDate").value=toLocalInput(r.date);$("#inNote").value=r.note||"";});}
 }
 function editBio(rec){goCard("bio","#bWeight");startEdit("bio",rec,r=>{$("#bWeight").value=r.weight??"";$("#bBf").value=r.bf??"";$("#bSmm").value=r.smm??"";$("#bVisc").value=r.visceral??"";if(r.method)$("#bMethod").value=r.method;$("#bDate").value=dkey(r.date);});}
-function editLab(rec){goCard("bio","#lE2");startEdit("lab",rec,r=>{LABF.forEach(([k,id])=>$("#"+id).value=r[k]??"");$("#lDate").value=dkey(r.date);
-  const exp=LABF.some(([k,id])=>r[k]!=null&&$("#"+id).closest("details"));if(exp)$("#lFreeT").closest("details").open=true;});}
+// D1/D2/D6 (v5.31): o campo volta com o sinal e na unidade em que foi digitado; a faixa gravada vira o rascunho.
+function editLab(rec){goCard("bio","#lE2");startEdit("lab",rec,r=>{
+  resetLabUnits();labUnitOk.clear();labRefDraft=JSON.parse(JSON.stringify(r.r||{}));
+  LABF.forEach(([k,id])=>{const el=$("#"+id),s=labUnitSel(k);if(s&&r.u&&r.u[k])s.value=r.u[k];
+    el.value=r[k]==null?"":labQ(r,k)+(s?fromCanon(k,r[k],s.value):r[k]);syncQBtn(el);});
+  $("#lDate").value=dkey(r.date);
+  if(LABF.some(([k,id])=>r[k]!=null&&$("#"+id).closest("#labMoreBox")))$("#labMoreBox").open=true;
+  $("#labRefBox").open=false;});}
 function editBp(rec){goCard("bio","#bpSys");startEdit("bp",rec,r=>{$("#bpSys").value=r.sys;$("#bpDia").value=r.dia;$("#bpHr").value=r.hr??"";$("#bpNote").value=r.note||"";$("#bpCtx").value=r.ctx==="cons"?"cons":"casa";$("#bpDate").value=String(r.date).slice(0,16);});}
 // Botões da linha de próxima dose: Registrar (âmbar se vencida) + Encerrar, numa linha abaixo do texto.
 function doseActions(kind,drug,due){
@@ -2252,7 +2422,7 @@ function renderAdherence(){
 }
 
 // ---------- TENDÊNCIA DE EXAMES ----------
-const TREND_MARKERS=[["e2","Estradiol","pg/mL"],["prol","Prolactina","ng/mL"],["tt","Testo Total","ng/dL"],["freeT","Testo Livre","pg/mL"],["shbg","SHBG","nmol/L"],["dht","DHT","ng/dL"],["hct","Hematócrito","%"],["hdl","HDL","mg/dL"],["ldl","LDL","mg/dL"],["vldl","VLDL","mg/dL"],["tg","Triglicérides","mg/dL"],["tgo","TGO","U/L"],["tgp","TGP","U/L"],["ggt","GGT","U/L"],["ur","Ureia","mg/dL"],["cr","Creatinina","mg/dL"],["cys","Cistatina C","mg/L"],["fer","Ferritina","ng/mL"],["feSer","Ferro sérico","µg/dL"],["sat","Sat. transferrina","%"],["pcr","PCR-us","mg/L"]];
+const TREND_MARKERS=[["e2","Estradiol","pg/mL"],["prol","Prolactina","ng/mL"],["tt","Testo Total","ng/dL"],["freeT","Testo Livre","pg/mL"],["shbg","SHBG","nmol/L"],["dht","DHT","ng/dL"],["hct","Hematócrito","%"],["ct","Colesterol total","mg/dL"],["hdl","HDL","mg/dL"],["ldl","LDL","mg/dL"],["vldl","VLDL","mg/dL"],["tg","Triglicérides","mg/dL"],["tgo","TGO","U/L"],["tgp","TGP","U/L"],["ggt","GGT","U/L"],["ur","Ureia","mg/dL"],["cr","Creatinina","mg/dL"],["cys","Cistatina C","mg/L"],["fer","Ferritina","ng/mL"],["feSer","Ferro sérico","µg/dL"],["sat","Sat. transferrina","%"],["pcr","PCR-us","mg/L"]];
 function fillTrendMarker(){const s=$("#trendMarker");if(s.options.length)return;TREND_MARKERS.forEach(m=>s.add(new Option(m[1],m[0])));}
 $("#trendMarker").onchange=renderLabTrend;
 function renderLabTrend(){
@@ -2267,21 +2437,26 @@ function renderLabTrend(){
   const ex=db.labs.filter(l=>l[key]!=null&&l[key]!=="").sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(!ex.length){clearCanvas("chTrend","sem dados deste marcador");$("#trendDelta").innerHTML='<span class="muted">Registre exames com este marcador.</span>';return;}
   const labels=ex.map(l=>fmtD(l.date)),vals=ex.map(l=>+l[key]);
-  const ref=(db.settings.refs||{})[key]||[null,null];const ds=[];
-  if(ref[0]!=null&&ref[1]!=null){
-    ds.push({label:"_hi",data:vals.map(()=>ref[1]),borderColor:"rgba(0,0,0,0)",pointRadius:0,fill:"+1",backgroundColor:"rgba(52,211,153,.10)"});
-    ds.push({label:"_lo",data:vals.map(()=>ref[0]),borderColor:"rgba(0,0,0,0)",pointRadius:0,fill:false});
-  }else if(ref[1]!=null){ds.push({label:"_hi",data:vals.map(()=>ref[1]),borderColor:"rgba(248,113,113,.45)",borderDash:[5,5],pointRadius:0,fill:false});}
-  else if(ref[0]!=null){ds.push({label:"_lo",data:vals.map(()=>ref[0]),borderColor:"rgba(248,113,113,.45)",borderDash:[5,5],pointRadius:0,fill:false});}
-  const ptc=ex.map(l=>{const f=flag(key,+l[key]);return f==="flag-hi"?PAL.red:f==="flag-ok"?PAL.green:PAL.amber;});
-  ds.push({label:meta[1]+(meta[2]?" ("+meta[2]+")":""),data:vals,borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.25,pointRadius:5,pointBackgroundColor:ptc,pointBorderColor:ptc});
+  // D6 (v5.31): a faixa acompanha a referência de cada exame (muda quando o laboratório muda a faixa).
+  const refs=ex.map(l=>labRef(l,key)||[null,null]),hasLo=refs.some(r=>r[0]!=null),hasHi=refs.some(r=>r[1]!=null);const ds=[];
+  if(hasLo&&hasHi){
+    ds.push({label:"_hi",data:refs.map(r=>r[1]),borderColor:"rgba(0,0,0,0)",pointRadius:0,fill:"+1",backgroundColor:"rgba(52,211,153,.10)",stepped:"middle"});
+    ds.push({label:"_lo",data:refs.map(r=>r[0]),borderColor:"rgba(0,0,0,0)",pointRadius:0,fill:false,stepped:"middle"});
+  }else if(hasHi){ds.push({label:"_hi",data:refs.map(r=>r[1]),borderColor:"rgba(248,113,113,.45)",borderDash:[5,5],pointRadius:0,fill:false,stepped:"middle"});}
+  else if(hasLo){ds.push({label:"_lo",data:refs.map(r=>r[0]),borderColor:"rgba(248,113,113,.45)",borderDash:[5,5],pointRadius:0,fill:false,stepped:"middle"});}
+  const ptc=ex.map(l=>{const f=flag(key,+l[key],l);return f==="flag-hi"?PAL.red:f==="flag-ok"?PAL.green:PAL.amber;});
+  // D1: valor censurado vira seta (▲ ">" · ▼ "<") no lugar do ponto.
+  const qs=ex.map(l=>labQ(l,key));
+  ds.push({label:meta[1]+(meta[2]?" ("+meta[2]+")":""),data:vals,borderColor:PAL.amber,backgroundColor:PAL.amber,borderWidth:2,tension:.25,
+    pointRadius:qs.map(q=>q?8:5),pointStyle:qs.map(q=>q?"triangle":"circle"),pointRotation:qs.map(q=>q==="<"?180:0),pointBackgroundColor:ptc,pointBorderColor:ptc});
   mkChart("chTrend",{panDates:ex.map(l=>l.date),type:"line",data:{labels,datasets:ds},
     options:{...baseOpts,plugins:{legend:{labels:{color:PAL.muted,font:{family:"IBM Plex Mono",size:10},boxWidth:12,padding:7,filter:it=>!it.text.startsWith("_")}}},
       scales:{x:baseOpts.scales.x,y:{...baseOpts.scales.y,beginAtZero:false}}}});
-  const last=vals[vals.length-1],prev=vals.length>1?vals[vals.length-2]:null;
-  let dh=`<span class="num" style="font-size:22px;font-weight:600;color:var(--amber-soft)">${last} <span style="font-size:12px;color:var(--muted)">${meta[2]}</span></span> `;
-  if(prev!=null){const diff=+(last-prev).toFixed(2);const pc=prev!==0?Math.round(diff/prev*100):0;const arr=diff>0?"▲":diff<0?"▼":"=";
-    dh+=`<span class="muted mono">${arr} ${diff>0?"+":""}${diff} (${pc>0?"+":""}${pc}%) vs anterior</span>`;}
+  const lr=ex[ex.length-1],pr=ex.length>1?ex[ex.length-2]:null,last=vals[vals.length-1],prev=pr?vals[vals.length-2]:null;
+  let dh=`<span class="num" style="font-size:22px;font-weight:600;color:var(--amber-soft)">${fmtLab(lr,key)} <span style="font-size:12px;color:var(--muted)">${meta[2]}</span></span> `;
+  if(prev!=null&&(labQ(lr,key)||labQ(pr,key)))dh+='<span class="muted">valor censurado: sem variação calculável</span>';
+  else if(prev!=null){const diff=+(last-prev).toFixed(2);const pc=prev!==0?Math.round(diff/prev*100):0;const arr=diff>0?"▲":diff<0?"▼":"=";
+    dh+=`<span class="muted mono">${arr} ${diff>0?"+":""}${fmtV(diff)} (${pc>0?"+":""}${pc}%) vs anterior</span>`;}
   else dh+='<span class="muted">primeiro registro</span>';
   $("#trendDelta").innerHTML=dh;
 }
@@ -2767,32 +2942,99 @@ $("#goalSave").onclick=()=>{
   {const cg=$("#cardGoals");if(cg)cg.classList.add("collap");}
   toast("Metas salvas ✓");
 };
-const LABF=[["e2","lE2"],["prol","lProl"],["freeT","lFreeT"],["shbg","lShbg"],["tt","lTT"],["dht","lDHT"],["hct","lHct"],["hdl","lHDL"],["ldl","lLDL"],["vldl","lVLDL"],["tg","lTG"],["tgo","lTGO"],["tgp","lTGP"],["ggt","lGGT"],["ur","lUr"],["cr","lCr"],["cys","lCys"],["fer","lFer"],["feSer","lFeSer"],["sat","lSat"],["pcr","lPcr"],["alb","lAlb"]];
+// [chave, id, rótulo, unidade fixa (marcador sem LAB_UNITS), "m" = painel principal]. Marcador com LAB_UNITS ganha seletor de
+// unidade e ocupa a linha inteira.
+// Ordem = ordem no formulário (D1/D2, v5.31: montado por buildLabForm). LABF ainda é lido como [k, id] em outros pontos.
+const LABF=[["e2","lE2","Estradiol",null,"m"],["tt","lTT","Testo total",null,"m"],["prol","lProl","Prolactina","ng/mL","m"],["shbg","lShbg","SHBG","nmol/L","m"],
+  ["freeT","lFreeT","Testo livre"],["dht","lDHT","DHT"],["hct","lHct","Hematócrito","%"],["fer","lFer","Ferritina","ng/mL"],["feSer","lFeSer","Ferro sérico","µg/dL"],["sat","lSat","Sat. transferrina","%"],
+  ["pcr","lPcr","PCR-us"],["ct","lCT","Colesterol total","mg/dL"],["hdl","lHDL","HDL","mg/dL"],["ldl","lLDL","LDL","mg/dL"],["vldl","lVLDL","VLDL","mg/dL"],["tg","lTG","Triglicérides","mg/dL"],
+  ["tgo","lTGO","TGO","U/L"],["tgp","lTGP","TGP","U/L"],["ggt","lGGT","GGT","U/L"],["cr","lCr","Creatinina"],["ur","lUr","Ureia","mg/dL"],["cys","lCys","Cistatina C","mg/L"],["alb","lAlb","Albumina","g/dL"]];
+const labQ=(rec,k)=>rec&&rec.q&&rec.q[k]||"";
+// D6 (v5.31): a referência do próprio exame (rec.r) vale sobre a global; exame antigo sem rec.r usa a global.
+const labRef=(rec,k)=>rec&&rec.r&&rec.r[k]||(db.settings.refs||DEFAULT_REFS)[k]||null;
+// Valor exibido com o qualificador do laudo (">3.460,8").
+const fmtLab=(rec,k,d)=>rec[k]==null?"—":labQ(rec,k)+fmtV(rec[k],d);
+const labUnitSel=k=>$(`.usel[data-k="${k}"]`);
+const lastLabWith=(k,exceptId)=>db.labs.filter(l=>l[k]!=null&&l.id!==exceptId).sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null;
+function buildLabForm(){
+  const main=$("#labMain"),more=$("#labMore");if(!main||main.childElementCount)return;
+  LABF.forEach(([k,id,lbl,unit,grp])=>{
+    const units=LAB_UNITS[k],f=document.createElement("div");f.className="field"+(units?" wide":"");
+    f.innerHTML=`<label for="${id}">${lbl}${unit?` (${unit})`:""}</label><div class="lab-in"><button type="button" class="qbtn" data-for="${id}" aria-label="Qualificador do laudo: igual, maior ou menor">=</button>`+
+      `<input id="${id}" type="text" inputmode="decimal" class="num" data-q data-k="${k}"${k==="alb"?' placeholder="4.3"':""}>`+
+      (units?`<select class="usel" data-k="${k}" aria-label="Unidade de ${lbl}">${units.map(u=>`<option>${u[0]}</option>`).join("")}</select>`:"")+`</div>`;
+    (grp==="m"?main:more).appendChild(f);
+  });
+  // "=" → ">" → "<" → "=": o sinal fica no próprio texto do campo (teclados sem ">" e "<").
+  $$(".lab-in .qbtn").forEach(b=>b.onclick=()=>{const inp=$("#"+b.dataset.for),v=inp.value,q=/^[<>]/.test(v)?v[0]:"";
+    const nq=q===""?">":q===">"?"<":"";inp.value=nq+v.replace(/^[<>]/,"");syncQBtn(inp);labUnitOk.delete(inp.dataset.k);});
+  $$("#labMain input,#labMore input").forEach(inp=>{inp.addEventListener("input",()=>{syncQBtn(inp);labUnitOk.delete(inp.dataset.k);});
+    inp.addEventListener("change",()=>{if($("#labRefBox").open)renderLabRefRows();});});
+  $$(".lab-in .usel").forEach(s=>s.onchange=()=>{labUnitOk.delete(s.dataset.k);if($("#labRefBox").open)renderLabRefRows();});
+  $("#labRefBox").addEventListener("toggle",()=>{if($("#labRefBox").open)renderLabRefRows();});
+}
+function syncQBtn(inp){const b=$(`.qbtn[data-for="${inp.id}"]`);if(!b)return;const q=/^[<>]/.test(inp.value)?inp.value[0]:"";b.textContent=q||"=";b.classList.toggle("on",!!q);}
+// Unidade padrão de cada marcador = a do último exame (o laboratório costuma manter a dele).
+function resetLabUnits(){Object.keys(LAB_UNITS).forEach(k=>{const s=labUnitSel(k);if(!s)return;const l=db.labs.filter(x=>x.u&&x.u[k]).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];s.value=l?l.u[k]:canonUnit(k);});}
+const labUnitOk=new Set();   // marcadores cuja unidade o usuário confirmou após o aviso de ~10×
+// D6: faixa digitada para este exame (rascunho), na unidade canônica. Vazio = usa a faixa padrão de Configurações.
+let labRefDraft={};
+function labFilled(){return LABF.filter(([,id])=>$("#"+id)&&$("#"+id).value.trim()!=="").map(([k])=>k);}
+function renderLabRefRows(){
+  const el=$("#labRefRows");if(!el)return;const ks=labFilled();
+  if(!ks.length){el.innerHTML='<div class="muted" style="font-size:12px">Preencha um marcador para ver a faixa dele.</div>';return;}
+  const n=(k,v)=>{if(v==null)return"";const s=labUnitSel(k),x=s?fromCanon(k,v,s.value):v;return String(+x.toPrecision(6));};
+  el.innerHTML=ks.map(k=>{const r=labRefDraft[k]||(db.settings.refs||{})[k]||[null,null],lbl=LABF.find(f=>f[0]===k),s=labUnitSel(k);
+    return `<div class="ref-row"><span>${lbl[2]} <span class="muted">${s?s.value:lbl[3]||""}</span></span>`+
+      `<input data-k="${k}" data-i="0" type="text" inputmode="decimal" class="num" placeholder="mín" value="${n(k,r[0])}">`+
+      `<input data-k="${k}" data-i="1" type="text" inputmode="decimal" class="num" placeholder="máx" value="${n(k,r[1])}"></div>`;}).join("");
+  el.querySelectorAll("input").forEach(inp=>inp.onchange=()=>{const k=inp.dataset.k,s=labUnitSel(k);
+    const cur=(labRefDraft[k]||(db.settings.refs||{})[k]||[null,null]).slice(),p=parseLabInput(inp.value);
+    cur[+inp.dataset.i]=p?(s?toCanon(k,p.v,s.value):p.v):null;labRefDraft[k]=cur;});
+}
+buildLabForm();
 $("#lSave").onclick=()=>{
-  const rec={id:uid(),date:($("#lDate").value||todayInput())+"T12:00:00",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType};let any=false;
-  LABF.forEach(([k,id])=>{const v=$("#"+id).value;if(v!==""){rec[k]=parseFloat(v);any=true;}});
-  if(!any)return toast("Preencha ao menos um marcador");
-  if(editRec("lab")){const f={date:rec.date};LABF.forEach(([k])=>f[k]=rec[k]);   // marcador apagado → undefined → removido
-    return commitEdit("lab",f,refreshLabViews);}
-  db.labs.push(rec);save();LABF.forEach(([,id])=>$("#"+id).value="");
+  const ed=editRec("lab"),vals={},bad=[];
+  LABF.forEach(([k,id,lbl])=>{const raw=$("#"+id).value.trim();if(raw==="")return;const p=parseLabInput(raw);
+    if(!p)bad.push(lbl);else vals[k]={...p,u:LAB_UNITS[k]?labUnitSel(k).value:null};});
+  if(bad.length)return toast("Valor inválido: "+bad.join(", "));
+  const keys=Object.keys(vals);if(!keys.length)return toast("Preencha ao menos um marcador");
+  // D2: número ~10× fora do esperado para a unidade → pergunta antes de gravar.
+  for(const k of keys){const x=vals[k];if(!x.u||labUnitOk.has(k))continue;
+    const prev=lastLabWith(k,ed&&ed.id),s=unitSuggest(k,x.v,x.u,prev?prev[k]:null);
+    if(s){const nm=LABF.find(f=>f[0]===k)[2];
+      return toast(`${nm} ${fmtV(x.v)} ${x.u} fica ~10× fora do esperado. Era ${s.unit} (= ${fmtV(toCanon(k,x.v,s.unit))} ${canonUnit(k)})?`,
+        [[s.unit,()=>{labUnitSel(k).value=s.unit;labUnitOk.add(k);$("#lSave").click();}],[`Manter ${x.u}`,()=>{labUnitOk.add(k);$("#lSave").click();}]]);}}
+  const f={date:($("#lDate").value||todayInput())+"T12:00:00"},q={},u={},r={};
+  LABF.forEach(([k])=>{const x=vals[k];if(!x){f[k]=undefined;return;}   // marcador apagado → undefined → removido na edição
+    f[k]=x.u?toCanon(k,x.v,x.u):x.v;if(x.q)q[k]=x.q;if(x.u)u[k]=x.u;
+    // Exame antigo sem rec.r (anterior à v5.31) continua seguindo a faixa global, salvo se a faixa foi digitada agora.
+    const ref=labRefDraft[k]||(ed&&!ed.r?null:(ed&&ed.r[k])||(db.settings.refs||{})[k]);if(ref&&(ref[0]!=null||ref[1]!=null))r[k]=ref.slice();});
+  const obj=o=>Object.keys(o).length?o:undefined;f.q=obj(q);f.u=obj(u);f.r=obj(r);
+  if(ed)return commitEdit("lab",f,refreshLabViews);
+  const rec={id:uid(),phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType};
+  Object.keys(f).forEach(k=>{if(f[k]!==undefined)rec[k]=f[k];});
+  db.labs.push(rec);save();clearForm("lab");
   refreshLabViews();toast("Exame salvo ✓");
 };
 // Em PCT/Off queremos ver E2/TT/T livre/DHT (recuperação do eixo) → não suprime nessas fases.
 const suppressExpected=()=>db.settings.cycleMode&&!["pct","off"].includes(db.settings.currentPhaseType);
-function flag(k,v){
+// D1/D6 (v5.31): usa o qualificador e a referência do exame; censurado sem como saber fica neutro.
+function flag(k,v,rec){
   if(v==null||v==="")return"";
   if(suppressExpected()&&CYCLE_EXEMPT.includes(k))return"";
-  const r=(db.settings.refs||DEFAULT_REFS)[k];if(!r)return"";
-  if(r[1]!=null&&v>r[1])return"flag-hi";if(r[0]!=null&&v<r[0])return"flag-hi";return"flag-ok";
+  const st=refStatus(+v,labQ(rec,k),labRef(rec,k));
+  return st==="hi"||st==="lo"?"flag-hi":st==="ok"?"flag-ok":"";
 }
 function renderLabTable(){
+  renderLabRepair();
   const labs=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,10);
   const el=$("#labTable");
   if(!labs.length){el.innerHTML='<div class="empty">Nenhum exame registrado.</div>';return;}
   const cols=[["e2","E2"],["prol","PRL"],["tt","T.total"],["shbg","SHBG"],["freeT","T.livre"],["dht","DHT"],["hct","Hct"],["fer","Ferr"]];
   let h='<table><thead><tr><th>Data</th>'+cols.map(c=>`<th>${c[1]}</th>`).join("")+'<th></th></tr></thead><tbody>';
   labs.forEach(l=>{h+=`<tr><td class="num">${fmtD(l.date)}${l.phase?`<br><span style="font-size:11px;color:var(--muted)">${esc(l.phase)}</span>`:""}</td>`;
-    cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v)}">${v!=null?fmtV(v):"·"}</td>`;});
+    cols.forEach(([k])=>{const v=l[k];h+=`<td class="num ${flag(k,v,l)}">${v!=null?fmtLab(l,k):"·"}</td>`;});
     h+=`<td><button class="del" data-id="${l.id}">×</button></td></tr>`;});
   /* linhas tocáveis → edição (ligadas abaixo) */
   h+="</tbody></table>";el.innerHTML=h;
@@ -2807,15 +3049,51 @@ function renderLabTable(){
 // Tudo que lê db.labs: a seção Exames, o painel CV (Cardio, mesma tela) e as telas que mostram exames.
 // Antes da v5.30 o exame novo não atualizava o painel CV nem os derivados ao excluir.
 function refreshLabViews(){refreshViews(["bio","resumo","charts"]);}
+// D1/D2 (v5.31): reparo dos exames gravados antes de existir sinal e unidade (labRepairs, no bloco de cálculo).
+// Nada muda sem o toque do usuário; o que ele desmarca ou dispensa vai para settings.labRepairSkip e não volta.
+function renderLabRepair(){
+  const el=$("#labRepair");if(!el)return;
+  const skip=new Set(db.settings.labRepairSkip||[]),items=labRepairs(db.labs).filter(x=>!skip.has(x.id+":"+x.k));
+  if(!items.length){el.innerHTML="";return;}
+  const groups=[];   // unidade: um por exame · teto do ensaio: um por marcador (todos os exames com o mesmo valor)
+  items.forEach(x=>{const g=x.kind==="ceil"&&groups.find(g=>g.kind==="ceil"&&g.k===x.k);if(g)g.items.push(x);else groups.push({kind:x.kind,k:x.k,q:x.q,items:[x]});});
+  const nm=k=>(LABF.find(f=>f[0]===k)||[])[2]||k,cu=k=>canonUnit(k)||(LABF.find(f=>f[0]===k)||[])[3]||"",dt=d=>fmtD(d).slice(0,5);
+  const txt=g=>{const x=g.items[0];
+    return g.kind==="unit"?`${dt(x.date)} · ${nm(x.k)} ${fmtV(x.from)} → <b>${g.q}${fmtV(x.to)} ${cu(x.k)}</b> (laudo em ${x.unit})`
+      :`${nm(x.k)} ${fmtV(x.from)} em ${g.items.length} exames (${g.items.map(i=>dt(i.date)).join(", ")}) → <b>&gt;${fmtV(x.from)} ${cu(x.k)}</b> (teto do ensaio)`;};
+  el.innerHTML=`<div class="note warn repair" style="margin:0 0 12px"><b>Revisar valores gravados antes da v5.31</b><div style="margin:3px 0 6px">Unidade do laudo e valores no teto do ensaio. Confira com o laudo; nada muda sem o seu toque.</div>`+
+    groups.map((g,i)=>`<label class="rp-row"><input type="checkbox" checked data-i="${i}"><span>${txt(g)}</span>${g.kind==="unit"?`<button type="button" class="qbtn${g.q?" on":""}" data-i="${i}" aria-label="Sinal do laudo">${g.q||"="}</button>`:""}</label>`).join("")+
+    `<div class="row-actions" style="margin-top:8px"><button class="btn-ghost btn-sm" id="rpSkip">Manter como está</button><button class="btn-amber btn-sm" id="rpApply">Corrigir marcados</button></div></div>`;
+  el.querySelectorAll(".qbtn").forEach(b=>b.onclick=e=>{e.preventDefault();const g=groups[+b.dataset.i];g.q=g.q?"":">";renderLabRepairQ(el,groups);});
+  const run=apply=>{
+    const before=db.labs.map(l=>JSON.parse(JSON.stringify(l))),skip0=(db.settings.labRepairSkip||[]).slice();let n=0;
+    groups.forEach((g,i)=>{const on=apply&&el.querySelector(`input[data-i="${i}"]`).checked;
+      g.items.forEach(x=>{if(!on){db.settings.labRepairSkip.push(x.id+":"+x.k);return;}
+        const r=db.labs.find(l=>l.id===x.id);if(!r)return;n++;
+        if(x.kind==="unit"){r[x.k]=x.to;r.u={...(r.u||{}),[x.k]:x.unit};}
+        if(g.q)r.q={...(r.q||{}),[x.k]:g.q};});});
+    save();refreshLabViews();
+    toast(apply?`${n} valor${n===1?"":"es"} corrigido${n===1?"":"s"} ✓`:"Valores mantidos",()=>{db.labs=before;db.settings.labRepairSkip=skip0;save();refreshLabViews();});
+  };
+  $("#rpApply").onclick=()=>run(true);$("#rpSkip").onclick=()=>run(false);
+}
+function renderLabRepairQ(el,groups){el.querySelectorAll(".qbtn").forEach(b=>{const g=groups[+b.dataset.i];b.textContent=g.q||"=";b.classList.toggle("on",!!g.q);
+  const s=b.previousElementSibling.querySelector("b");if(s){const x=g.items[0];s.textContent=g.q+fmtV(x.to)+" "+(canonUnit(x.k)||"");}});}
 // C2 (v5.30): notas de ferro × Hct a partir de ironAssess (bloco de cálculo). Tom: aponta o tema, não a conduta.
 function ironNotes(o){
-  const f=v=>fmtV(v,1),out=[];
-  ironAssess(o).forEach(c=>{
+  const f=v=>fmtV(v,1),out=[],cs=ironAssess(o);
+  cs.forEach(c=>{
     if(c==="hctHigh")out.push(["warn",`Hct ${f(o.hct)}% no/acima do teto (${o.uln}%) — eritrocitose; tema para o médico (flebotomia/doação é decisão dele).`]);
     else if(c==="ferDepleted")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL — depleção de ferro. Doação não indicada; reposição é tema para o médico.`]);
     else if(c==="ferLow")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL — abaixo de 100.`]);
-    else if(c==="ferHighSatLow")out.push(["warn",`Ferritina ${f(o.fer)} ng/mL com saturação de ${f(o.sat)}% — ferro disponível baixo (a ferritina sobe com inflamação). Não indica reserva para doar; tema para o médico.`]);
-    else if(c==="ferHighNoSat")out.push(["",`Ferritina ${f(o.fer)} ng/mL. Sozinha não confirma reserva (sobe com inflamação): registre a saturação de transferrina do mesmo exame.`]);
+    // D5 (v5.31): estoque × disponibilidade discordantes — lista as causas; inflamação só entra se a PCR-us não a descarta.
+    else if(c==="ferHighSatLow"){
+      const causes=["consumo alto pela medula (eritropoiese)","ferritina liberada por lesão muscular ou hepática","variação de coleta (ferro na véspera, treino pesado)"];
+      if(cs.includes("pcrHigh"))causes.unshift(`inflamação (PCR-us ${fmtV(o.pcr,2)} mg/L)`);
+      else if(cs.includes("pcrNA"))causes.push("inflamação (registre a PCR-us do mesmo exame)");
+      out.push(["warn",`Ferritina ${f(o.fer)} ng/mL com saturação de ${f(o.sat)}%: estoque e disponibilidade não batem. Causas possíveis: ${causes.join("; ")}.`+
+        (cs.includes("pcrLow")?` Inflamação é improvável (PCR-us ${fmtV(o.pcr,2)} mg/L).`:"")+" Desempate: reticulócitos e RET-He. Não indica reserva para doar; tema para o médico."]);}
+    else if(c==="ferHighNoSat")out.push(["",`Ferritina ${f(o.fer)} ng/mL. Sozinha não confirma reserva (sobe com inflamação e com lesão muscular ou hepática): registre a saturação de transferrina do mesmo exame.`]);
     else if(c==="ferOk")out.push(["ok",`Ferritina ${f(o.fer)} ng/mL e saturação de ${f(o.sat)}% — ferro disponível.`]);
     else if(c==="satLow")out.push(["warn",`Saturação de transferrina de ${f(o.sat)}% — abaixo de 20%.`]);
     else if(c==="donWindow")out.push(["ok","Hct alto com ferro disponível — tema de flebotomia/doação para levar ao médico."]);
@@ -2829,9 +3107,9 @@ function renderLabStatus(){
   const last=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   if(!last)return;
   const out=[];
-  if(last.hct!=null){const uln=(db.settings.refs.hct||[])[1]||52;
-    if(last.hct>=uln)out.push(['warn',`Hematócrito ${last.hct}% — no/acima do teto (${uln}%). Atenção à viscosidade; tema para o médico.`]);}
-  if(last.fer!=null||last.sat!=null)ironNotes({hct:null,uln:0,fer:last.fer??null,sat:last.sat??null}).forEach(n=>out.push(n));
+  if(last.hct!=null){const uln=(labRef(last,"hct")||[])[1]||52;
+    if(last.hct>=uln)out.push(['warn',`Hematócrito ${fmtV(last.hct,1)}% — no/acima do teto (${fmtV(uln,1)}%). Atenção à viscosidade; tema para o médico.`]);}
+  if(last.fer!=null||last.sat!=null)ironNotes({hct:null,uln:0,fer:last.fer??null,sat:last.sat??null,pcr:last.pcr??null,pcrUln:(labRef(last,"pcr")||[])[1]||2}).forEach(n=>out.push(n));
   out.forEach(([cls,msg])=>{const n=document.createElement("div");n.className="note "+cls;n.textContent=msg;el.appendChild(n);});
 }
 function buildCheckScales(){
@@ -3205,16 +3483,15 @@ function renderWeightTrend(){
 
 // ---------- M7: marcadores derivados ----------
 // ---------- PRESSÃO ARTERIAL & RISCO CARDIOVASCULAR ----------
-// Classificação AHA. lvl: 0 normal · 1 elevada · 2 estágio 1 · 3 estágio 2 · 4 crise.
-// C3 (v5.30): classificação por local (bpLevel, no bloco de cálculo) — casa contra a meta pessoal,
-// consultório pela Diretriz Brasileira 2020. Registros sem ctx (anteriores à v5.30) contam como casa.
+// C3 (v5.30) · D3 (v5.31): classificação por local (bpLevel, no bloco de cálculo) — casa: alterado a partir da meta
+// pessoal; consultório pela Diretriz Brasileira 2025. Registros sem ctx (anteriores à v5.30) contam como casa.
 const bpCtxOf=p=>p&&p.ctx==="cons"?"cons":"casa";
 const BP_CTX_LBL={casa:"casa",cons:"consultório"};
 function bpClass(s,d,ctx){
   const c=bpLevel(s,d,ctx||"casa",db.settings.bpTarget);
   return {...c,col:s==null||d==null?PAL.muted:c.lvl>=3?PAL.red:c.lvl>=1?PAL.amber:PAL.green};
 }
-const bpTargetTxt=()=>{const t=db.settings.bpTarget||{sys:130,dia:80};return "meta ≤ "+t.sys+"/"+t.dia;};
+const bpTargetTxt=()=>{const t=db.settings.bpTarget||{sys:130,dia:80};return "meta < "+t.sys+"/"+t.dia;};
 // Resumo para status e painel CV: leituras de casa (senão, de consultório) — média 7d com ≥ 2 leituras.
 function bpMain(){
   const home=db.pressures.filter(p=>bpCtxOf(p)==="casa"),ctx=home.length?"casa":"cons";
@@ -3319,11 +3596,12 @@ function renderCVDashboard(){
   // C3 (v5.30): valor mais recente de cada marcador COM a data — sinal mais velho que o intervalo de exames
   // (labs) ou 30 dias (PA) aparece esmaecido e com "há N d". A PA usa a média de 7 dias (bpMain), nunca 1 leitura
   // quando há mais de uma.
-  const lv=key=>{const a=db.labs.filter(l=>l[key]!=null).sort((x,y)=>new Date(y.date)-new Date(x.date));return a.length?{v:a[0][key],date:a[0].date}:null;};
-  const L={hdl:lv("hdl"),ldl:lv("ldl"),vldl:lv("vldl"),tg:lv("tg"),hct:lv("hct")};const val=k=>L[k]?L[k].v:null;
+  const lv=key=>{const a=db.labs.filter(l=>l[key]!=null).sort((x,y)=>new Date(y.date)-new Date(x.date));return a.length?{v:a[0][key],date:a[0].date,rec:a[0]}:null;};
+  const L={hdl:lv("hdl"),ldl:lv("ldl"),tg:lv("tg"),hct:lv("hct")};const val=k=>L[k]?L[k].v:null;
   const examMax=db.settings.examDays||120;
-  const tone=lvl=>lvl>=3?PAL.red:lvl>=1?PAL.amber:PAL.green;
-  const add=(lbl,v,lvl,hint,age,maxAge)=>sig.push({lbl,val:v,lvl,col:tone(lvl),hint:hint||"",age,stale:age!=null&&age>maxAge});
+  const tone=lvl=>lvl==null?PAL.muted:lvl>=3?PAL.red:lvl>=1?PAL.amber:PAL.green;
+  // lvl null = sem veredito (ex.: LDL sem categoria de risco) — cinza, conta como 0 no veredito.
+  const add=(lbl,v,lvl,hint,age,maxAge)=>sig.push({lbl,val:v,lvl:lvl??0,col:tone(lvl),hint:hint||"",age,stale:age!=null&&age>maxAge});
   const ageL=k=>L[k]?daysSince(L[k].date):null;
   if(bp)add("Pressão arterial",`${bp.sys}/${bp.dia}`,bp.cls.lvl,bp.cls.lbl+" · "+(bp.mode==="avg7"?"média 7d, "+bp.n+" leituras":"1 leitura")+" · "+BP_CTX_LBL[bp.ctx],bp.ageDays,30);
   if(bp&&bp.hr!=null){const hr=bp.hr;let lvl=hr>100?3:(hr>80||hr<40)?1:0;add("FC de repouso",hr+" bpm",lvl,lvl?(hr>80?"elevada":"baixa"):"ok",bp.ageDays,30);}
@@ -3331,13 +3609,19 @@ function renderCVDashboard(){
   if(ns&&ns.avg7!=null){const hr=Math.round(ns.avg7);let lvl=hr>=80?3:hr>=70?1:0;add("FC no sono (7d)",hr+" bpm",lvl,lvl?"elevada":"ok",null,0);}
   const nv=nightStats("sleepHrv");
   if(nv&&nv.base!=null&&nv.avg7!=null){const low=nv.avg7<nv.base-nv.sd;add("HRV no sono (7d)",fmtN(nv.avg7,0)+" ms",low?1:0,low?"abaixo da sua base":"na sua faixa",null,0);}
-  const hdl=val("hdl"),ldl=val("ldl"),vldl=val("vldl"),tg=val("tg"),hct=val("hct");
+  const hdl=val("hdl"),ldl=val("ldl"),tg=val("tg"),hct=val("hct");
   if(hdl!=null){let lvl=hdl<40?3:hdl<50?1:0;add("HDL",hdl+" mg/dL",lvl,lvl?"baixo (orais derrubam o HDL)":"ok",ageL("hdl"),examMax);}
-  if(ldl!=null){let lvl=ldl>=160?3:ldl>=130?1:0;add("LDL",ldl+" mg/dL",lvl,lvl?"acima do alvo":"ok",ageL("ldl"),examMax);}
-  const nh=(ldl!=null||vldl!=null)?((ldl||0)+(vldl||0)):null;
-  if(nh){let lvl=nh>=160?3:nh>=130?1:0;add("Não-HDL",nh+" mg/dL",lvl,lvl?"acima do alvo":"ok",ageL(ldl!=null?"ldl":"vldl"),examMax);}
+  // D5 (v5.31): LDL e não-HDL contra o alvo da categoria de risco CV (Configurações, do cardiologista), não cortes fixos.
+  const cat=db.settings.cvRisk;
+  const lipHint=r=>r.target==null?(r.lvl===3?"muito alto em qualquer categoria":"alvo depende da categoria de risco (Configurações)")
+    :`${r.lvl?"acima do alvo":"no alvo"} < ${r.target} · risco ${CV_RISK_LBL[cat]}`;
+  if(ldl!=null){const r=lipidLevel(ldl,cat,"ldl");add("LDL",ldl+" mg/dL",r.lvl,lipHint(r),ageL("ldl"),examMax);}
+  // Não-HDL do mesmo exame: CT − HDL; sem CT, LDL + VLDL (aproximado).
+  const ctR=db.labs.filter(l=>l.ct!=null&&l.hdl!=null).sort((x,y)=>new Date(y.date)-new Date(x.date))[0],ldR=L.ldl?L.ldl.rec:null;
+  const nhR=ctR&&(!ldR||new Date(ctR.date)>=new Date(ldR.date))?ctR:ldR,nh=!nhR?null:nhR===ctR?ctR.ct-ctR.hdl:nhR.ldl+(nhR.vldl||0);
+  if(nh){const r=lipidLevel(nh,cat,"nonHdl");add("Não-HDL"+(nhR===ctR?"":" (aprox.)"),nh+" mg/dL",r.lvl,lipHint(r),daysSince(nhR.date),examMax);}
   if(tg!=null&&hdl){const r=tg/hdl;let lvl=r>3?3:r>=2?1:0;add("TG:HDL",fmtN(r,1),lvl,lvl?"resistência insulínica / aterogênico":"ok",ageL("tg"),examMax);}
-  if(hct!=null){const uln=(db.settings.refs.hct&&db.settings.refs.hct[1])||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",fmtV(hct,1)+" %",lvl,lvl>=3?"eritrocitose — tema para o médico":lvl?"próximo do teto":"ok",ageL("hct"),examMax);}
+  if(hct!=null){const uln=(labRef(L.hct.rec,"hct")||[])[1]||52;let lvl=hct>=uln?3:hct>=uln-2?1:0;add("Hematócrito",fmtV(hct,1)+" %",lvl,lvl>=3?"eritrocitose — tema para o médico":lvl?"próximo do teto":"ok",ageL("hct"),examMax);}
   const v=$("#cvVerdict"),box=$("#cvSignals");
   if(!sig.length){v.innerHTML='<div class="empty">Registre pressão arterial, FC do sono ou um exame para ver o painel.</div>';box.innerHTML="";return;}
   const worst=sig.reduce((m,s)=>s.lvl>m.lvl?s:m,sig[0]);
@@ -3356,53 +3640,84 @@ function renderDerived(){
   const el=$("#derivedBox");
   const last=db.labs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   if(!last){el.innerHTML='<div class="empty">Nenhum exame registrado.</div>';return;}
-  const alb=last.alb!=null?last.alb:(db.settings.albumin||4.3);const rows=[];
+  const alb=last.alb!=null?last.alb:(db.settings.albumin||4.3);const rows=[],notes=[];
+  // D1 (v5.31): entrada censurada vira piso/teto no derivado (boundDir); sentidos opostos → não calculável.
+  const q=k=>labQ(last,k),bnd=(d,v,dec,u)=>d===null?"—":(d===">"?"≥ ":d==="<"?"≤ ":"")+fmtN(v,dec)+(u||"");
   const ft=calcFreeT(last.tt,last.shbg,alb);
-  if(ft!=null)rows.push(["T livre (calc.)",fmtN(ft,1)+" pg/mL",last.alb!=null?"alb medida "+alb:"alb padrão "+alb]);
-  if(last.tt!=null&&last.e2!=null&&last.e2>0)rows.push(["Razão T:E2",fmtN((last.tt/last.e2),0),"ng/dL ÷ pg/mL"]);
-  if(last.tgo!=null&&last.tgp!=null&&last.tgp>0)rows.push(["Razão TGO:TGP",fmtN((last.tgo/last.tgp),2),">1,5 = atenção hepática"]);
-  if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",fmtN((last.ldl+(last.vldl||0)),0)+" mg/dL","LDL + VLDL"]);
+  if(ft!=null){const d=boundDir([[q("tt"),1],[q("shbg"),-1]]);
+    rows.push(["T livre (calc.)",bnd(d,ft,d?0:1," pg/mL"),(d===null?"não calculável (TT e SHBG censuradas em sentidos opostos)":d?"TT censurada no laudo: número real só por LC-MS/MS":"Vermeulen")+" · alb "+(last.alb!=null?"medida ":"padrão ")+fmtN(alb,1)]);}
+  if(last.tt!=null&&last.e2!=null&&last.e2>0){const d=boundDir([[q("tt"),1],[q("e2"),-1]]);
+    rows.push(["Razão T:E2",bnd(d,last.tt/last.e2,0),"ng/dL ÷ pg/mL"+(d?" · valor censurado":"")]);}
+  // D5: TGO só fala de fígado quando a TGP ou a GGT passam do limite do exame; senão, músculo (treino recente).
+  if(last.tgo!=null&&last.tgp!=null&&last.tgp>0){
+    const hi=k=>{const r=labRef(last,k);return r?r[1]:null;},g=last.ggt!=null;
+    const pat=liverPattern({tgo:last.tgo,tgp:last.tgp,ggt:g?last.ggt:null,tgpHi:hi("tgp"),ggtHi:hi("ggt")});
+    rows.push(["Razão TGO:TGP",fmtN(last.tgo/last.tgp,2),pat==="hepatic"?"TGP ou GGT acima do limite: padrão hepático":pat==="muscle"?"TGO > TGP com TGP"+(g?" e GGT":"")+" normais"+(g?"":" (sem GGT)"):"TGP"+(g?" e GGT":"")+" normais"]);
+    if(pat==="hepatic")notes.push(["warn",`TGP ${fmtV(last.tgp)}${g?` · GGT ${fmtV(last.ggt)}`:""} U/L: ${last.tgp>(hi("tgp")??Infinity)?"TGP":"GGT"} acima do limite do laudo — padrão hepático; tema para o médico.`]);
+    else if(pat==="muscle"){const tr=trainBefore(last.date);
+      notes.push(["",`TGO acima da TGP com TGP${g?" e GGT":""} normais: pode ser muscular${tr?` (treino ${tr} — coleta a menos de 72 h)`:" (treino recente)"}, não hepático. CPK no mesmo exame confirma.`]);}}
+  // D5: não-HDL = CT − HDL do mesmo exame; sem CT, aproxima por LDL + VLDL.
+  if(last.ct!=null&&last.hdl!=null)rows.push(["Não-HDL",bnd(boundDir([[q("ct"),1],[q("hdl"),-1]]),last.ct-last.hdl,0," mg/dL"),"colesterol total − HDL"]);
+  else if(last.ldl!=null)rows.push(["Não-HDL (aprox.)",fmtN((last.ldl+(last.vldl||0)),0)+" mg/dL","LDL + VLDL · registre o colesterol total"]);
   if(last.tg!=null&&last.hdl!=null&&last.hdl>0)rows.push(["Razão TG:HDL",fmtN((last.tg/last.hdl),1),"<2 ideal · resistência insulínica"]);
-  // C1 (v5.30): TFG com idade na data do exame. Cistatina é a principal (creatina e massa muscular enviesam a creatinina).
+  // D4 (v5.31): TFG combinada (CKD-EPI 2021) é a principal; creatinina e cistatina são réguas (egfrPanel).
   // Usa o exame mais recente com creatinina ou cistatina (o último exame pode não ter função renal).
-  const rl=db.labs.filter(l=>l.cr!=null||l.cys!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-  if(rl){const age=ageAt(db.settings.birthDate,rl.date),when=rl===last?"":" · exame de "+fmtD(rl.date);
+  const byDate=(a,b)=>new Date(b.date)-new Date(a.date),birth=db.settings.birthDate;
+  const rl=db.labs.filter(l=>l.cr!=null||l.cys!=null).sort(byDate)[0];
+  if(rl){const age=ageAt(birth,rl.date),when=rl===last?"":" · exame de "+fmtD(rl.date);
     if(age==null)rows.push(["TFG","—","informe a data de nascimento em Mais › Dados › Configurações"]);
-    else{const gC=egfrCys(rl.cys,age),gR=egfrCr(rl.cr,age),gRC=egfrCrCys(rl.cr,rl.cys,age);
-      if(gC!=null)rows.push(["<b>TFG cistatina</b>",Math.round(gC)+" mL/min","CKD-EPI 2012 · principal · "+age+" anos"+when]);
-      if(gRC!=null)rows.push(["TFG combinada",Math.round(gRC)+" mL/min","CKD-EPI 2021 creatinina + cistatina"+when]);
-      if(gR!=null)rows.push(["TFG creatinina",Math.round(gR)+" mL/min","CKD-EPI 2021 · subestima com creatina e massa muscular"+when]);}}
+    else{const pv=db.labs.filter(l=>l.cr!=null&&l.cys!=null&&new Date(l.date)<new Date(rl.date)).sort(byDate)[0];
+      const p=egfrPanel(rl,age,pv||null,pv?ageAt(birth,pv.date):null),g=v=>Math.round(v)+" mL/min";
+      if(p){
+        if(p.crcys!=null)rows.push(["<b>TFG combinada</b>",g(p.crcys),"CKD-EPI 2021 · principal · "+age+" anos"+when]);
+        if(p.cys!=null)rows.push([p.main==="cys"?"<b>TFG cistatina</b>":"Régua: cistatina",g(p.cys),"CKD-EPI 2012 · sobe com hormônio tireoidiano e inflamação"+(p.main==="cys"?" · "+age+" anos"+when:"")]);
+        if(p.cr!=null)rows.push([p.main==="cr"?"<b>TFG creatinina</b>":"Régua: creatinina",g(p.cr),"CKD-EPI 2021 · creatina e massa muscular sobem a creatinina"+(p.main==="cr"?" · "+age+" anos"+when:"")]);
+        if(p.discord)notes.push(["warn",`Réguas discordantes: creatinina ${g(p.cr)} × cistatina ${g(p.cys)} (${fmtN(Math.abs(p.cr-p.cys)/((p.cr+p.cys)/2)*100,0)}% da média). Repetir a coleta; se uma decisão depender da TFG, ela pode ser medida (iohexol) — tema para o médico.`]);
+        if(p.dropFrac!=null&&p.dropFrac>0.10)notes.push(["warn",`TFG combinada caiu ${fmtN(p.dropFrac*100,0)}% desde ${fmtD(pv.date)}: reteste em 6–8 semanas — tema para o médico.`]);
+      }}}
   if(!rows.length){el.innerHTML='<div class="empty">Faltam marcadores-base no último exame.</div>';return;}
-  el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:11px">'+r[2]+'</td></tr>').join("")+'</tbody></table>';
+  el.innerHTML='<table><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td class="num"><b>'+r[1]+'</b></td><td class="muted" style="font-size:11px">'+r[2]+'</td></tr>').join("")+'</tbody></table>'+
+    notes.map(n=>`<div class="note ${n[0]}" style="margin:8px 0 0">${n[1]}</div>`).join("");
+}
+// D5 (v5.31): treino registrado nos 3 dias antes da coleta (CPK e TGO sobem por 48–72 h) → "em 28/08 e 29/08" ou "".
+function trainBefore(dateISO){
+  const d0=new Date(dateISO),ds=[3,2,1].map(n=>dkey(addDays(d0,-n))).filter(k=>{const t=db.training.log[k];return t&&t.type==="train";});
+  return ds.length?"em "+ds.map(k=>fmtD(k+"T12:00:00").slice(0,5)).join(" e "):"";
 }
 
 // ---------- M9: ferro & hematócrito ----------
+// D5 (v5.31): regressão só com as coletas do regime de dose atual (mg/semana de cada EAA nos 28 dias antes de cada
+// coleta — hctTrend, no bloco de cálculo). Dose mudou depois da última coleta → não projeta.
 function hctForecast(uln){
-  const pts=db.labs.filter(l=>l.hct!=null).map(l=>({t:+new Date(l.date),v:l.hct})).sort((a,b)=>a.t-b.t);
+  const eaa=db.injections.filter(i=>{const d=drugByName(i.drug);return d&&!d.anc;});
+  const pts=db.labs.filter(l=>l.hct!=null).map(l=>{const t=+new Date(l.date);return {t,v:l.hct,vec:weeklyDoseVec(eaa,t)};}).sort((a,b)=>a.t-b.t);
   if(pts.length<2)return null;
-  const t0=pts[0].t,x=pts.map(p=>(p.t-t0)/864e5),y=pts.map(p=>p.v),n=x.length;
-  const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;
-  let num=0,den=0;for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)*(x[i]-mx);}
-  const slope=den?num/den:0;const slopeWk=slope*7;
-  const curHct=pts[pts.length-1].v;
-  const crossWeeks=(slope>1e-5&&curHct<uln)?(uln-curHct)/slopeWk:null;
-  return {slope,slopeWk,curHct,crossWeeks};
+  const tr=hctTrend(pts,weeklyDoseVec(eaa,Date.now())),curHct=pts[pts.length-1].v;
+  if(tr.reason)return {reason:tr.reason,n:tr.n,curHct};
+  const crossWeeks=(tr.slopeWk>1e-4&&curHct<uln)?(uln-curHct)/tr.slopeWk:null;
+  return {slopeWk:tr.slopeWk,curHct,crossWeeks,n:tr.n,fromT:tr.fromT};
 }
 function renderIron(){
   const el=$("#ironStatus");
   const lh=db.labs.filter(l=>l.hct!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const lf=db.labs.filter(l=>l.fer!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const lastHct=lh[lh.length-1],lastFer=lf[lf.length-1];
-  const ulnHct=(db.settings.refs.hct||[])[1]||52;
+  const ulnHct=(labRef(lastHct,"hct")||[])[1]||52;
   const lastSat=db.labs.filter(l=>l.sat!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-  const out=ironNotes({hct:lastHct?lastHct.hct:null,uln:ulnHct,fer:lastFer?lastFer.fer:null,sat:lastSat?lastSat.sat:null});
-  // C6 — preditor de hematócrito (regressão linear na tendência)
+  // PCR-us do exame da ferritina (senão, a mais recente): decide se inflamação entra entre as causas.
+  const lastPcr=lastFer&&lastFer.pcr!=null?lastFer:db.labs.filter(l=>l.pcr!=null).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  const out=ironNotes({hct:lastHct?lastHct.hct:null,uln:ulnHct,fer:lastFer?lastFer.fer:null,sat:lastSat?lastSat.sat:null,
+    pcr:lastPcr?lastPcr.pcr:null,pcrUln:lastPcr?(labRef(lastPcr,"pcr")||[])[1]||2:2});
+  // C6 — preditor de hematócrito (regressão linear na tendência do regime atual)
   const fc=hctForecast(ulnHct);
   if(fc){
-    if(fc.curHct>=ulnHct)out.push(["warn","Projeção: Hct já no/acima do teto ("+ulnHct+"%)."]);
-    else if(fc.slopeWk<=0.02)out.push(["ok","Projeção: Hct estável/declinando ("+(fc.slopeWk>=0?"+":"")+fmtN(fc.slopeWk,2)+"%/sem) — sem cruzamento previsto no ritmo atual."]);
+    const since=fc.n?` (${fc.n} coletas desde ${fmtD(new Date(fc.fromT).toISOString())}, mesma dose)`:"";
+    if(fc.curHct>=ulnHct)out.push(["warn","Projeção: Hct já no/acima do teto ("+fmtV(ulnHct,1)+"%)."]);
+    else if(fc.reason==="changedAfter")out.push(["","Projeção do Hct suspensa: a dose mudou depois da última coleta. Volta com a próxima coleta no regime atual."]);
+    else if(fc.reason==="few")out.push(["","Projeção do Hct: só 1 coleta no regime de dose atual — precisa de 2."]);
+    else if(fc.slopeWk<=0.02)out.push(["ok","Projeção: Hct estável/declinando ("+(fc.slopeWk>=0?"+":"")+fmtN(fc.slopeWk,2)+"%/sem)"+since+" — sem cruzamento previsto no ritmo atual."]);
     else if(fc.crossWeeks!=null){const dt=new Date(Date.now()+fc.crossWeeks*7*864e5);
-      out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fmtN(fc.slopeWk,2)+"%/sem (≈"+fmtN((fc.slopeWk*4.3),1)+"%/mês) → cruza "+ulnHct+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
+      out.push([fc.crossWeeks<=6?"warn":"",("Projeção: subindo "+fmtN(fc.slopeWk,2)+"%/sem (≈"+fmtN((fc.slopeWk*4.3),1)+"%/mês)"+since+" → cruza "+fmtV(ulnHct,1)+"% em ~"+Math.round(fc.crossWeeks)+" semanas (≈ "+dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+").")]);}
   }
   el.innerHTML=out.length?out.map(x=>'<div class="note '+x[0]+'" style="margin:6px 0 0">'+x[1]+'</div>').join(""):'<div class="muted" style="font-size:12px">Registre Hct e ferritina nos exames.</div>';
   const all=[...new Set(db.labs.filter(l=>l.hct!=null||l.fer!=null).map(l=>l.date))].sort((a,b)=>new Date(a)-new Date(b));
@@ -3899,6 +4214,7 @@ $("#saveSet").onclick=()=>{
   {const bs=Math.round(+$("#setBpS").value),bd=Math.round(+$("#setBpD").value);
    db.settings.bpTarget={sys:bs>=90&&bs<=200?bs:130,dia:bd>=50&&bd<=130?bd:80};$("#setBpS").value=db.settings.bpTarget.sys;$("#setBpD").value=db.settings.bpTarget.dia;}
   db.settings.albumin=+$("#setAlb").value||4.3;
+  db.settings.cvRisk=$("#setCvRisk").value||null;
   const cp=db.settings.coProtocol||{};
   cp.enabled=$("#cpEnabled").checked;
   cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,everyDays:+$("#cpAnaFreq").value||2};
@@ -3960,11 +4276,13 @@ function initAll(){
   diaDate=todayInput();$("#diaDate").value=diaDate;
   $("#inDate").value=nowLocalInput();$("#gDate").value=nowLocalInput();$("#gSymDate").value=todayInput();
   $("#bDate").value=todayInput();$("#lDate").value=todayInput();$("#cDate").value=todayInput();
+  resetLabUnits();
   if($("#bpDate"))$("#bpDate").value=nowLocalInput();
   $("#setWarn").value=db.settings.warnDays;$("#setPhase").value=db.settings.currentPhase;$("#setCycle").checked=db.settings.cycleMode;$("#setWater").value=db.settings.waterTarget;$("#setExam").value=db.settings.examDays;$("#setBio").value=db.settings.bioDays;
   {const sp=$("#setPhaseType");if(sp){sp.innerHTML="";PHASE_TYPES.forEach(p=>sp.add(new Option(p[1],p[0])));sp.value=db.settings.currentPhaseType||"blast";}}
   $("#setHeight").value=db.settings.heightCm;$("#setAlb").value=db.settings.albumin;
   $("#setBirth").value=db.settings.birthDate||"";$("#setInbody").checked=!!db.settings.inbodyOnly;
+  $("#setCvRisk").value=db.settings.cvRisk||"";
   {const t=db.settings.bpTarget||{sys:130,dia:80};$("#setBpS").value=t.sys;$("#setBpD").value=t.dia;}
   {const g=db.settings.goals||{};
    // Só as metas escolhidas (basis) voltam aos campos; as calculadas aparecem como dica (goalHints).

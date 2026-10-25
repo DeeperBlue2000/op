@@ -224,6 +224,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 .log-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .row-actions{flex-basis:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:-2px}
 .row-actions button{min-height:36px;padding:7px 14px;font-size:12px}
+.row-actions .proto-div{flex:1;align-self:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--amber-soft);line-height:1.35}
 .pend-h{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0 0 2px}
 .log-item.pend .pend-act{flex:none}
 .log-item.pend .pend-act button{min-height:36px;padding:7px 14px;font-size:12px}
@@ -457,13 +458,16 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="btn btn-ghost btn-sm" id="btnIcs" style="width:100%;margin-top:11px;display:none">📅 Exportar próximas doses (.ics)</button>
   </div>
   <div class="card">
-    <h2>Co-protocolo <span class="hint">ancilares vinculados</span></h2>
+    <h2>Co-protocolo <span class="hint">ancilares no ciclo</span> <span class="help" data-note-id="helpCop" data-help-title="Co-protocolo">?</span></h2>
     <div id="coProtoBox"></div>
+    <template class="help-src" id="helpCop">Todo ancilar do cadastro (<b>Dados › Drogas</b>, ancilar: sim) entra aqui quando você registra uma dose, com a cadência dele contada da própria última dose (independe do EAA). <b>Encerrar</b> tira o ancilar do protocolo na hora; sem dose por 3 cadências (mínimo 10 dias) ele sai sozinho. Uma nova aplicação o traz de volta. <b>Registrar</b> usa a última dose daquele ancilar.</template>
   </div>
 
   <div class="card">
-    <h2>Dose semanal <span class="hint">janela móvel 7d · vs alvo</span></h2>
-    <div id="weeklyBox"><div class="empty">Sem aplicações nos últimos 7 dias.</div></div>
+    <h2>Protocolo vigente <span class="hint">do registro</span> <span class="help" data-note-id="helpProto" data-help-title="Protocolo vigente">?</span></h2>
+    <div id="protoBox"></div>
+    <button class="btn btn-ghost btn-sm" id="protoCopy" style="width:100%;margin-top:11px">Copiar como texto</button>
+    <template class="help-src" id="helpProto">O protocolo sai do que você registrou, não de um número digitado: para cada droga no ciclo (EAA, ancilares e GLP-1), a <b>dose da última aplicação</b>, o <b>intervalo médio</b> das últimas 4, os <b>mg/semana reais</b> dos últimos 28 dias (desde o início, se começou depois) e <b>desde quando</b> você está nessa dose. Quando a dose (±10%) ou o intervalo registrado não batem com o cadastro da droga, aparece o aviso com <b>Atualizar</b>, que leva o registrado para o cadastro (é o que move lembrete e "Registrar"). <b>Copiar como texto</b> leva o protocolo para documentos e mensagens; o resumo para consulta usa as mesmas linhas.</template>
   </div>
 
   <div class="card">
@@ -961,7 +965,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
     <div class="field"><label>Perguntas para o médico (uma por linha)</label><textarea id="csQ" rows="3"></textarea></div>
     <button class="btn" id="csPrint">Imprimir / salvar PDF</button>
-    <template class="help-src" id="helpCs">Uma página por médico, montada com o que já está no app: exames do período (anterior, atual e meta), pressão pela última sessão MRPA, sono, composição, mg/semana reais das últimas 4 semanas, mudanças desde a última consulta, retestes pendentes, pedidos da consulta anterior e as suas perguntas. "Desde" começa na última consulta registrada daquele médico. <b>Imprimir / salvar PDF</b> usa a impressão do navegador (no Android: compartilhar › imprimir › salvar como PDF). O <b>registro pós-consulta</b>, preenchido no mesmo dia, vira mudança (com reteste), categoria de risco CV, meta pessoal de um marcador e a lista de exames pedidos.</template>
+    <template class="help-src" id="helpCs">Uma página por médico, montada com o que já está no app: exames do período (anterior, atual e meta), pressão pela última sessão MRPA, sono, composição, protocolo vigente do registro (dose, intervalo e mg/semana reais — as mesmas linhas do card da aba EAA), mudanças desde a última consulta, retestes pendentes, pedidos da consulta anterior e as suas perguntas. "Desde" começa na última consulta registrada daquele médico. <b>Imprimir / salvar PDF</b> usa a impressão do navegador (no Android: compartilhar › imprimir › salvar como PDF). O <b>registro pós-consulta</b>, preenchido no mesmo dia, vira mudança (com reteste), categoria de risco CV, meta pessoal de um marcador e a lista de exames pedidos.</template>
   </div>
   <div class="card cs-page" id="csPage"></div>
   <div class="card no-print">
@@ -1011,12 +1015,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div><label>Ancilar</label><select id="ndAnc"><option value="false">não</option><option value="true">sim</option></select></div>
         <div><label>Dose alvo</label><input id="ndDose" type="text" inputmode="decimal" class="num" placeholder="200"></div>
         <div><label>Cadência (d)</label><input id="ndCad" type="text" inputmode="decimal" class="num" placeholder="2"></div>
-        <div><label>mg/sem alvo</label><input id="ndWk" type="text" inputmode="decimal" class="num" placeholder="700"></div>
       </div>
       <button class="btn btn-ghost btn-sm" id="addDrug" style="width:100%;margin-top:9px">+ Adicionar</button>
     </details>
     <span class="help" data-note-id="help14" data-help-title="Drogas & protocolo">?</span>
-    <template class="help-src" id="help14">Durateston é blend de 4 ésteres — ½-vida única é aproximação. Orais não pedem sítio. Cadência por droga alimenta "próxima dose" e steady-state.</template>
+    <template class="help-src" id="help14">Durateston é blend de 4 ésteres — ½-vida única é aproximação. Orais não pedem sítio. <b>Dose alvo e cadência</b> são a única configuração de cada droga: movem a próxima dose, o co-protocolo (ancilar: sim) e o steady-state. O que você realmente usa sai do registro, no card <b>Protocolo vigente</b> (aba EAA), que avisa quando os dois divergem.</template>
   </div>
 
   <div class="card">
@@ -1039,20 +1042,6 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <input type="checkbox" id="setInbody" style="width:20px;height:20px">
       <label for="setInbody" style="margin:0">Peso só no InBody (sem balança em casa) — uma pendência só, pela biometria completa</label>
     </div>
-    <details style="margin:8px 0"><summary>Co-protocolo de ancilares</summary>
-      <div style="margin-top:9px">
-        <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <input type="checkbox" id="cpEnabled" style="width:18px;height:18px">
-          <label for="cpEnabled" style="margin:0">Ativar derivação automática</label>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Anastrozol — dose (mg)</label><input id="cpAnaDose" type="text" inputmode="decimal" class="num" placeholder="0.20"></div>
-          <div class="field"><label>Anastrozol — frequência (dias)</label><input id="cpAnaFreq" type="text" inputmode="numeric" class="num" placeholder="2"></div>
-          <div class="field"><label>Cabergolina — dose (mg)</label><input id="cpCabDose" type="text" inputmode="decimal" class="num" placeholder="0.25"></div>
-          <div class="field"><label>Cabergolina — frequência (dias)</label><input id="cpCabFreq" type="text" inputmode="numeric" class="num" placeholder="3"></div>
-        </div>
-      </div>
-    </details>
     <details style="margin:8px 0"><summary>Ciclo de treino <span class="help" data-note-id="help15" data-help-title="Ciclo de treino" data-help-inline="1">?</span></summary>
       <div style="margin-top:9px">
         <div class="field"><label>Sequência do ciclo (vírgula; use "descanso", "Regenerativo" ou a letra da ficha). O Regenerativo é o dia leve após o descanso; as fichas A/B/C/D rotacionam.</label>
@@ -1103,7 +1092,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.40</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.50</div>
 </section>
 
 </main>
@@ -1585,6 +1574,32 @@ function ruleConflicts(times,rules){
     const gap=tb-ta;if(Math.abs(gap)<r.h*60)out.push({a:r.a,b,gap,h:r.h});}));
   return out;
 }
+
+// ---------- Protocolo vigente — M10 (v5.50) ----------
+// Ciclo ativo: a droga sai do ciclo após max(3×cadência, 10 d) sem dose — também quebra os períodos de uso.
+function stopGapDays(cad){return Math.max(3*(cad||2),10);}
+// Uma fonte só para doses: o que está em uso sai do registro. hist: aplicações da droga [{doseMg, date}], qualquer
+// ordem · cfg: {dose, cadence} do cadastro (só para o aviso de divergência).
+// → {mg, last, n, interval, weekly, since, start, div} | null. interval = média das últimas 4 aplicações do período
+// atual (dias; null com uma só) · weekly = mg/semana em 28 dias (período que começou dentro da janela conta do início
+// até a próxima dose esperada) · since = nesta dose (±10% da última) desde · start = período atual desde ·
+// div = {dose: [registrado, configurado]} se a última dose difere > 10%; {cad: [~registrado (0,5 d), configurado]}
+// se o intervalo (≥ 2) difere ≥ 0,5 d e > 20% · null se bate.
+function protoSummary(hist,cfg,nowMs){
+  const now=nowMs||Date.now(),c=cfg||{},D=864e5;
+  const h=(hist||[]).filter(x=>x.doseMg>0).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));if(!h.length)return null;
+  const ts=h.map(x=>+new Date(x.date)),z=h.length-1,L=h[z],gap=stopGapDays(c.cadence)*D;
+  let s=z;while(s>0&&ts[s]-ts[s-1]<=gap)s--;
+  const k=Math.max(s,z-3),interval=z>k?(ts[z]-ts[k])/(z-k)/D:null;
+  let d=z;while(d>s&&Math.abs(h[d-1].doseMg-L.doseMg)<=0.1*L.doseMg)d--;
+  const from=now-28*D,iv=interval||c.cadence||7;
+  let sum=0;for(let i=s;i<=z;i++)if(ts[i]>from&&ts[i]<=now)sum+=h[i].doseMg;
+  const span=ts[s]>from?(Math.max(now,ts[z]+iv*D)-ts[s])/D:28;
+  const div={};
+  if(c.dose>0&&Math.abs(L.doseMg-c.dose)>0.1*Math.max(L.doseMg,c.dose))div.dose=[L.doseMg,c.dose];
+  if(interval!=null&&z-k>=2&&c.cadence>0){const dc=Math.abs(interval-c.cadence);if(dc>=0.5&&dc>0.2*c.cadence)div.cad=[Math.max(0.5,Math.round(interval*2)/2),c.cadence];}
+  return {mg:L.doseMg,last:L.date,n:z-s+1,interval,weekly:sum/span*7,since:h[d].date,start:h[s].date,div:div.dose||div.cad?div:null};
+}
 </script>
 <script>
 "use strict";
@@ -2006,7 +2021,7 @@ const REF_LBL=Object.fromEntries(LAB_CAT.filter(m=>m[5]>0).map(m=>[m[0],m[1]]));
 // Categorias de risco CV (Diretriz Brasileira de Dislipidemias 2025) — chaves de LDL_TARGETS, no bloco de cálculo.
 const CV_RISK_LBL={baixo:"baixo",intermediario:"intermediário",alto:"alto",muitoAlto:"muito alto",extremo:"extremo"};
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="5.40";
+const APP_VERSION="5.50";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -2049,7 +2064,7 @@ function fresh(){
       goals:{weight:null,bf:null,lean:null,fat:null,deadline:null,basis:null},
       personal:{enabled:true,perWeek:3,start:ptWeekStart(todayInput()),initial:0},
       suppRev:SUPP_SCHEDULE_REV,meals:6,
-      coProtocol:{enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}}}};
+      coProtocol:{merged:true}}};
 }
 function migrate(r){
   r.schemaVersion=2;
@@ -2078,7 +2093,7 @@ function migrate(r){
   if(s.personal.initial==null)s.personal.initial=0;
   // Acertos legados do "Zerar saldo" (sem UI desde v4.92): somados ao saldo inicial uma vez e removidos (v5.30).
   if(Array.isArray(s.personal.settlements)){s.personal.initial=(+s.personal.initial||0)-s.personal.settlements.reduce((a,x)=>a+(+x.amount||0),0);delete s.personal.settlements;}
-  if(!s.coProtocol)s.coProtocol={enabled:true,anastrozol:{drug:"Anastrozol",everyDays:2,dose:0.20},cabergolina:{drug:"Cabergolina",everyDays:3,dose:0.25}};
+  if(!s.coProtocol)s.coProtocol={merged:true};   // M10: nada a levar para o cadastro (ver depois de r.drugs)
   // Anastrozol agora é independente do EAA (frequência em dias). Converte config antiga (offsetH).
   if(s.coProtocol&&s.coProtocol.anastrozol&&s.coProtocol.anastrozol.everyDays==null){s.coProtocol.anastrozol.everyDays=2;delete s.coProtocol.anastrozol.offsetH;}
   // Cabergolina agora é frequência em dias (igual ao Anastrozol). Converte config antiga (days da semana).
@@ -2114,6 +2129,14 @@ function migrate(r){
     doseTarget:d.doseTarget!=null?d.doseTarget:0,cadence:d.cadence!=null?d.cadence:2,weekly:d.weekly!=null?d.weekly:0,
     stoppedAt:d.stoppedAt||null
   }));
+  // M10 (v5.50): uma fonte só para doses. Dose e frequência do co-protocolo (o que movia o lembrete) passam uma vez
+  // para o cadastro do ancilar; co-protocolo desligado encerra os ancilares. Os campos antigos ficam para as versões
+  // anteriores em outros aparelhos, mas não são mais lidos.
+  {const cp=s.coProtocol;if(!cp.merged){
+    ["anastrozol","cabergolina"].forEach(key=>{const a=cp[key],d=a&&r.drugs.find(x=>x.name===a.drug);if(!d)return;
+      if(a.dose>0)d.doseTarget=a.dose;if(a.everyDays>0)d.cadence=a.everyDays;d.anc=true;});
+    if(cp.enabled===false)r.drugs.forEach(d=>{if(d.anc&&!d.stoppedAt)d.stoppedAt=new Date().toISOString();});
+    cp.merged=true;}}
   ["injections","biometrics","labs","checkins"].forEach(k=>r[k]=r[k]||[]);
   return r;
 }
@@ -2263,7 +2286,7 @@ const NAV_GROUPS={
 const VIEW_RENDER={
   resumo:()=>renderResumo(),
   diario:()=>renderDiaryAll(),
-  apply:()=>{renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();renderCoProtocol();},
+  apply:()=>{renderLog();renderNextDose();renderProtocol();buildSiteGrid();renderBodyMap();renderCoProtocol();},
   glp1:()=>renderGlp(),
   mudancas:()=>renderChanges(),
   charts:()=>{fillPhaseFilter();renderFreq();renderConc();renderSS();renderUsagePeriods();renderProtocolAdherence();renderCorr();renderGlpLevel();renderGlpResult();updatePhaseTags();},
@@ -2271,7 +2294,7 @@ const VIEW_RENDER={
   bio:()=>{renderBioChart();renderBioList();renderBodyComp();renderGoals();renderWeightTrend();renderMoodChart();renderTrack();renderLabCatalog();renderLabTable();renderLabStatus();renderLabTrend();renderDerived();renderIron();renderSymptomHormone();renderPressure();renderMrpa();renderNightHr();renderCVDashboard();},
   fotos:()=>renderFotos(),
   consulta:()=>renderConsulta(),
-  data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderStorageState();renderAuthState();renderCoProtoEditor();renderTrainCfg();}
+  data:()=>{renderDrugEditor();renderGlpDrugEditor();renderRefEditor();renderSnapList();renderStorageState();renderAuthState();renderTrainCfg();}
 };
 // Render sob demanda (F3.6): só a tela visível é desenhada; as outras ficam "sujas" e renderizam ao abrir.
 const dirtyViews=new Set();
@@ -2479,28 +2502,8 @@ function renderMonthList(el,list,mkRow){
 }
 function delInjection(i){
   if(editing&&editing.id===i.id){endEdit();clearForm("eaa");}
-  db.injections=db.injections.filter(x=>x.id!==i.id);save();
-  renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();
-  toast("Aplicação excluída",()=>{db.injections.push(i);save();renderLog();renderNextDose();renderWeekly();buildSiteGrid();renderBodyMap();});
-}
-function renderWeekly(){
-  const box=$("#weeklyBox");const cut=Date.now()-7*864e5;
-  const sums={};
-  db.injections.filter(i=>+new Date(i.date)>=cut).forEach(i=>sums[i.drug]=(sums[i.drug]||0)+i.doseMg);
-  const keys=Object.keys(sums);
-  if(!keys.length){box.innerHTML='<div class="empty">Sem aplicações nos últimos 7 dias.</div>';return;}
-  box.innerHTML="";
-  keys.sort((a,b)=>sums[b]-sums[a]).forEach(k=>{
-    const d=drugByName(k)||{};const c=d.color||PAL.muted;const tgt=d.weekly||0;
-    const pct=tgt?Math.round(sums[k]/tgt*100):0;
-    const w=tgt?Math.min(100,pct):100;
-    const col=!tgt?c:pct>115?PAL.red:pct>=85?PAL.green:PAL.amber;
-    const row=document.createElement("div");row.className="wk";
-    row.innerHTML=`<div class="top"><b>${esc(k)}</b><span class="mg">${fmtV(sums[k],1)} mg${tgt?" / "+fmtV(tgt):""}</span></div>
-      <div class="bar"><i style="width:${w}%;background:${col}"></i></div>
-      <div class="pct">${tgt?pct+"% do alvo semanal":"sem alvo definido"}</div>`;
-    box.appendChild(row);
-  });
+  db.injections=db.injections.filter(x=>x.id!==i.id);save();refreshDoseViews();
+  toast("Aplicação excluída",()=>{db.injections.push(i);save();refreshDoseViews();});
 }
 // ---------- REGISTRO DE DOSE (compartilhado EAA + GLP-1) ----------
 // Usado pelos formulários (#btnSave/#gSave) e pelo "Registrar" de 1 toque (F2.1).
@@ -3254,9 +3257,6 @@ const CS_MARKERS={endo:["e2","prol","tt","shbg","dht","igf1","hct","hb","fer","s
 // Itens do cronograma com efeito pressórico (o cardiologista precisa conhecer a lista).
 const BP_STACK_RE=/coq|ômega|omega|magn[eé]s|taurin|citrul|nitrat|beterrab|alho|pot[aá]ss|arginin|hibisc/i;
 function lastConsult(doc){return (db.consults||[]).filter(c=>c.doc===doc).sort((a,b)=>b.date.localeCompare(a.date))[0]||null;}
-// mg por semana de cada droga nas últimas 4 semanas (EAA, ancilares e GLP-1), pelo registro real.
-function weeklyReal(days){const from=Date.now()-days*864e5,out={};[...db.injections,...db.glp1].forEach(i=>{if(+new Date(i.date)>=from&&i.doseMg>0)out[i.drug]=(out[i.drug]||0)+i.doseMg;});
-  return Object.keys(out).map(k=>[k,out[k]/(days/7)]).sort((a,b)=>b[1]-a[1]);}
 function csTable(keys){
   const rows=keys.map(k=>{const ls=db.labs.filter(l=>l[k]!=null).sort((a,b)=>new Date(b.date)-new Date(a.date));if(!ls.length)return "";
     const cur=ls[0],prev=ls[1],j=labJudge(cur,k),col=judgeColor(j);
@@ -3274,9 +3274,9 @@ function renderConsulta(){
   $("#csQ").value=(db.settings.consultQ||{})[doc]||"";
   const from=$("#csFrom").value,d5=k=>fmtD(k+"T12:00:00");
   let h=`<div class="cs-top"><b>Resumo para consulta · ${CONSULT_DOCS[doc]}</b><span>${fmtD(todayInput()+"T12:00:00")} · período ${d5(from)}–${d5(todayInput())}${lc?" · última consulta "+d5(lc.date):""}</span></div>`;
-  // protocolo real
-  const wk=weeklyReal(28);
-  h+=csSection("Protocolo · mg/semana reais (últimas 4 semanas)",wk.length?"<ul>"+wk.map(([n,v])=>`<li>${esc(n)}: ${fmtV(v,v<10?2:0)} mg/sem</li>`).join("")+"</ul>":'<div class="muted">Sem aplicações nas últimas 4 semanas.</div>');
+  // protocolo vigente (M10): as mesmas linhas do card e do texto copiado, mais o que saiu do ciclo nas últimas 4 semanas
+  const pr=protoRows(true);
+  h+=csSection("Protocolo vigente · do registro (mg/semana dos últimos 28 dias)",pr.length?"<ul>"+pr.map(r=>`<li>${esc(protoLine(r))}</li>`).join("")+"</ul>":'<div class="muted">Sem aplicações nas últimas 4 semanas.</div>');
   if(doc==="cardio"){
     const ml=mrpaLatest(),bm=bpMain(),cons=db.pressures.filter(p=>bpCtxOf(p)==="cons").sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
     let p="";
@@ -4051,7 +4051,7 @@ function dueDays(lastISO,cad){
 // Uma droga está "no ciclo" enquanto a última dose tiver menos de max(3×cadência, 10d) — mesma regra que
 // encerra um período em "Períodos de uso". "Encerrar" grava drug.stoppedAt e tira a droga na hora.
 // Nova aplicação posterior a stoppedAt reativa automaticamente. Fora do ciclo = sem alertas/próxima dose.
-function stopGapDays(cad){return Math.max(3*(cad||2),10);}
+// stopGapDays: no bloco <script id="calc"> (testado).
 function drugDef(name,kind){return kind==="glp1"?glpDrugByName(name):drugByName(name);}
 function drugActive(name,kind,lastISO){
   if(!lastISO)return false;
@@ -4075,61 +4075,105 @@ function offCycleHTML(off,byDrug){
   return '<div class="muted" style="font-size:11px;margin-top:10px">Fora do ciclo: '+off.map(k=>"<b>"+esc(k)+"</b> (última "+fmtD(byDrug[k].date)+")").join(" · ")+'. Uma nova aplicação reativa.</div>';
 }
 function dueList(){const out=[];const e=lastByDrug(db.injections.filter(i=>!(drugByName(i.drug)||{}).anc));Object.keys(e).forEach(k=>{if(!drugActive(k,"eaa",e[k].date))return;const d=drugByName(k)||{};const cad=d.cadence||2;const dd=dueDays(e[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"EAA"});});const g=lastByDrug(db.glp1);Object.keys(g).forEach(k=>{if(!drugActive(k,"glp1",g[k].date))return;const d=glpDrugByName(k)||{};const cad=d.cadence||7;const dd=dueDays(g[k].date,cad);if(dd<=0)out.push({name:k,dd,kind:"GLP-1"});});return out;}
-// ---------- C1: co-protocolo (ancilares vinculados) ----------
+// ---------- Co-protocolo (ancilares) — C1 · M10 (v5.50) ----------
+// Todo ancilar do cadastro (anc) no ciclo ativo, com a cadência do cadastro ancorada na própria última dose
+// (independe do EAA). Sai por "Encerrar" ou após max(3×cadência, 10 d) sem dose; uma nova aplicação traz de volta.
+const ancLast=()=>lastByDrug(db.injections,i=>!!(drugByName(i.drug)||{}).anc);
 function coProtocolDue(){
-  const cp=db.settings.coProtocol;if(!cp||!cp.enabled)return [];
-  const out=[];const now=Date.now();
-  // Anastrozol e Cabergolina: cadência própria em dias, ancorada na última aplicação daquela droga (independe do EAA).
-  [[cp.anastrozol,2],[cp.cabergolina,3]].forEach(([a,defEvery])=>{
-    if(!a)return;const every=a.everyDays||defEvery;
-    const last=db.injections.filter(i=>i.drug===a.drug).sort((x,y)=>new Date(y.date)-new Date(x.date))[0];
-    if(!last){out.push({drug:a.drug,dose:a.dose,dueTime:now,status:"due",reason:"a cada "+every+"d · sem registro anterior"});return;}
-    const nd=addDays(new Date(last.date),every);nd.setHours(12,0,0,0);const dueT=+nd;
-    let status;
-    if(dkey(last.date)===dkey(new Date(now)))status="done";
-    else if(now>=dueT)status="overdue";
-    else if(dkey(new Date(dueT))===dkey(new Date(now)))status="due";
-    else status="upcoming";
-    out.push({drug:a.drug,dose:a.dose,dueTime:dueT,status,reason:"a cada "+every+"d (última "+fmtD(last.date)+")"});
+  const by=ancLast(),out=[],today=dkey(new Date());
+  Object.keys(by).forEach(k=>{
+    const last=by[k];if(!drugActive(k,"eaa",last.date))return;
+    const cad=drugByName(k).cadence||2,dd=dueDays(last.date,cad);
+    const status=dkey(last.date)===today?"done":dd<0?"overdue":dd===0?"due":"upcoming";
+    out.push({drug:k,dose:quickDoseDefaults("eaa",k).doseMg,dd,status,reason:"a cada "+fmtV(cad,1)+"d · última "+fmtD(last.date)});
   });
   return out;
 }
-function etaText(t){if(t==null)return "—";const h=(t-Date.now())/3600e3;if(h<0)return "agora";if(h<24)return "em ~"+Math.max(1,Math.round(h))+"h";return "em "+Math.round(h/24)+"d";}
-function logCoProtocol(drug,dose){
-  db.injections.push({id:uid(),drug,doseMg:dose,site:null,date:new Date().toISOString(),note:"co-protocolo",phase:db.settings.currentPhase,phaseType:db.settings.currentPhaseType});
-  save();refreshViews(["resumo","apply","charts"]);toast(drug+" "+fmtV(dose)+" mg registrado ✓");
-}
 function renderCoProtocol(){
   const el=$("#coProtoBox");if(!el)return;
-  const cp=db.settings.coProtocol;
-  if(!cp||!cp.enabled){el.innerHTML='<div class="muted" style="font-size:12px">Co-protocolo desativado (ative em Dados → Configurações).</div>';return;}
-  const items=coProtocolDue();el.innerHTML="";
+  const items=coProtocolDue(),by=ancLast(),off=Object.keys(by).filter(k=>!items.some(it=>it.drug===k));
+  if(!items.length){el.innerHTML='<div class="empty">'+(off.length?"Nenhum ancilar no ciclo.":"Nenhum ancilar registrado.")+'</div>'+offCycleHTML(off,by);return;}
+  el.innerHTML="";
   items.forEach(it=>{
-    let col,label,btn=false;
-    if(it.status==="done"){col=PAL.green;label="✓ feito";}
-    else if(it.status==="overdue"){col=PAL.red;label="atrasado";btn=true;}
-    else if(it.status==="due"){col=PAL.amber;label="hoje";btn=true;}
-    else if(it.status==="none"){col=PAL.muted;label="—";}
-    else {col=PAL.muted;label=etaText(it.dueTime);}
+    const [col,label]=it.status==="done"?[PAL.green,"✓ feito"]:it.status==="overdue"?[PAL.red,"atrasado "+(-it.dd)+"d"]:it.status==="due"?[PAL.amber,"hoje"]:[PAL.muted,"em "+it.dd+"d"];
     const row=document.createElement("div");row.className="log-item";
-    row.innerHTML='<div class="log-swatch" style="background:'+col+'"></div>'+
-      '<div class="log-main"><div class="t">'+esc(it.drug)+' <span class="muted" style="font-size:11px">'+fmtV(it.dose)+' mg</span></div>'+
-      '<div class="s">'+esc(it.reason)+'</div></div>';
-    const right=document.createElement("div");right.style.cssText="display:flex;align-items:center;gap:6px";
-    if(btn){const b=document.createElement("button");b.className="btn-amber btn-sm";b.textContent="Registrar";b.style.cssText="font-size:11px;padding:5px 9px";b.onclick=()=>logCoProtocol(it.drug,it.dose);right.appendChild(b);}
-    else{const s=document.createElement("div");s.className="log-dose";s.style.cssText="color:"+col+";font-size:11px";s.textContent=label;right.appendChild(s);}
-    row.appendChild(right);el.appendChild(row);
+    row.innerHTML=`<div class="log-swatch" style="background:${col}"></div><div class="log-main"><div class="t">${esc(it.drug)} <span class="muted" style="font-size:11px">${fmtV(it.dose)} mg</span></div>`+
+      `<div class="s">${esc(it.reason)}</div></div><div class="log-dose" style="color:${col};font-size:12px">${label}</div>`;
+    row.appendChild(doseActions("eaa",it.drug,it.status==="due"||it.status==="overdue"));
+    el.appendChild(row);
   });
-  if(!items.length)el.innerHTML='<div class="muted" style="font-size:12px">Nenhum ancilar configurado.</div>';
+  el.insertAdjacentHTML("beforeend",offCycleHTML(off,by));
 }
-function renderCoProtoEditor(){
-  const cp=db.settings.coProtocol||{};
-  if($("#cpEnabled"))$("#cpEnabled").checked=cp.enabled!==false;
-  if($("#cpAnaDose"))$("#cpAnaDose").value=cp.anastrozol?cp.anastrozol.dose:"";
-  if($("#cpAnaFreq"))$("#cpAnaFreq").value=cp.anastrozol?cp.anastrozol.everyDays:"";
-  if($("#cpCabDose"))$("#cpCabDose").value=cp.cabergolina?cp.cabergolina.dose:"";
-  if($("#cpCabFreq"))$("#cpCabFreq").value=cp.cabergolina?cp.cabergolina.everyDays:"";
+// ---------- PROTOCOLO VIGENTE — M10 (v5.50) ----------
+// Uma fonte só para doses: o que está em uso sai do registro (protoSummary); dose alvo e cadência do cadastro só
+// movem lembrete e "Registrar", e o card avisa quando os dois divergem. Mesmas linhas no texto copiado e na consulta.
+// Grupos: 0 EAA · 1 ancilares · 2 GLP-1. withOff: inclui (off:true) as que saíram do ciclo com dose nos últimos 28 dias.
+const PROTO_GRP=["EAA","Ancilares","GLP-1"];
+function protoRows(withOff){
+  const rows=[],from=Date.now()-28*864e5;
+  [["eaa",db.injections],["glp1",db.glp1]].forEach(([kind,arr])=>{
+    const by={};arr.forEach(i=>(by[i.drug]=by[i.drug]||[]).push(i));
+    Object.keys(by).forEach(name=>{
+      const d=drugDef(name,kind)||{},p=protoSummary(by[name],{dose:d.doseTarget,cadence:d.cadence||(kind==="glp1"?7:2)});if(!p)return;
+      const off=!drugActive(name,kind,p.last);if(off&&!(withOff&&+new Date(p.last)>=from))return;
+      rows.push({...p,name,kind,off,grp:kind==="glp1"?2:d.anc?1:0,color:d.color||PAL.muted});
+    });
+  });
+  return rows.sort((a,b)=>a.grp-b.grp||a.off-b.off||b.weekly-a.weekly);
 }
+const fmtMgWk=v=>fmtV(v,v<10?2:0);
+// Linha em texto puro (copiar e consulta).
+function protoLine(r){
+  const nm=r.name+(r.grp===1?" (ancilar)":r.grp===2?" (GLP-1)":"");
+  if(r.off)return nm+": fora do ciclo · última "+fmtV(r.mg)+" mg em "+fmtD(r.last);
+  return nm+": "+fmtV(r.mg)+" mg "+(r.interval!=null?"a cada "+fmtV(r.interval,1)+" d":"(1 aplicação)")+" · ≈ "+fmtMgWk(r.weekly)+" mg/sem"+
+    " · nesta dose desde "+fmtD(r.since)+(r.start!==r.since?" · em uso desde "+fmtD(r.start):"");
+}
+function protoText(rows){
+  const ph=db.settings.currentPhase,pi=phaseInfo(db.settings.currentPhaseType);
+  return ["Protocolo vigente · "+fmtD(new Date())+(ph&&ph!=="—"?" · fase "+ph+(pi[1]?" ("+pi[1]+")":""):""),
+    ...rows.map(r=>"• "+protoLine(r)),
+    "Do registro de aplicações (Control): dose da última aplicação, intervalo médio das últimas 4 e mg/semana dos últimos 28 dias."].join("\n");
+}
+const refreshProto=()=>refreshViews(["apply","glp1","resumo","charts","data"]);
+// "Atualizar": leva o registrado (dose da última; intervalo arredondado a 0,5 d) para o cadastro da droga.
+function protoApply(r){
+  const d=drugDef(r.name,r.kind);if(!d)return toast("Droga não cadastrada");
+  const prev={doseTarget:d.doseTarget,cadence:d.cadence};
+  if(r.div.dose)d.doseTarget=r.div.dose[0];if(r.div.cad)d.cadence=r.div.cad[0];
+  save();refreshProto();
+  toast(r.name.split(" (")[0]+": cadastro atualizado",()=>{Object.assign(d,prev);save();refreshProto();});
+}
+function renderProtocol(){
+  const el=$("#protoBox");if(!el)return;const rows=protoRows();
+  $("#protoCopy").style.display=rows.length?"block":"none";
+  if(!rows.length){el.innerHTML='<div class="empty">Nenhuma droga no ciclo.</div>';return;}
+  el.innerHTML="";let g=-1;const d5=iso=>fmtD(iso).slice(0,5);
+  rows.forEach(r=>{
+    if(r.grp!==g){g=r.grp;el.insertAdjacentHTML("beforeend",`<div class="pend-h"${el.children.length?' style="margin-top:12px"':""}>${PROTO_GRP[g]}</div>`);}
+    const row=document.createElement("div");row.className="log-item";
+    row.innerHTML=`<div class="log-swatch" style="background:${r.color}"></div><div class="log-main"><div class="t">${esc(r.name)}</div>`+
+      `<div class="s">${r.interval!=null?"a cada "+fmtV(r.interval,1)+" d":"1 aplicação"} · ${fmtMgWk(r.weekly)} mg/sem</div>`+
+      `<div class="s">nesta dose desde ${d5(r.since)}${r.start!==r.since?" · em uso desde "+d5(r.start):""}</div></div>`+
+      `<div class="log-dose">${fmtV(r.mg)} mg</div>`;
+    if(r.div){
+      const v=(dose,cad)=>[dose!=null?fmtV(dose)+" mg":"",cad!=null?"a cada "+fmtV(cad,1)+" d":""].filter(Boolean).join(" ");
+      const box=document.createElement("div");box.className="row-actions";
+      box.innerHTML=`<span class="proto-div">registrado ${v(r.div.dose&&r.div.dose[0],r.div.cad&&r.div.cad[0])} × configurado ${v(r.div.dose&&r.div.dose[1],r.div.cad&&r.div.cad[1])}</span>`;
+      const b=document.createElement("button");b.className="btn-ghost btn-sm";b.textContent="Atualizar";b.title="Leva o registrado para o cadastro da droga";
+      b.onclick=()=>protoApply(r);box.appendChild(b);row.appendChild(box);
+    }
+    el.appendChild(row);
+  });
+}
+// Copiar: área de transferência; sem permissão, o texto abre selecionável no popup de ajuda.
+async function copyText(txt,title){
+  try{await navigator.clipboard.writeText(txt);return toast("Copiado ✓");}catch(e){}
+  try{const ta=document.createElement("textarea");ta.value=txt;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;top:0;opacity:0";
+    document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();if(ok)return toast("Copiado ✓");}catch(e){}
+  openHelp('<pre style="white-space:pre-wrap;font-size:12px;user-select:text;-webkit-user-select:text">'+esc(txt)+'</pre>',title);
+}
+$("#protoCopy").onclick=()=>copyText(protoText(protoRows()),"Protocolo vigente");
 function renderResumo(){
   $("#resumoDate").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
   renderPending();
@@ -4156,7 +4200,7 @@ const lastFullBio=()=>db.biometrics.filter(b=>b.bf!=null||b.smm!=null).sort((a,b
 function pendItems(){
   const out=[];
   dueList().forEach(x=>out.push({col:x.dd<0?PAL.red:PAL.amber,t:x.name,s:x.kind+" · "+(x.dd<0?(-x.dd)+"d atrasada":"hoje"),act:"dose",kind:x.kind==="GLP-1"?"glp1":"eaa",drug:x.name}));
-  coProtocolDue().filter(c=>c.status==="due"||c.status==="overdue").forEach(c=>out.push({col:c.status==="overdue"?PAL.red:PAL.amber,t:c.drug+" "+fmtV(c.dose)+" mg",s:"co-protocolo · "+(c.status==="overdue"?"atrasado":"hoje"),act:"cop",drug:c.drug,dose:c.dose}));
+  coProtocolDue().filter(c=>c.status==="due"||c.status==="overdue").forEach(c=>out.push({col:c.status==="overdue"?PAL.red:PAL.amber,t:c.drug+" "+fmtV(c.dose)+" mg",s:"co-protocolo · "+(c.status==="overdue"?(-c.dd)+"d atrasado":"hoje"),act:"dose",kind:"eaa",drug:c.drug}));
   // M3 (v5.40): consulta marcada (registro pós-consulta) — 3 dias antes, para montar o resumo.
   Object.keys(CONSULT_DOCS).forEach(doc=>{const c=lastConsult(doc),t=todayInput();if(c&&c.next&&t>=addDaysKey(c.next,-3)&&t<=c.next){const dd=diffDays(c.next,t);out.push({col:PAL.blue,t:"Consulta · "+CONSULT_DOCS[doc],s:dd?"em "+dd+"d · monte o resumo e as perguntas":"hoje · resumo pronto para imprimir",act:"cs",doc});}});
   // M4 (v5.40): tolerância do GLP-1 nos dias depois da dose.
@@ -4195,7 +4239,6 @@ function renderPending(){
     }else{
       const box=document.createElement("div");box.className="pend-act";
       if(it.act==="dose")box.appendChild(btn("Registrar","btn-amber",()=>quickDose(it.kind,it.drug)));
-      else if(it.act==="cop")box.appendChild(btn("Registrar","btn-amber",()=>logCoProtocol(it.drug,it.dose)));
       else if(it.act==="supp")box.appendChild(btn("Marcar","btn-amber",()=>{const k=todayInput(),prev={...(((db.daily||{})[k]||{}).supps||{})};markBlock(it.blk,k);
         toast(it.blkName+" ✓",()=>{db.daily[k].supps=prev;save();renderSupps();renderPending();});}));
       else if(it.act==="bio")box.appendChild(btn("Abrir","btn-ghost",()=>goCard("bio","#bWeight")));
@@ -5125,12 +5168,11 @@ function renderDrugEditor(){
         <div><label>Ancilar</label><select data-f="anc"><option value="false"${!d.anc?" selected":""}>não</option><option value="true"${d.anc?" selected":""}>sim</option></select></div>
         <div><label>Dose alvo</label><input data-f="doseTarget" type="text" inputmode="decimal" class="num" value="${d.doseTarget}"></div>
         <div><label>Cadência (d)</label><input data-f="cadence" type="text" inputmode="decimal" class="num" value="${d.cadence}"></div>
-        <div><label>mg/sem</label><input data-f="weekly" type="text" inputmode="decimal" class="num" value="${d.weekly}"></div>
       </div>`;
     box.querySelectorAll("[data-f]").forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f;let v=inp.value;
       if(f==="anc")v=v==="true";else if(f!=="type")v=parseFloat(v)||0;
-      db.drugs[idx][f]=v;save();fillDrugSelect();applyDrugContext();renderSS();
+      db.drugs[idx][f]=v;save();fillDrugSelect();applyDrugContext();renderSS();refreshViews(["apply","resumo"]);
       if(f==="anc"||f==="type")renderDrugEditor();
     });
     box.querySelector(".del").onclick=()=>{
@@ -5146,8 +5188,8 @@ $("#addDrug").onclick=()=>{
   const palette=["#22d3ee","#fb923c","#a3e635","#e879f9","#facc15","#94a3b8"];
   db.drugs.push({name:n,hl:parseFloat($("#ndHl").value)||4.5,type:$("#ndType").value,
     anc:$("#ndAnc").value==="true",color:palette[db.drugs.length%palette.length],
-    doseTarget:parseFloat($("#ndDose").value)||0,cadence:parseFloat($("#ndCad").value)||2,weekly:parseFloat($("#ndWk").value)||0});
-  save();["ndName","ndHl","ndDose","ndCad","ndWk"].forEach(id=>$("#"+id).value="");
+    doseTarget:parseFloat($("#ndDose").value)||0,cadence:parseFloat($("#ndCad").value)||2,weekly:0});
+  save();["ndName","ndHl","ndDose","ndCad"].forEach(id=>$("#"+id).value="");
   renderDrugEditor();fillDrugSelect();renderSS();toast("Droga adicionada ✓");
 };
 function renderGlpDrugEditor(){
@@ -5206,11 +5248,6 @@ $("#saveSet").onclick=()=>{
    db.settings.bpTarget={sys:bs>=90&&bs<=200?bs:130,dia:bd>=50&&bd<=130?bd:80};$("#setBpS").value=db.settings.bpTarget.sys;$("#setBpD").value=db.settings.bpTarget.dia;}
   db.settings.albumin=+$("#setAlb").value||4.3;
   db.settings.cvRisk=$("#setCvRisk").value||null;
-  const cp=db.settings.coProtocol||{};
-  cp.enabled=$("#cpEnabled").checked;
-  cp.anastrozol={drug:"Anastrozol",dose:+$("#cpAnaDose").value||0.20,everyDays:+$("#cpAnaFreq").value||2};
-  cp.cabergolina={drug:"Cabergolina",dose:+$("#cpCabDose").value||0.25,everyDays:+$("#cpCabFreq").value||3};
-  db.settings.coProtocol=cp;
   const pt=db.settings.personal;
   pt.enabled=$("#ptEnabled").checked;pt.perWeek=Math.max(1,+$("#ptPerWeek").value||3);
   if($("#ptStart").value)pt.start=ptWeekStart($("#ptStart").value);

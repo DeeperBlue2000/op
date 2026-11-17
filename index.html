@@ -129,7 +129,7 @@ input[type=checkbox]{width:auto}
 .cs-foot{font-size:11px;color:var(--muted);margin-top:16px}
 @media print{
   body{background:#fff!important;background-image:none!important;color:#111!important;padding:0!important}
-  header,#nav,.toast,.no-print,.help,.chart-nav,.view:not(#v-consulta){display:none!important}
+  header,#nav,.toast,.no-print,.help,.chart-nav,.chart-zoom,.chart-win,.view:not(#v-consulta){display:none!important}
   main{padding:0!important;max-width:none!important}
   #v-consulta{display:block!important;animation:none!important}
   .cs-page{background:#fff!important;border:none!important;padding:0!important}
@@ -270,6 +270,11 @@ tr.tap-edit:active,.tap-edit:active{opacity:.7}
 .chart-nav{display:none;position:relative;height:20px;padding:7px 0;margin-top:4px;cursor:pointer;touch-action:none;background:linear-gradient(var(--panel-2),var(--panel-2)) content-box;border-radius:3px}
 .chart-nav.on{display:block}
 .chart-nav i{position:absolute;top:7px;bottom:7px;min-width:14px;background:var(--amber);opacity:.6;border-radius:3px}
+.chart-zoom{display:flex;gap:4px;margin:0 0 4px}
+.chart-zoom[hidden],.chart-win[hidden]{display:none}
+.chart-zoom button{flex:1;min-height:44px;padding:0 4px;background:none;border:1px solid transparent;border-radius:8px;color:var(--muted);font:600 12px 'IBM Plex Mono',monospace}
+.chart-zoom button.on{border-color:var(--amber);color:var(--amber-soft);background:rgba(245,158,11,.1)}
+.chart-win{font:11px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:2px;padding-right:24px}
 .seg{display:flex;gap:6px;margin-bottom:13px;background:var(--panel-2);padding:4px;border-radius:var(--r-sm)}
 .seg button{flex:1;background:none;color:var(--muted);padding:8px;border-radius:7px;font-size:12.5px;font-weight:500}
 .seg button.on{background:var(--amber);color:#181818}
@@ -1092,7 +1097,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.50</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v5.60</div>
 </section>
 
 </main>
@@ -1600,6 +1605,33 @@ function protoSummary(hist,cfg,nowMs){
   if(interval!=null&&z-k>=2&&c.cadence>0){const dc=Math.abs(interval-c.cadence);if(dc>=0.5&&dc>0.2*c.cadence)div.cad=[Math.max(0.5,Math.round(interval*2)/2),c.cadence];}
   return {mg:L.doseMg,last:L.date,n:z-s+1,interval,weekly:sum/span*7,since:h[d].date,start:h[s].date,div:div.dose||div.cad?div:null};
 }
+
+// ---------- Janela dos gráficos: zoom e pan — Z1/Z2/Z3 (v5.60) ----------
+// Estado em dias desde a primeira data do gráfico: S = início da janela, W = largura, span = período inteiro,
+// min = menor largura permitida. req: {W2 (largura pedida; ≥ span = "Tudo"), anchor (0..1, ponto da janela que fica
+// parado na tela), at? (dia que fica parado; padrão S + anchor × W)}. → {S, W} com W em [min, span] e S em [0, span − W].
+function zoomWindow(st,req){
+  const span=Math.max(0,st.span||0),min=Math.min(span,Math.max(1,st.min||14)),r=req||{};
+  const a=r.anchor==null?1:Math.max(0,Math.min(1,r.anchor));
+  let W=r.W2==null||isNaN(r.W2)?st.W:r.W2;
+  if(!(W<span))W=span;if(!(W>=min))W=min;
+  const at=r.at!=null?r.at:(st.S||0)+a*(st.W||0);
+  const S=Math.max(0,Math.min(span-W,at-a*W));
+  return {S,W};
+}
+// Menor janela que costuma ter ≥ 2 pontos: 2 × o intervalo mediano entre as datas, nunca abaixo de `floor` (14 dias).
+// ts: datas em ms, ordenadas. → dias, ou null com menos de 2 datas. Gráfico com span ≤ isso não ganha zoom.
+function zoomMinDays(ts,floor){
+  const f=floor==null?14:floor;if(!ts||ts.length<2)return null;
+  const g=[];for(let i=1;i<ts.length;i++)g.push((ts[i]-ts[i-1])/864e5);
+  g.sort((x,y)=>x-y);const m=g.length%2?g[(g.length-1)/2]:(g[g.length/2-1]+g[g.length/2])/2;
+  return Math.max(f,2*m);
+}
+// Períodos prontos que cabem no gráfico (menores que o período e não menores que a janela mínima) + "Tudo".
+const ZOOM_PRESETS=[[30,"1m"],[91,"3m"],[150,"5m"],[365,"1a"]];
+function zoomPresets(span,min){
+  return [...ZOOM_PRESETS.filter(([w])=>w>=(min||0)&&w<span*0.95),[span,"Tudo"]];
+}
 </script>
 <script>
 "use strict";
@@ -1632,61 +1664,137 @@ const kpi3=(...boxes)=>boxes.map(b=>kpiBox(b[0],b[1],b[2])).join("");
 const axisTitle=t=>({display:true,text:t,color:PAL.muted,font:{size:9}});
 const leftY=(text,extra={})=>({...baseOpts.scales.y,position:"left",...(text?{title:axisTitle(text)}:{}),...extra});
 // Chart.js: registro central — destrói o gráfico anterior e recria no mesmo canvas.
-// cfg.panDates (opcional): datas de cada label. Se o período passar de CHART_WIN_DAYS, o gráfico mostra só a
-// janela mais recente e ganha pan horizontal (arrastar no gráfico, roda/trackpad lateral ou trilho abaixo).
-// Eixos e legenda ficam fixos — só a janela do eixo X (min/max por índice) se move.
+// cfg.panDates (opcional): datas de cada label (ordenadas). Liga a janela do eixo X (Z1/Z2, v5.60): períodos prontos
+// (1m · 3m · 5m · 1a · Tudo, os que cabem), pinça, Ctrl + roda e dois toques (volta para 5 meses), além do arrastar,
+// da roda lateral e do trilho (v4.70). Os rótulos do eixo saem da data e da largura da janela (Z3).
+// Eixos Y e legenda ficam fixos — só a janela do eixo X (min/max por índice) se move. Um novo desenho do mesmo gráfico
+// mantém a largura e a posição; a largura escolhida fica guardada por aparelho (control_chartwin — fora do db, não
+// sincroniza). As contas da janela (zoomWindow, zoomMinDays, zoomPresets) estão no bloco de cálculo.
 const charts={};
 if(window.Chart)Chart.defaults.locale="pt-BR"; // ticks e tooltips com vírgula decimal
-const CHART_WIN_DAYS=150; // ~5 meses visíveis
-const chartPan={};        // id → {ch, ts, t0, span, S (dias desde t0 do início da janela), nav}
+const CHART_WIN_DEF=150;  // janela inicial: ~5 meses
+const CHART_WIN_MIN=14;   // menor janela de zoom (dias)
+const CHART_WIN_KEY="control_chartwin";
+const chartPan={};        // id → {ch, ts, t0, span, min, S (dias desde t0 do início da janela), W (largura), nav, bar, win}
+const MON3=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+// Preferência de largura por gráfico: lê (v omitido), grava (dias ou "all") ou apaga (null).
+function chartWinPref(id,v){
+  try{const o=JSON.parse(localStorage.getItem(CHART_WIN_KEY)||"{}");if(v===undefined)return o[id];
+    if(v===null)delete o[id];else o[id]=v;localStorage.setItem(CHART_WIN_KEY,JSON.stringify(o));}catch(e){}
+}
+// Z3: rótulo do eixo X pela data — dia/mês até ~13 meses visíveis; mês/ano acima disso.
+function tickLabel(t,winDays){
+  if(t==null||isNaN(t))return "";const d=new Date(t);
+  return winDays>400?MON3[d.getMonth()]+"/"+String(d.getFullYear()).slice(2):DF_DM.format(d);
+}
+// "20 dias" · "3 meses" · "1,5 anos"; winTxt junta a janela e o período ("3 de 6 meses").
+function durParts(d){if(d<60)return [Math.max(1,Math.round(d)),Math.round(d)===1?"dia":"dias"];
+  if(d<730){const m=Math.max(1,Math.round(d/30.44));return [m,m===1?"mês":"meses"];}return [fmtV(d/365.25,1),"anos"];}
+function winTxt(W,span){const a=durParts(W),b=durParts(span);return a[1]===b[1]||(a[1]==="mês"&&b[1]==="meses")?a[0]+" de "+b.join(" "):a.join(" ")+" de "+b.join(" ");}
 function mkChart(id,cfg){
   const dates=cfg.panDates;delete cfg.panDates;
   if(dates){const o=cfg.options=cfg.options||{};o.scales={...(o.scales||{})};o.scales.x={...(o.scales.x||{})}; // não vaza min/max no baseOpts compartilhado
-    o.plugins={...(o.plugins||{}),changeMarks:{ts:dates.map(d=>+new Date(d))}};}  // M2: linhas das mudanças (changeMarks)
+    const tsx=dates.map(d=>+new Date(d)),full=tsx.length?(tsx[tsx.length-1]-tsx[0])/864e5:0;
+    o.scales.x.ticks={...(o.scales.x.ticks||{}),callback:v=>tickLabel(tsx[v],chartPan[id]?chartPan[id].W:full)}; // Z3
+    o.plugins={...(o.plugins||{}),changeMarks:{ts:tsx}};}  // M2: linhas das mudanças (changeMarks)
   if(charts[id]){charts[id].destroy();cfg.options={...(cfg.options||{}),animation:false};} // re-render sem animação
   const ch=charts[id]=new Chart($("#"+id),cfg);
   setupPan(id,ch,dates);
   return ch;
 }
+// Cria (uma vez por canvas) a fileira de períodos acima do gráfico, o trilho e a linha do intervalo abaixo dele.
+function panParts(cv){
+  const wrap=cv.parentElement,mk=(cls,where)=>{const el=document.createElement("div");el.className=cls;wrap[where](el);return el;};
+  let bar=wrap.previousElementSibling;if(!bar||!bar.classList.contains("chart-zoom")){bar=mk("chart-zoom","before");bar.setAttribute("role","group");bar.setAttribute("aria-label","Período do gráfico");}
+  let nav=wrap.nextElementSibling;if(!nav||!nav.classList.contains("chart-nav")){nav=mk("chart-nav","after");nav.innerHTML="<i></i>";}
+  let win=nav.nextElementSibling;if(!win||!win.classList.contains("chart-win")){win=document.createElement("div");win.className="chart-win";nav.after(win);}
+  return {bar,nav,win};
+}
 function setupPan(id,ch,dates){
-  const cv=$("#"+id),wrap=cv.parentElement;
-  let nav=wrap.nextElementSibling;
-  if(!nav||!nav.classList.contains("chart-nav")){nav=document.createElement("div");nav.className="chart-nav";nav.innerHTML="<i></i>";wrap.after(nav);}
-  const ts=(dates||[]).map(d=>+new Date(d));
-  const span=ts.length?(ts[ts.length-1]-ts[0])/864e5:0;
-  if(span<=CHART_WIN_DAYS){nav.classList.remove("on");delete chartPan[id];return;}
-  chartPan[id]={ch,ts,t0:ts[0],span,S:span-CHART_WIN_DAYS,nav}; // abre no período mais recente
-  nav.classList.add("on");cv.style.touchAction="pan-y";
-  if(!cv.dataset.pan){bindPan(id,cv,nav);cv.dataset.pan="1";}
+  const cv=$("#"+id),{bar,nav,win}=panParts(cv);
+  const ts=(dates||[]).map(d=>+new Date(d)),span=ts.length?(ts[ts.length-1]-ts[0])/864e5:0;
+  const min=zoomMinDays(ts,CHART_WIN_MIN),prev=chartPan[id],presets=min==null?[]:zoomPresets(span,min);
+  // sem zoom quando nenhum período pronto cabe (período curto ou pontos esparsos demais)
+  if(presets.length<2){nav.classList.remove("on");bar.hidden=true;win.hidden=true;delete chartPan[id];return;}
+  let W,S;
+  if(prev){ // novo desenho do mesmo gráfico: mantém a largura ("Tudo" continua "Tudo") e a posição (o fim continua no fim)
+    W=prev.W>=prev.span-0.01?span:prev.W;
+    S=prev.S>=prev.span-prev.W-0.5?span-W:(prev.t0+prev.S*864e5-ts[0])/864e5;
+  }else{const p=chartWinPref(id);W=p==="all"?span:(p>0?p:CHART_WIN_DEF);if(W>=span*0.95)W=span;S=span-W;} // abre no período mais recente
+  const st=chartPan[id]={ch,ts,t0:ts[0],span,min,S:0,W:span,nav,bar,win};
+  Object.assign(st,zoomWindow(st,{W2:W,anchor:0,at:S}));
+  bar.innerHTML=presets.map(([w,l])=>`<button type="button" data-w="${l==="Tudo"?"all":w}" aria-pressed="false">${l}</button>`).join("");
+  bar.hidden=false;win.hidden=false;cv.style.touchAction="pan-y";
+  if(!cv.dataset.pan){bindPan(id,cv,nav,bar);cv.dataset.pan="1";}
   applyPan(id);
 }
 function applyPan(id){
   const st=chartPan[id];if(!st)return;
-  const a=st.t0+st.S*864e5,b=a+CHART_WIN_DAYS*864e5;
-  let lo=st.ts.findIndex(t=>t>=a-6e4),hi=lo;
-  for(let i=st.ts.length-1;i>=0;i--)if(st.ts[i]<=b+6e4){hi=i;break;}
-  if(lo<0)lo=0;if(hi<lo)hi=lo;
-  st.ch.options.scales.x.min=lo;st.ch.options.scales.x.max=hi;st.ch.update("none");
-  const th=st.nav.firstChild;th.style.left=(st.S/st.span*100)+"%";th.style.width=(CHART_WIN_DAYS/st.span*100)+"%";
-  st.nav.title=fmtD(new Date(a).toISOString())+" – "+fmtD(new Date(b).toISOString());
+  const all=st.W>=st.span-0.01,a=st.t0+st.S*864e5,b=a+st.W*864e5;
+  let lo=0,hi=st.ts.length-1;
+  if(!all){lo=st.ts.findIndex(t=>t>=a-6e4);hi=lo;
+    for(let i=st.ts.length-1;i>=0;i--)if(st.ts[i]<=b+6e4){hi=i;break;}
+    if(lo<0)lo=0;if(hi<lo)hi=lo;}
+  st.ch.options.scales.x.min=lo;st.ch.options.scales.x.max=hi;
+  // Z3: com mais de 120 pontos visíveis os marcadores somem e fica só a linha (o raio original volta ao aproximar)
+  const many=hi-lo+1>120;
+  st.ch.data.datasets.forEach(ds=>{if(!("_pr0" in ds))ds._pr0=ds.pointRadius;
+    if(many)ds.pointRadius=0;else if(ds._pr0===undefined)delete ds.pointRadius;else ds.pointRadius=ds._pr0;});
+  st.ch.update("none");
+  st.nav.classList.toggle("on",!all);
+  const th=st.nav.firstChild;th.style.left=(st.S/st.span*100)+"%";th.style.width=(st.W/st.span*100)+"%";
+  const rng=fmtD(new Date(a).toISOString())+" – "+fmtD(new Date(b).toISOString());
+  st.nav.title=rng;st.win.textContent=rng+" · "+(all?"tudo · "+durParts(st.span).join(" "):winTxt(st.W,st.span));
+  st.bar.querySelectorAll("button").forEach(btn=>{const w=btn.dataset.w,on=w==="all"?all:!all&&Math.abs(+w-st.W)<0.5;
+    btn.classList.toggle("on",on);btn.setAttribute("aria-pressed",on);});
 }
-function bindPan(id,cv,nav){
-  const setS=S=>{const st=chartPan[id];if(!st)return;st.S=Math.max(0,Math.min(st.span-CHART_WIN_DAYS,S));applyPan(id);};
-  const pxDays=()=>{const st=chartPan[id];return CHART_WIN_DAYS/(((st&&st.ch.chartArea)||{}).width||cv.clientWidth||300);};
-  let x0=null,dragging=false;
-  cv.addEventListener("pointerdown",e=>{if(chartPan[id]){x0=e.clientX;dragging=false;}});
+function bindPan(id,cv,nav,bar){
+  const cur=()=>chartPan[id];
+  const keep=st=>chartWinPref(id,st.W>=st.span-0.01?"all":Math.round(st.W));
+  const set=(z,save)=>{const st=cur();if(!st)return;st.S=z.S;st.W=z.W;applyPan(id);if(save)keep(st);};
+  const setS=S=>{const st=cur();if(st)set(zoomWindow(st,{W2:st.W,anchor:0,at:S}));};
+  const area=()=>{const st=cur(),a=(st&&st.ch.chartArea)||{};return {left:a.left||0,width:a.width||cv.clientWidth||300};};
+  const pxDays=()=>{const st=cur();return st?st.W/area().width:0;};
+  const fracAt=x=>{const r=cv.getBoundingClientRect(),a=area();return Math.max(0,Math.min(1,(x-r.left-a.left)/a.width));};
+  const hideTip=st=>{try{st.ch.tooltip.setActiveElements([],{x:0,y:0});st.ch.update("none");}catch(e){}};
+  const ptr=new Map();let x0=null,dragging=false,pinch=null,lastTap=null;
+  cv.addEventListener("pointerdown",e=>{
+    const st=cur();if(!st)return;ptr.set(e.pointerId,e.clientX);
+    if(ptr.size===2){ // Z2: pinça — o dia entre os dedos fica parado
+      const xs=[...ptr.values()],f=fracAt((xs[0]+xs[1])/2);
+      pinch={d0:Math.max(24,Math.abs(xs[1]-xs[0])),W0:st.W,at:st.S+f*st.W};x0=null;dragging=true;lastTap=null;hideTip(st);}
+    else if(ptr.size===1){x0=e.clientX;dragging=false;}});
   cv.addEventListener("pointermove",e=>{
-    if(x0==null||!chartPan[id])return;const dx=e.clientX-x0;
-    if(!dragging&&Math.abs(dx)<6)return;dragging=true;
-    setS(chartPan[id].S-dx*pxDays());x0=e.clientX;});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>cv.addEventListener(ev,()=>{x0=null;}));
+    const st=cur();if(!st||!ptr.has(e.pointerId))return;ptr.set(e.pointerId,e.clientX);
+    if(pinch&&ptr.size>=2){const xs=[...ptr.values()].slice(0,2),d=Math.max(24,Math.abs(xs[1]-xs[0]));
+      set(zoomWindow(st,{W2:pinch.W0*pinch.d0/d,anchor:fracAt((xs[0]+xs[1])/2),at:pinch.at}));return;}
+    if(x0==null)return;const dx=e.clientX-x0;
+    if(!dragging&&Math.abs(dx)<6)return;if(!dragging)hideTip(st);dragging=true;
+    setS(st.S-dx*pxDays());x0=e.clientX;});
+  const up=e=>{
+    const had=ptr.delete(e.pointerId);
+    if(pinch){if(ptr.size<2){pinch=null;const st=cur();if(st)keep(st);x0=ptr.size?[...ptr.values()][0]:null;}return;}
+    if(ptr.size)return;x0=null;
+    // dois toques sem arrastar: volta para 5 meses, no período mais recente (e esquece o período guardado)
+    if(e.type!=="pointerup"||!had||dragging)return;
+    const now=Date.now();
+    if(lastTap&&now-lastTap.t<350&&Math.abs(e.clientX-lastTap.x)<30){lastTap=null;const st=cur();
+      if(st){chartWinPref(id,null);set(zoomWindow(st,{W2:CHART_WIN_DEF>=st.span*0.95?Infinity:CHART_WIN_DEF,anchor:1,at:st.span}));}}
+    else lastTap={t:now,x:e.clientX};};
+  ["pointerup","pointercancel"].forEach(ev=>cv.addEventListener(ev,up));
+  cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")up(e);});
   cv.addEventListener("wheel",e=>{
-    if(!chartPan[id])return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:(e.shiftKey?e.deltaY:0);
-    if(!d)return;e.preventDefault();setS(chartPan[id].S+d*pxDays());},{passive:false});
+    const st=cur();if(!st)return;
+    if(e.ctrlKey){e.preventDefault();set(zoomWindow(st,{W2:st.W*Math.exp(e.deltaY*0.01),anchor:fracAt(e.clientX)}),true);return;} // Ctrl + roda / pinça no trackpad
+    const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:(e.shiftKey?e.deltaY:0);
+    if(!d)return;e.preventDefault();setS(st.S+d*pxDays());},{passive:false});
   // trilho: tocar/arrastar centraliza a janela no ponto
-  const seek=e=>{const st=chartPan[id];if(!st)return;const r=nav.getBoundingClientRect();setS((e.clientX-r.left)/r.width*st.span-CHART_WIN_DAYS/2);};
+  const seek=e=>{const st=cur();if(!st)return;const r=nav.getBoundingClientRect();setS((e.clientX-r.left)/r.width*st.span-st.W/2);};
   nav.addEventListener("pointerdown",e=>{seek(e);nav.setPointerCapture(e.pointerId);});
   nav.addEventListener("pointermove",e=>{if(nav.hasPointerCapture(e.pointerId))seek(e);});
+  // períodos prontos: mostram os últimos N dias
+  bar.addEventListener("click",e=>{const b=e.target.closest("button[data-w]"),st=cur();if(!b||!st)return;
+    set(zoomWindow(st,{W2:b.dataset.w==="all"?Infinity:+b.dataset.w,anchor:1,at:st.span}),true);});
 }
 
 // ============================================================
@@ -2021,7 +2129,7 @@ const REF_LBL=Object.fromEntries(LAB_CAT.filter(m=>m[5]>0).map(m=>[m[0],m[1]]));
 // Categorias de risco CV (Diretriz Brasileira de Dislipidemias 2025) — chaves de LDL_TARGETS, no bloco de cálculo.
 const CV_RISK_LBL={baixo:"baixo",intermediario:"intermediário",alto:"alto",muitoAlto:"muito alto",extremo:"extremo"};
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="5.50";
+const APP_VERSION="5.60";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -3236,14 +3344,25 @@ function suppTouched(){
 // Linhas das mudanças em todo gráfico temporal (os que passam panDates ao mkChart): tracejado âmbar + número.
 const changeMarks={id:"changeMarks",afterDatasetsDraw(ch,args,opt){
   const ts=opt&&opt.ts;if(!ts||ts.length<2||!db.changes||!db.changes.length)return;
-  const xs=ch.scales.x,a=ch.chartArea;if(!xs||!a)return;const ctx=ch.ctx;
+  const xs=ch.scales.x,a=ch.chartArea;if(!xs||!a)return;const ctx=ch.ctx,marks=[];
   changeList().forEach(c=>{const t=+new Date(c.date+"T12:00:00");if(t<ts[0]||t>ts[ts.length-1])return;
     const i=ts.findIndex(x=>x>=t);let px=xs.getPixelForValue(i);
     if(ts[i]!==t&&i>0)px=xs.getPixelForValue(i-1)+(t-ts[i-1])/(ts[i]-ts[i-1])*(px-xs.getPixelForValue(i-1));
-    if(!(px>=a.left&&px<=a.right))return;
-    ctx.save();ctx.strokeStyle="rgba(245,158,11,.55)";ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(px,a.top+13);ctx.lineTo(px,a.bottom);ctx.stroke();
-    ctx.setLineDash([]);ctx.fillStyle=PAL.amber;ctx.beginPath();ctx.arc(px,a.top+6,6.5,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#181818";ctx.font="600 9px 'IBM Plex Mono',monospace";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(c.n),px,a.top+6.5);ctx.restore();});
+    if(px>=a.left&&px<=a.right)marks.push({px,n:c.n});});
+  if(!marks.length)return;
+  marks.sort((p,q)=>p.px-q.px);
+  // Z3 (v5.60): marcas a menos de 14 px uma da outra dividem um selo só ("3–5"); as linhas continuam uma por mudança.
+  const groups=[];marks.forEach(m=>{const g=groups[groups.length-1];if(g&&m.px-g[g.length-1].px<14)g.push(m);else groups.push([m]);});
+  ctx.save();ctx.strokeStyle="rgba(245,158,11,.55)";ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  marks.forEach(m=>{ctx.beginPath();ctx.moveTo(m.px,a.top+13);ctx.lineTo(m.px,a.bottom);ctx.stroke();});
+  ctx.setLineDash([]);ctx.font="600 9px 'IBM Plex Mono',monospace";ctx.textAlign="center";ctx.textBaseline="middle";
+  groups.forEach(g=>{const ns=g.map(m=>m.n).sort((x,y)=>x-y),seq=ns.every((n,k)=>!k||n===ns[k-1]+1);
+    const txt=ns.length===1?String(ns[0]):seq?ns[0]+"–"+ns[ns.length-1]:ns.join(",");
+    const w=Math.max(13,ctx.measureText(txt).width+8),cx=Math.max(a.left+w/2,Math.min(a.right-w/2,(g[0].px+g[g.length-1].px)/2));
+    ctx.fillStyle=PAL.amber;ctx.beginPath();
+    if(ns.length>1&&ctx.roundRect)ctx.roundRect(cx-w/2,a.top-0.5,w,13,6.5);else ctx.arc(cx,a.top+6,6.5,0,Math.PI*2);
+    ctx.fill();ctx.fillStyle="#181818";ctx.fillText(txt,cx,a.top+6.5);});
+  ctx.restore();
 }};
 if(window.Chart)Chart.register(changeMarks);
 // ---------- RESUMO PARA CONSULTA — M3 (v5.40) ----------

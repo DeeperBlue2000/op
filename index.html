@@ -790,6 +790,11 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
   <div class="card" data-sec="corpo">
     <h2>Biometria <span class="hint" id="bioDue"></span> <span class="help" data-note-id="helpBio" data-help-title="Biometria e InBody">?</span></h2>
+    <!-- T9 (v6.10): arquivo control-bio da skill laudo-control → conferência em #bioImpBox antes de gravar -->
+    <div class="lab-imp"><button class="btn-ghost" id="btnBioImp">⬆ Importar InBody</button><span class="help" data-note-id="helpBioImp" data-help-title="Importar InBody">?</span></div>
+    <input type="file" id="fileBio" accept=".json,.txt,application/json,text/plain" style="display:none">
+    <div id="bioImpBox"></div>
+    <template class="help-src" id="helpBioImp">Importa o arquivo <b>bio_AAAA-MM-DD.json</b> (ou <b>bio_lote_…</b>), gerado no computador pelo Claude Code a partir dos PDFs do InBody (skill <b>laudo-control</b>: "importa estes laudos de bioimpedância para o Control"). Um arquivo pode trazer várias medições. Antes de gravar, cada data mostra o que é <b>novo</b> (vem marcado), o que é <b>diferente</b> do já gravado (só entra se você marcar "substituir") e o que já é igual.<br><br>O <b>histórico</b> que a folha imprime vem em números inteiros: só entram peso e MME, das datas sem laudo, marcados como arredondados — e ficam fora das contas de composição, que pedem o %GC. A conferência avisa quando o %GC × peso não bate com a gordura do laudo ou quando água + proteína + minerais + gordura não somam o peso. Tudo tem desfazer.</template>
     <div class="grid3">
       <div class="field"><label>Peso (kg)</label><input id="bWeight" type="text" inputmode="decimal" class="num" placeholder="79.6"></div>
       <div class="field"><label>%GC</label><input id="bBf" type="text" inputmode="decimal" class="num" placeholder="21.3"></div>
@@ -803,6 +808,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
         <div class="field"><label>Água corporal total (L)</label><input id="bTbw" type="text" inputmode="decimal" class="num"></div>
         <div class="field"><label>TMB (kcal)</label><input id="bBmr" type="text" inputmode="numeric" class="num"></div>
         <div class="field"><label>Ângulo de fase (°)</label><input id="bPha" type="text" inputmode="decimal" class="num" placeholder="770/S10"></div>
+        <div class="field"><label>Proteína (kg)</label><input id="bProt" type="text" inputmode="decimal" class="num" placeholder="13.1"></div>
+        <div class="field"><label>Cintura-quadril</label><input id="bWhr" type="text" inputmode="decimal" class="num" placeholder="0.88"></div>
       </div>
       <label>Massa magra segmentar (kg)</label>
       <div class="grid3">
@@ -1164,7 +1171,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v6.00</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v6.10</div>
 </section>
 
 </main>
@@ -1872,6 +1879,58 @@ function laudoDiff(items,rec){
     return {...it,st:same?"igual":"diferente",old:{v:ov,q:oq}};});
 }
 
+// ---------- Importar bioimpedância — T9 (v6.10) ----------
+// Arquivo da mesma skill (laudo-control) para o InBody: {formato:"control-bio", versao:1, fonte:{aparelho, arquivos},
+//  medidas:[{data, origem:"laudo"|"historico", arquivo?, v:{campo: número, seg:{ra,la,tr,rl,ll}}, conf:{fm, min}}],
+//  fora:[{nome, valor, motivo}]}. conf (gordura e minerais em kg) só confere a folha: não é gravado.
+// O histórico da folha vem em números inteiros: só peso e MME entram, marcados como arredondados.
+const BIO_FMT=1;
+// [campo, rótulo, unidade, faixa plausível, casas]
+const BIO_F=[["weight","peso","kg",[30,250],1],["bf","%GC","%",[2,60],1],["smm","MME","kg",[10,80],1],["visceral","gordura visceral","nível",[1,30],0],
+  ["tbw","água total","L",[15,90],1],["bmr","TMB","kcal",[800,4000],0],["prot","proteína","kg",[3,30],1],["whr","cintura-quadril","",[0.5,1.5],2],
+  ["ecw","ECW/TBW","",[0.3,0.45],3],["pha","ângulo de fase","°",[2,15],1]];
+const BIO_SEG=[["ra","braço D",[0.3,20]],["la","braço E",[0.3,20]],["tr","tronco",[5,60]],["rl","perna D",[1,30]],["ll","perna E",[1,30]]];
+const BIO_HIST=["weight","smm"];
+// → {err:"formato"|"versao"|"vazio"} ou {err:null, aparelho, medidas:[{date, origem, arquivo, err:null|"data", vals:{campo: n,
+//   seg?:{…}}, issues:[{f, why:"valor"|"plaus"|"campo"}], warns:[{why:"gc"|"soma", calc, laudo}]}], fora}. Campo com issue não entra;
+//   warn é só para conferir (o %GC × peso não bate com a gordura do laudo, ou a soma das partes não dá o peso).
+function parseBio(j,hoje){
+  if(!j||typeof j!=="object"||Array.isArray(j)||j.formato!=="control-bio")return {err:"formato"};
+  if(!(+j.versao>=1&&+j.versao<=BIO_FMT))return {err:"versao"};
+  if(!Array.isArray(j.medidas)||!j.medidas.length)return {err:"vazio"};
+  const F=Object.fromEntries(BIO_F.map(f=>[f[0],f])),S=Object.fromEntries(BIO_SEG.map(f=>[f[0],f]));
+  const num=x=>{if(typeof x==="number")return isFinite(x)?x:NaN;const p=parseLabInput(x);return p&&!p.q?p.v:NaN;};
+  const medidas=j.medidas.filter(m=>m&&typeof m==="object").map(m=>{
+    const date=String(m.data||"").slice(0,10),origem=m.origem==="historico"?"historico":"laudo";
+    const ok=/^\d{4}-\d{2}-\d{2}$/.test(date)&&!isNaN(+new Date(date+"T12:00:00"))&&(!hoje||date<=hoje);
+    const vals={},issues=[],warns=[],src=m.v&&typeof m.v==="object"?m.v:{};
+    Object.keys(src).forEach(f=>{
+      if(f==="seg"){if(origem==="historico"||!src.seg||typeof src.seg!=="object")return issues.push({f,why:"campo"});
+        const seg={};Object.keys(src.seg).forEach(s=>{const d=S[s],v=num(src.seg[s]);
+          if(!d)issues.push({f:"seg."+s,why:"campo"});else if(Number.isNaN(v)||v==null)issues.push({f:"seg."+s,why:"valor"});
+          else if(v<d[2][0]||v>d[2][1])issues.push({f:"seg."+s,why:"plaus"});else seg[s]=v;});
+        if(Object.keys(seg).length)vals.seg=seg;return;}
+      const d=F[f];if(!d||(origem==="historico"&&!BIO_HIST.includes(f)))return issues.push({f,why:"campo"});
+      const v=num(src[f]);if(Number.isNaN(v)||v==null)return issues.push({f,why:"valor"});
+      if(v<d[3][0]||v>d[3][1])return issues.push({f,why:"plaus"});vals[f]=v;});
+    const c=m.conf&&typeof m.conf==="object"?m.conf:{},fm=num(c.fm),mn=num(c.min);
+    if(vals.weight!=null&&vals.bf!=null&&fm>0){const calc=vals.weight*vals.bf/100;if(Math.abs(calc-fm)>0.3)warns.push({why:"gc",calc:+calc.toFixed(2),laudo:fm});}
+    if(vals.weight!=null&&vals.tbw!=null&&vals.prot!=null&&fm>0&&mn>0){const sum=vals.tbw+vals.prot+mn+fm;if(Math.abs(sum-vals.weight)>0.6)warns.push({why:"soma",calc:+sum.toFixed(2),laudo:vals.weight});}
+    return {date,origem,arquivo:m.arquivo?String(m.arquivo):"",err:ok?null:"data",vals,issues,warns};});
+  const fora=(Array.isArray(j.fora)?j.fora:[]).filter(x=>x&&typeof x==="object").map(x=>({nome:String(x.nome||""),valor:x.valor==null?"":String(x.valor),motivo:x.motivo?String(x.motivo):""}));
+  const f=j.fonte&&typeof j.fonte==="object"?j.fonte:{};
+  return {err:null,aparelho:f.aparelho?String(f.aparelho):"",medidas,fora};
+}
+// Medida × biometria já gravada no dia (rec ou null) → linhas por campo ("seg.ra" para os segmentos):
+// {f, v, st:"novo"|"igual"|"diferente", old}. Igual = mesmo número (0,01%).
+function bioDiff(vals,rec){
+  const out=[],cmp=(f,v,ov)=>{if(ov==null)return out.push({f,v,st:"novo",old:null});
+    out.push({f,v,st:Math.abs(ov-v)<=1e-4*Math.max(Math.abs(ov),Math.abs(v),1e-9)?"igual":"diferente",old:ov});};
+  Object.keys(vals||{}).forEach(f=>{if(f==="seg")Object.keys(vals.seg).forEach(s=>cmp("seg."+s,vals.seg[s],rec&&rec.seg&&rec.seg[s]!=null?+rec.seg[s]:null));
+    else cmp(f,vals[f],rec&&rec[f]!=null?+rec[f]:null);});
+  return out;
+}
+
 // ---------- Pressão em casa por agenda — U2 (v6.00) ----------
 // lastKey: dia da última leitura em casa (ou null) · every: intervalo em dias (0 = só pela consulta) · consultKey:
 // próxima consulta de cardiologia marcada (ou null) · sessStart: início da última sessão MRPA (ou null).
@@ -2237,7 +2296,7 @@ function syncState(){
 }
 function renderSyncState(){
   const el=$("#hdrSub");if(!el)return;const s=syncState();
-  el.innerHTML=`<span class="sync-dot" style="background:${s.c}"></span>${s.t}`;
+  el.innerHTML=`<span class="sync-dot" style="background:${s.c}"></span>v${APP_VERSION} · ${s.t}`;   // v6.01: versão sempre visível no cabeçalho
   el.dataset.state=s.k;
 }
 
@@ -2382,7 +2441,7 @@ const REF_LBL=Object.fromEntries(LAB_CAT.filter(m=>m[5]>0).map(m=>[m[0],m[1]]));
 // Categorias de risco CV (Diretriz Brasileira de Dislipidemias 2025) — chaves de LDL_TARGETS, no bloco de cálculo.
 const CV_RISK_LBL={baixo:"baixo",intermediario:"intermediário",alto:"alto",muitoAlto:"muito alto",extremo:"extremo"};
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="6.00";
+const APP_VERSION="6.10";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -4065,6 +4124,7 @@ function renderBioList(){
     if(x.smm!=null)parts.push("MME "+fmtV(x.smm,1));
     if(x.visceral!=null)parts.push("visc "+fmtV(x.visceral,1));
     if(x.ecw!=null)parts.push("ECW/TBW "+fmtN(x.ecw,3));if(x.pha!=null)parts.push("φ "+fmtN(x.pha,1)+"°");if(x.bmr!=null)parts.push("TMB "+fmtV(x.bmr,0));
+    if(x.prot!=null)parts.push("prot "+fmtN(x.prot,1));if(x.whr!=null)parts.push("C/Q "+fmtN(x.whr,2));if(x.hist)parts.push("arredondado (histórico da folha)");
     const row=document.createElement("div");row.className="log-item";
     row.innerHTML='<div class="log-main"><div class="t">'+fmtD(x.date)+
       (x.method?' <span class="muted" style="font-size:11px">'+esc(x.method)+'</span>':'')+'</div>'+
@@ -4106,7 +4166,8 @@ function renderMoodChart(){
 // Campos opcionais da folha do InBody: ECW/TBW (separa perda de músculo de perda de água), água total, TMB, ângulo de
 // fase (770/S10) e massa magra por segmento. A foto da folha fica no IndexedDB das fotos ("inbody_<id da biometria>")
 // e, como as fotos de progresso, não sincroniza (o registro guarda só sheet:true).
-const INBODY_F=[["ecw","bEcw","ECW/TBW",3],["tbw","bTbw","água total (L)",1],["bmr","bBmr","TMB (kcal)",0],["pha","bPha","ângulo de fase (°)",1]];
+const INBODY_F=[["ecw","bEcw","ECW/TBW",3],["tbw","bTbw","água total (L)",1],["bmr","bBmr","TMB (kcal)",0],["pha","bPha","ângulo de fase (°)",1],
+  ["prot","bProt","proteína (kg)",1],["whr","bWhr","cintura-quadril",2]];   // T9 (v6.10): proteína e relação cintura-quadril
 const SEG_F=[["ra","bSegRa","braço D"],["la","bSegLa","braço E"],["tr","bSegTr","tronco"],["rl","bSegRl","perna D"],["ll","bSegLl","perna E"]];
 let bioSheet=null;   // foto da folha escolhida (comprimida); grava quando a biometria é salva
 function phGet(id){return phOpen().then(d=>new Promise((res,rej)=>{const tx=d.transaction(PH_STORE,"readonly");const rq=tx.objectStore(PH_STORE).get(id);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>rej(rq.error);}));}
@@ -4132,8 +4193,9 @@ function inbodyNote(){
   const b=ls[0],pe=ls.find(x=>x!==b&&x.ecw!=null),p=[];
   if(b.ecw!=null)p.push("ECW/TBW "+fmtN(b.ecw,3)+(pe?" (antes "+fmtN(pe.ecw,3)+")":"")+(b.ecw>0.39?" · acima de 0,390 (água extracelular alta)":b.ecw<0.36?" · abaixo de 0,360":""));
   if(b.pha!=null)p.push("ângulo de fase "+fmtN(b.pha,1)+"°");if(b.bmr!=null)p.push("TMB "+fmtV(b.bmr,0)+" kcal");if(b.tbw!=null)p.push("água total "+fmtN(b.tbw,1)+" L");
+  if(b.prot!=null)p.push("proteína "+fmtN(b.prot,1)+" kg");if(b.whr!=null)p.push("cintura-quadril "+fmtN(b.whr,2));
   if(b.seg){const s=b.seg,f=v=>v!=null?fmtN(v,1):"—";p.push("magra segmentar: braços "+f(s.ra)+"/"+f(s.la)+" · tronco "+f(s.tr)+" · pernas "+f(s.rl)+"/"+f(s.ll)+" kg");}
-  return `<div class="note" style="margin-top:8px">InBody de ${fmtD(b.date)}: ${p.join(" · ")}. Com GLP-1, creatina e protocolo hormonal, o ECW/TBW ajuda a separar perda de músculo de perda de água.</div>`;
+  return `<div class="note" style="margin-top:8px">InBody de ${fmtD(b.date)}: ${p.join(" · ")}.${b.ecw!=null?" Com GLP-1, creatina e protocolo hormonal, o ECW/TBW ajuda a separar perda de músculo de perda de água.":""}</div>`;
 }
 $("#bSave").onclick=()=>{
   const w=parseFloat($("#bWeight").value),bf=parseFloat($("#bBf").value),smm=parseFloat($("#bSmm").value),visc=parseFloat($("#bVisc").value);
@@ -4144,6 +4206,74 @@ $("#bSave").onclick=()=>{
   const nb={id:uid(),...f};db.biometrics.push(nb);saveBioSheet(nb);
   save();$("#bWeight").value="";$("#bBf").value="";$("#bSmm").value="";$("#bVisc").value="";refreshBioViews();toast("Biometria salva ✓");
 };
+// ---------- Importar InBody — T9 (v6.10) ----------
+// parseBio/bioDiff (bloco de cálculo) leem e comparam; nada grava antes de "Importar". Por data: medida nova (marcada),
+// medida com biometria no dia → completa o que falta (marcada) e substitui os diferentes só com "substituir".
+// Histórico arredondado da folha: desmarcado; marcado, só cria datas sem registro. Desfazer volta db.biometrics.
+let bioImp=null;
+const bioOnDay=key=>db.biometrics.find(b=>b.date&&dkey(b.date)===key)||null;
+const BIO_LBL=Object.fromEntries(BIO_F.map(f=>[f[0],[f[1],f[2],f[4]]]).concat(BIO_SEG.map(s=>["seg."+s[0],["magra "+s[1],"kg",2]])));
+const bioVal=(f,v)=>{const l=BIO_LBL[f]||[f,"",1];return esc(l[0])+" "+fmtN(v,l[2])+(l[1]?" "+esc(l[1]):"");};
+function bioImpLoad(j){
+  const p=parseBio(j,todayInput());
+  if(p.err)return toast(p.err==="formato"?"Arquivo inválido — não é um laudo do InBody para o Control":p.err==="versao"?"Arquivo de uma versão mais nova — atualize o app":"Arquivo sem medições");
+  const ms=p.medidas.filter(m=>!m.err).map(m=>{const rec=bioOnDay(m.date),rows=bioDiff(m.vals,rec);
+    const hist=m.origem==="historico";
+    return {...m,rec,rows,on:!hist&&rows.some(r=>r.st==="novo"),rep:false};})
+    .filter((m,i,a)=>m.origem==="laudo"||(!m.rec&&!a.some(x=>x.origem==="laudo"&&x.date===m.date)&&a.findIndex(x=>x.origem==="historico"&&x.date===m.date)===i))   // histórico: só datas sem registro e sem laudo, uma vez
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  bioImp={p,ms,hist:false,bad:p.medidas.filter(m=>m.err)};renderBioImp();
+  const b=$("#bioImpBox");if(b){b.scrollIntoView({block:"start"});window.scrollBy(0,-56);}
+}
+function bioImpCount(){if(!bioImp)return 0;return bioImp.ms.filter(m=>m.origem==="laudo"?(m.on||m.rep):bioImp.hist).length;}
+function renderBioImp(){
+  const el=$("#bioImpBox");if(!el)return;if(!bioImp){el.innerHTML="";return;}
+  const {p,ms}=bioImp,d=k=>fmtD(k),pl=(n,a,b)=>n+" "+(n===1?a:b);
+  const main=ms.filter(m=>m.origem==="laudo"),hist=ms.filter(m=>m.origem==="historico");
+  const act=main.filter(m=>m.rows.some(r=>r.st!=="igual")),same=main.filter(m=>!m.rows.some(r=>r.st!=="igual"));
+  const ks=main.map(m=>m.date).sort();
+  let h=`<div class="note laudo"><div class="li-h"><b>InBody${p.aparelho?" · "+esc(p.aparelho):""}</b> · ${pl(main.length,"medição","medições")}${ks.length?" ("+d(ks[0])+(ks.length>1?" a "+d(ks[ks.length-1]):"")+")":""}</div>`;
+  const rowOf=m=>{let h="";const i=ms.indexOf(m),nv=m.rows.filter(r=>r.st==="novo"),df=m.rows.filter(r=>r.st==="diferente");
+    const main3=["weight","bf","smm"].map(f=>m.vals[f]!=null?bioVal(f,m.vals[f]):"").filter(Boolean).join(" · ");
+    h+=`<label class="li-row"><input type="checkbox" data-m="${i}"${m.on?" checked":""}${nv.length?"":" disabled"}><span class="li-m"><b>${d(m.date)}</b> · ${m.rec?"já há registro: "+pl(nv.length,"campo novo","campos novos"):"medição nova"}<span class="li-o">${m.rec?nv.map(r=>bioVal(r.f,r.v)).join(" · ")||"—":main3+(nv.length>3?" · +"+(nv.length-3)+" campos":"")}</span>`+
+      m.warns.map(w=>`<span class="li-o" style="color:var(--amber)">${w.why==="gc"?"conferir: %GC × peso dá "+fmtN(w.calc,1)+" kg de gordura, o laudo diz "+fmtN(w.laudo,1):"conferir: água + proteína + minerais + gordura = "+fmtN(w.calc,1)+" kg, peso "+fmtN(w.laudo,1)}</span>`).join("")+`</span></label>`;
+    if(df.length)h+=`<label class="li-row" style="padding-left:30px"><input type="checkbox" data-r="${i}"${m.rep?" checked":""}><span class="li-m">Substituir ${pl(df.length,"diferente","diferentes")}<span class="li-o">${df.map(r=>bioVal(r.f,r.v)+" × gravado "+fmtN(r.old,(BIO_LBL[r.f]||[0,0,1])[2])).join(" · ")}</span></span><span class="li-st dif">diferente</span></label>`;return h;};
+  // T9: medições com registro no dia à vista (pedem decisão); as novas recolhidas, já marcadas.
+  const fresh=act.filter(m=>!m.rec);h+=act.filter(m=>m.rec).map(rowOf).join("");
+  if(fresh.length)h+=`<details${fresh.length<=3?" open":""}><summary>${pl(fresh.length,"medição nova","medições novas")} · marcadas — ver ou desmarcar</summary>${fresh.map(rowOf).join("")}</details>`;
+  if(same.length)h+=`<details><summary>${pl(same.length,"medição igual","medições iguais")} ao gravado</summary><div class="li-list">${same.map(m=>d(m.date)).join(" · ")}</div></details>`;
+  if(hist.length){const hy=hist.map(m=>m.date).sort();
+    h+=`<label class="li-row" style="margin-top:6px"><input type="checkbox" id="biHist"${bioImp.hist?" checked":""}><span class="li-m"><b>Histórico da folha</b> · ${pl(hist.length,"data","datas")} sem registro (${d(hy[0])}${hy.length>1?" a "+d(hy[hy.length-1]):""})<span class="li-o">Números inteiros: só peso e MME, marcados como arredondados; ficam fora das contas de composição.</span></span></label>`+
+      `<details><summary>Ver as datas</summary><div class="li-list">${hist.map(m=>d(m.date)+" · "+Object.keys(m.vals).map(f=>bioVal(f,m.vals[f])).join(" · ")).join("<br>")}</div></details>`;}
+  const bad=[];bioImp.bad.forEach(m=>bad.push("medição "+esc(m.date)+": data inválida ou no futuro"));
+  ms.forEach(m=>m.issues.forEach(x=>{if(m.origem==="historico"&&x.why==="campo")return;bad.push(d(m.date)+" · "+esc(x.f)+" — "+({campo:"campo fora do app",valor:"valor ilegível",plaus:"fora do plausível"}[x.why]||x.why));}));
+  p.fora.forEach(x=>bad.push(esc(x.nome)+" "+esc(x.valor)+(x.motivo?" — "+esc(x.motivo):"")));
+  if(bad.length)h+=`<details><summary>Não importados · ${bad.length}</summary><div class="li-list">${bad.join("<br>")}</div></details>`;
+  h+=`<div class="row-actions" style="margin-top:10px"><button class="btn-ghost btn-sm" id="biCancel">Cancelar</button><button class="btn-amber btn-sm" id="biGo"></button></div></div>`;
+  el.innerHTML=h;syncBioBtn();
+  el.querySelectorAll("input[data-m]").forEach(cb=>cb.onchange=()=>{bioImp.ms[+cb.dataset.m].on=cb.checked;syncBioBtn();});
+  el.querySelectorAll("input[data-r]").forEach(cb=>cb.onchange=()=>{bioImp.ms[+cb.dataset.r].rep=cb.checked;syncBioBtn();});
+  const hc=$("#biHist");if(hc)hc.onchange=()=>{bioImp.hist=hc.checked;syncBioBtn();};
+  $("#biCancel").onclick=()=>{bioImp=null;renderBioImp();};
+  $("#biGo").onclick=bioImpApply;
+}
+function syncBioBtn(){const b=$("#biGo");if(!b)return;const n=bioImpCount();b.disabled=!n;b.textContent=n?"Importar "+n+" medi"+(n===1?"ção":"ções"):"Nada marcado";}
+function bioImpApply(){
+  if(!bioImp)return;const before=JSON.parse(JSON.stringify(db.biometrics));let nn=0,nu=0;
+  bioImp.ms.forEach(m=>{
+    const hist=m.origem==="historico";if(hist?!bioImp.hist:!(m.on||m.rep))return;
+    const pick=m.rows.filter(r=>(r.st==="novo"&&(hist||m.on))||(r.st==="diferente"&&m.rep));if(!pick.length)return;
+    let rec=bioOnDay(m.date);
+    if(!rec){rec={id:uid(),date:m.date+"T12:00:00",weight:null,bf:null,smm:null,visceral:null,method:"InBody",src:"inbody"};if(hist)rec.hist=true;db.biometrics.push(rec);nn++;}else nu++;
+    pick.forEach(r=>{if(r.f.startsWith("seg.")){rec.seg=rec.seg||{};rec.seg[r.f.slice(4)]=r.v;}else rec[r.f]=r.v;});
+    if(!rec.method)rec.method="InBody";});
+  if(!nn&&!nu)return toast("Nada a importar");
+  save();bioImp=null;renderBioImp();refreshBioViews();
+  toast("InBody importado ✓ "+(nn?nn+" medi"+(nn===1?"ção nova":"ções novas"):"")+(nn&&nu?" · ":"")+(nu?nu+" completada"+(nu===1?"":"s"):""),()=>{db.biometrics=before;save();refreshBioViews();});
+}
+$("#btnBioImp").onclick=()=>$("#fileBio").click();
+$("#fileBio").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const r=new FileReader();
+  r.onload=()=>{let j=null;try{j=JSON.parse(r.result);}catch(err){}if(!j)return toast("Arquivo inválido — não é um laudo do InBody para o Control");impRoute(j);};r.readAsText(f);};
 // C4 (v5.30): duas metas definem as outras. Campos vazios mostram o valor calculado como dica; 3 ou 4 metas
 // só são aceitas se baterem com o par (goalDerive, no bloco de cálculo).
 const GOAL_FIELDS=[["weight","#goalW","kg",1],["bf","#goalBf","%",1],["lean","#goalLean","kg",1],["fat","#goalFat","kg",1]];
@@ -4440,7 +4570,9 @@ function laudoApply(){
 }
 $("#btnLaudo").onclick=()=>$("#fileLaudo").click();
 $("#fileLaudo").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const r=new FileReader();
-  r.onload=()=>{let j=null;try{j=JSON.parse(r.result);}catch(err){}if(!j)return toast("Arquivo inválido — não é um laudo do Control");laudoLoad(j);};r.readAsText(f);};
+  r.onload=()=>{let j=null;try{j=JSON.parse(r.result);}catch(err){}if(!j)return toast("Arquivo inválido — não é um laudo do Control");impRoute(j);};r.readAsText(f);};
+// T9 (v6.10): os dois botões aceitam os dois arquivos — o formato decide a conferência (exames ou InBody).
+function impRoute(j){if(j&&j.formato==="control-bio"){goView("bio:corpo");bioImpLoad(j);}else{if(j&&j.formato==="control-laudo")goView("bio:exames");laudoLoad(j);}}
 // ---------- Em acompanhamento + catálogo — M1 (v5.40) ----------
 // Último valor de cada marcador acompanhado contra a meta pessoal (ou a faixa do laudo), em barra: faixa (verde),
 // meta (contorno âmbar), anterior (traço) e atual (ponto). Fora da meta/faixa primeiro, depois reteste vencido.
@@ -5984,7 +6116,7 @@ const EXPORT_FIELDS={
   injections:"Aplicações de EAA, ancilares e orais: {id, drug (nome; ver dicionario.drogas), doseMg, site (sítio; null em oral), date (ISO), note, phase, phaseType}.",
   glp1:"Aplicações de GLP-1: {id, drug, doseMg, site, date, note, phase, phaseType}.",
   glp1sym:"Tolerância do GLP-1: {id, date, appetite 1–5 (1 suprimido, 5 alto), nausea 0–3, sx [sintomas], hr, note, dose? {drug, mg, day = dias depois da dose}}.",
-  biometrics:"Biometria: {id, date, weight kg, bf %GC, smm massa muscular esquelética kg, visceral nível, method, ecw/tbw razão água extracelular/total, bmr kcal, pha ângulo de fase, seg {ra, la, tr, rl, ll} massa magra por segmento, sheet (foto da folha do InBody)}.",
+  biometrics:"Biometria: {id, date, weight kg, bf %GC, smm massa muscular esquelética kg, visceral nível, method, ecw/tbw razão água extracelular/total, bmr kcal, pha ângulo de fase, seg {ra, la, tr, rl, ll} massa magra por segmento, prot proteína kg, whr relação cintura-quadril, sheet (foto da folha do InBody), src 'inbody' quando veio da importação, hist true = histórico da folha em números inteiros (só peso e MME)}.",
   labs:"Exames: {id, date, phase, phaseType, <chave do marcador>: número na unidade canônica (dicionario.marcadores), q {chave: '>'|'<'}, u {chave: unidade do laudo}, r {chave: [mín, máx]} faixa do laudo, src 'laudo' quando o exame veio da importação do laudo (T8)}.",
   checkins:"Check-in subjetivo: {id, date, libido, energy, mood, sleep, irrit}, cada um 1–5.",
   pressures:"Pressão arterial: {id, date local 'YYYY-MM-DDTHH:MM', sys e dia mmHg, hr bpm, ctx 'casa'|'cons' (consultório; ausente = casa), note, mrpa? id da sessão, period? 'm' manhã | 'n' noite}.",
@@ -6081,7 +6213,7 @@ function exportCalc(){
       const lw=lastBioWeight(),wr=weightRate(weightSeries().map(p=>({t:p.t,w:p.w}))),hM=(db.settings.heightCm||176)/100;
       const s=db.biometrics.filter(x=>x.weight!=null&&x.bf!=null).sort(byDate),fst=s[0],lst=s[s.length-1];
       const comp=b=>{const lean=b.weight*(1-b.bf/100);return {data:dkey(b.date),peso:b.weight,gc_pct:b.bf,massa_magra:r2(lean),gordura:r2(b.weight-lean),
-        mme:b.smm??null,visceral:b.visceral??null,ffmi:r2(lean/(hM*hM)),metodo:b.method||null};};
+        mme:b.smm??null,visceral:b.visceral??null,ffmi:r2(lean/(hM*hM)),proteina:b.prot??null,cintura_quadril:b.whr??null,ecw_tbw:b.ecw??null,metodo:b.method||null};};
       const g=db.settings.goals||{},gd=goalDerive(g);
       const im=!gd.invalid&&!gd.conflict?goalImplication(lst?{weight:lst.weight,bf:lst.bf}:(lw?{weight:lw.weight,bf:null}:null),gd.vals,g.deadline):null;
       const ca=s.length>=2?compAssess(fst,lst):null;

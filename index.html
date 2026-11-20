@@ -676,6 +676,8 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <div class="card phase-sel">
     <label>Fase / ciclo</label>
     <select id="phaseFilter"></select>
+    <label style="margin-top:10px">Drogas nos gráficos</label>
+    <div class="seg" id="drugSeg" style="margin-bottom:0"><button data-v="on" class="on">Em uso</button><button data-v="all">Todas</button></div>
   </div>
   <div class="card" data-phase-aware>
     <h2>Frequência por droga</h2>
@@ -1171,7 +1173,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <hr>
     <button class="btn btn-ghost btn-sm" id="btnWipe" style="width:100%;color:var(--red)">Apagar tudo</button>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v6.10</div>
+  <div style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;margin:4px 0 8px" id="verFooter">Control · v6.11</div>
 </section>
 
 </main>
@@ -2441,7 +2443,7 @@ const REF_LBL=Object.fromEntries(LAB_CAT.filter(m=>m[5]>0).map(m=>[m[0],m[1]]));
 // Categorias de risco CV (Diretriz Brasileira de Dislipidemias 2025) — chaves de LDL_TARGETS, no bloco de cálculo.
 const CV_RISK_LBL={baixo:"baixo",intermediario:"intermediário",alto:"alto",muitoAlto:"muito alto",extremo:"extremo"};
 const GLP1_SITES=["Abdômen D","Abdômen E","Coxa D","Coxa E","Braço D","Braço E","Flanco D","Flanco E","Dorsal D","Dorsal E"];
-const APP_VERSION="6.10";
+const APP_VERSION="6.11";
 const DEFAULT_GLP1=[
   {name:"Semaglutida (Ozempic/Wegovy)",hl:7,color:"#22d3ee",doseTarget:0.25,cadence:7},
   {name:"Tirzepatida (Mounjaro/Zepbound)",hl:5,color:"#a78bfa",doseTarget:2.5,cadence:7},
@@ -2696,7 +2698,7 @@ function drugByName(n){return db.drugs.find(d=>d.name===n);}
 function isOral(n){const d=drugByName(n);return d&&d.type==="oral";}
 
 // ---------- nav ----------
-let selectedSite=null, phaseFilter="__all__";
+let selectedSite=null, phaseFilter="__all__", chartAllDrugs=false;
 // ---------- NAVEGAÇÃO: 5 grupos × sub-abas (F3.1) ----------
 // As 8 telas (.view) continuam existindo; cada grupo do menu mostra uma barra de sub-abas no cabeçalho.
 // goView(v) aceita o id da tela (ex.: "apply") ou "bio:exames" (seção da Saúde).
@@ -3413,8 +3415,10 @@ function renderLabTrend(){
 let gSelectedSite=null;
 function glpDrugByName(n){return db.glp1Drugs.find(d=>d.name===n);}
 function glpDaysSinceSite(site){return daysSinceSiteAll(site);}
-function fillGlpSelect(keep){const s=$("#gDrug");const cur=keep||s.value;s.innerHTML="";db.glp1Drugs.forEach(d=>s.add(new Option(d.name,d.name)));s.add(new Option("+ Outro (livre)","__custom__"));if(cur)s.value=cur;else{const ret=db.glp1Drugs.find(d=>/retatrutida/i.test(d.name));if(ret)s.value=ret.name;}}
-function glpDrugContext(){const v=$("#gDrug").value;$("#gCustomBox").style.display=v==="__custom__"?"block":"none";const d=glpDrugByName(v);if(d&&d.doseTarget&&!$("#gDose").value)$("#gDose").value=d.doseTarget;gSelectedSite=glpSuggestSite();$("#gSugHint").textContent=gSelectedSite?"· sugerido: "+gSelectedSite:"";buildGlpSiteGrid();}
+function fillGlpSelect(keep){const s=$("#gDrug");const cur=keep||s.value;s.innerHTML="";db.glp1Drugs.forEach(d=>s.add(new Option(d.name,d.name)));s.add(new Option("+ Outro (livre)","__custom__"));if(cur)s.value=cur;else{const l=glpLast();if(l&&glpDrugByName(l.drug))s.value=l.drug;}}
+// v6.11: o formulário começa na última droga usada, com a última dose dela (sem registro: dose-alvo do cadastro).
+function glpLast(drug){return db.glp1.filter(i=>!drug||i.drug===drug).reduce((a,i)=>!a||new Date(i.date)>new Date(a.date)?i:a,null);}
+function glpDrugContext(){const v=$("#gDrug").value;$("#gCustomBox").style.display=v==="__custom__"?"block":"none";const d=glpDrugByName(v),l=d&&glpLast(v);if(d&&!$("#gDose").value){const dose=l?l.doseMg:d.doseTarget;if(dose)$("#gDose").value=dose;}gSelectedSite=glpSuggestSite();$("#gSugHint").textContent=gSelectedSite?"· sugerido: "+gSelectedSite:"";buildGlpSiteGrid();}
 $("#gDrug").onchange=()=>{$("#gDose").value="";glpDrugContext();};
 $("#gSave").onclick=()=>{
   let drug=$("#gDrug").value;
@@ -3506,9 +3510,10 @@ function glpTimeline(forecast){
   return {t0,labels,days,stepDays:step};
 }
 function renderGlpLevel(){
-  const g=phasedGlp();
+  let g=phasedGlp();
   if(!g.length)return clearCanvas("chGlpLevel","registre aplicações");
   // próxima aplicação programada por droga: última dose + cadência (mesma regra do painel "Próxima")
+  const show=chartDrugs([...new Set(g.map(i=>i.drug))],"glp1",db.glp1);g=g.filter(i=>show.includes(i.drug));
   const lastBy={};g.forEach(i=>{if(!lastBy[i.drug]||new Date(i.date)>new Date(lastBy[i.drug].date))lastBy[i.drug]=i;});
   const nextBy={};let maxNext=0;
   Object.keys(lastBy).forEach(k=>{const cad=(glpDrugByName(k)||{}).cadence||7;const nt=+new Date(lastBy[k].date)+cad*864e5;nextBy[k]=nt;if(nt>maxNext)maxNext=nt;});
@@ -4002,6 +4007,14 @@ const baseOpts={responsive:true,maintainAspectRatio:false,
           y:{ticks:{color:PAL.muted,font:{size:10,family:"IBM Plex Mono"}},grid:{color:"#33363c"}}}};
 function clearCanvas(id,msg){const cv=$("#"+id),ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle=PAL.muted;ctx.font="13px IBM Plex Mono";ctx.textAlign="center";ctx.fillText(msg,cv.width/2,cv.height/2);}
 
+// v6.11: por padrão os gráficos mostram só as drogas em uso (ciclo ativo, drugActive). "Todas" mostra o histórico.
+// Com uma fase escolhida no filtro, valem todas as drogas da fase; se nenhuma estiver em uso, mostra todas.
+function chartDrugs(names,kind,list){
+  if(chartAllDrugs||phaseFilter!=="__all__")return names;
+  const last={};list.forEach(i=>{if(!last[i.drug]||new Date(i.date)>new Date(last[i.drug]))last[i.drug]=i.date;});
+  const on=names.filter(n=>last[n]&&drugActive(n,kind,last[n]));
+  return on.length?on:names;
+}
 // Filtro de fase compartilhado entre módulos (EAA + GLP-1 + exames).
 const inPhase=e=>phaseFilter==="__all__"||(e.phase||"")===phaseFilter;
 function fillPhaseFilter(){
@@ -4025,11 +4038,12 @@ function renderFreq(){
   let inj=db.injections.filter(i=>+new Date(i.date)>=cut);
   if(phaseFilter!=="__all__")inj=inj.filter(i=>(i.phase||"")===phaseFilter);
   const counts={};inj.forEach(i=>counts[i.drug]=(counts[i.drug]||0)+1);
-  const labels=Object.keys(counts),data=labels.map(l=>counts[l]),colors=labels.map(l=>(drugByName(l)||{}).color||PAL.muted);
+  const labels=chartDrugs(Object.keys(counts),"eaa",db.injections),data=labels.map(l=>counts[l]),colors=labels.map(l=>(drugByName(l)||{}).color||PAL.muted);
   if(!labels.length)return clearCanvas("chFreq","sem dados no período");
   mkChart("chFreq",{type:"bar",data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:6}]},
     options:{...baseOpts,plugins:{legend:{display:false}},scales:{...baseOpts.scales,y:{...baseOpts.scales.y,beginAtZero:true,ticks:{...baseOpts.scales.y.ticks,precision:0}}}}});
 }
+$("#drugSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#drugSeg .on").classList.remove("on");b.classList.add("on");chartAllDrugs=b.dataset.v==="all";renderFreq();renderConc();renderSS();renderGlpLevel();});
 $("#freqSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#freqSeg .on").classList.remove("on");b.classList.add("on");renderFreq();});
 
 function splitForecast(arr,nowIdx,color,label,thick){
@@ -4044,7 +4058,7 @@ function renderConc(){
   const tl=buildTimeline(14);
   if(!tl)return clearCanvas("chConc","registre aplicações para ver a curva");
   const ds=[];
-  tl.drugs.forEach(dn=>{const c=(drugByName(dn)||{}).color||PAL.muted;ds.push(...splitForecast(tl.series[dn],tl.nowIdx,c,dn));});
+  chartDrugs(tl.drugs,"eaa",db.injections).forEach(dn=>{const c=(drugByName(dn)||{}).color||PAL.muted;ds.push(...splitForecast(tl.series[dn],tl.nowIdx,c,dn));});
   if(tl.totalInj.some(v=>v>0))ds.push(...splitForecast(tl.totalInj,tl.nowIdx,"#e8e9ec","Total injetáveis",true));
   if(tl.totalOral.some(v=>v>0))ds.push(...splitForecast(tl.totalOral,tl.nowIdx,"#7dd3fc","Total orais",true));
   mkChart("chConc",{panDates:tl.days,type:"line",data:{labels:tl.labels,datasets:ds},
@@ -4054,7 +4068,7 @@ function renderConc(){
 
 function renderSS(){
   const el=$("#ssTable");
-  const drugs=db.drugs.filter(d=>!d.anc&&d.doseTarget>0&&d.cadence>0);
+  const all=db.drugs.filter(d=>!d.anc&&d.doseTarget>0&&d.cadence>0),keep=chartDrugs(all.map(d=>d.name),"eaa",db.injections),drugs=all.filter(d=>keep.includes(d.name));
   if(!drugs.length){el.innerHTML='<div class="empty">Defina dose-alvo e cadência das drogas em Dados.</div>';return;}
   let h='<table><thead><tr><th>Droga</th><th>Cmáx</th><th>Cmín</th><th>Flutuação</th><th>~90% SS</th></tr></thead><tbody>';
   drugs.forEach(d=>{
